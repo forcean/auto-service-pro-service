@@ -1,4 +1,4 @@
-import Module from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { LoginModule } from "./login/login.module";
 
 @Module({
