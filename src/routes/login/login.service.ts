@@ -24,8 +24,8 @@ export class LoginService {
         throw new Error('User not found');
       }
 
-      // const checkPassword = await bcrypt.compare(loginDto.painTextPassword, getUser.credentialId);
-      const checkPassword = loginDto.painTextPassword === getUser.credentialId;
+      const checkPassword = await bcrypt.compare(loginDto.painTextPassword, getUser.credentialId);
+      // const checkPassword = loginDto.painTextPassword === getUser.credentialId;
       if (!checkPassword) {
         throw new Error('Invalid password');
       }
