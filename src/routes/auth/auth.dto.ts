@@ -1,4 +1,5 @@
 import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
+import { Unique } from 'typeorm';
 
 export class LoginDto {
   @IsString()
@@ -22,6 +23,10 @@ export class registerDto {
   @IsString()
   @IsNotEmpty()
   email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  phoneNumber: string;
 
   @IsString()
   @IsNotEmpty()

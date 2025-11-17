@@ -3,6 +3,8 @@ import { UsersEntity, UsersSchema } from "./users/users.schema";
 import { UsersRepository } from "./users/users.repository";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ModelDefinition, MongooseModule, getModelToken } from "@nestjs/mongoose";
+import { TokenRepository } from "./token/token.repository";
+import { TokenEntity, TokenSchema } from "./token/token.schema";
 
 
 // const reposytories = [UsersRepository];
@@ -25,12 +27,13 @@ import { ModelDefinition, MongooseModule, getModelToken } from "@nestjs/mongoose
 @Module({
   imports: [MongooseModule.forFeature(
     [
-      { name: UsersEntity.name, schema: UsersSchema }
+      { name: UsersEntity.name, schema: UsersSchema },
+      { name: TokenEntity.name, schema: TokenSchema }
     ], 
     'autoservice')
   ],
-  providers: [UsersRepository],
-  exports: [UsersRepository],
+  providers: [UsersRepository, TokenRepository],
+  exports: [UsersRepository, TokenRepository],
 })
 
 export class RepositoryModule { }

@@ -1,7 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { FilterQuery, Model } from 'mongoose';
-import { MongoRepository } from 'typeorm';
-import { LoginDto, registerDto } from '../../routes/login/login.dto';
+import { registerDto } from '../../routes/auth/auth.dto';
 import { UsersEntity } from './users.schema';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectModel } from '@nestjs/mongoose';
@@ -24,6 +23,7 @@ export class UsersRepository {
         publicId: userData.publicId,
         credentialId: hashedPassword,
         email: userData.email,
+        phoneNumber: userData.phoneNumber,
         firstname: userData.firstname,
         lastname: userData.lastname,
         activeFlag: true,
@@ -45,6 +45,7 @@ export class UsersRepository {
         publicId: userData.publicId,
         credentialId: hashedPassword,
         email: userData.email,
+        phoneNumber: userData.phoneNumber,
         firstname: userData.firstname,
         lastname: userData.lastname,
         activeFlag: true,
@@ -65,6 +66,7 @@ export class UsersRepository {
         publicId: userData.publicId,
         credentialId: hashedPassword,
         email: userData.email,
+        phoneNumber: userData.phoneNumber,
         firstname: userData.firstname,
         lastname: userData.lastname,
         activeFlag: true,
