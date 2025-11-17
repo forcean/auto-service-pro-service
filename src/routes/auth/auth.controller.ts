@@ -106,4 +106,25 @@ export class AuthController {
       }
     };
   }
+
+  @Post('revoke')
+  async authlogout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+
+    if (!req.cookies.accessToken) {
+      throw new Error('No token provided');
+    }
+
+    const token = req.cookies.accessToken;
+    await this.authService.revokeAccessToken(token);
+    
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    return {
+      message: 'Logout successful',
+    };
+  }
 }

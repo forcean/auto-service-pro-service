@@ -164,4 +164,8 @@ export class AuthService {
       throw new Error(`Create new refresh token failed: ${error.message}`);
     }
   }
+
+  async revokeAccessToken(token: string) {
+    await this.tokenRepository.deleteByToken(token);
+  }
 }

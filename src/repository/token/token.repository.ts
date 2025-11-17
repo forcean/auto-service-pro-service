@@ -27,7 +27,11 @@ export class TokenRepository {
   }
 
   async deleteOldToken(publicId: string, oldAccessToken: string, refreshToken: string): Promise<boolean> {
-    const delOldToken = await this.tokenEntity.deleteOne({publicId, accessToken: oldAccessToken, refreshToken});
+    const delOldToken = await this.tokenEntity.deleteOne({ publicId, accessToken: oldAccessToken, refreshToken });
     return delOldToken ? true : false;
+  }
+
+  async deleteByToken(token: string): Promise<void> {
+    await this.tokenEntity.deleteOne({ accessToken: token });
   }
 }
