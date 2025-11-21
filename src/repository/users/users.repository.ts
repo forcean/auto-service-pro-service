@@ -17,29 +17,30 @@ export class UsersRepository {
     return await this.usersEntity.findOne(query);
   }
 
-  async createUserAdmin(userData: registerDto, hashedPassword: string, publicIdCreator: string): Promise<boolean> {
-    try {
-      await this.usersEntity.create({
-        publicId: userData.publicId,
-        credentialId: hashedPassword,
-        email: userData.email,
-        phoneNumber: userData.phoneNumber,
-        firstname: userData.firstname,
-        lastname: userData.lastname,
-        activeFlag: true,
-        role: 'admin',
-        createdDt: new Date(),
-        createdBy: publicIdCreator,
-        parent: null,
-      });
-      return true;
-    } catch (error) {
-      console.error('Error created user', error);
-      return false;
-    }
-  }
+  // async createUserAdmin(userData: registerDto, hashedPassword: string, publicIdCreator: string, permissions: string[]): Promise<boolean> {
+  //   try {
+  //     await this.usersEntity.create({
+  //       publicId: userData.publicId,
+  //       credentialId: hashedPassword,
+  //       email: userData.email,
+  //       phoneNumber: userData.phoneNumber,
+  //       firstname: userData.firstname,
+  //       lastname: userData.lastname,
+  //       activeFlag: true,
+  //       role: 'admin',
+  //       permissions: permissions,
+  //       createdDt: new Date(),
+  //       createdBy: publicIdCreator,
+  //       parent: null,
+  //     });
+  //     return true;
+  //   } catch (error) {
+  //     console.error('Error created user', error);
+  //     return false;
+  //   }
+  // }
 
-  async createUser(userData: registerDto, hashedPassword: string, publicIdCreator: string): Promise<boolean> {
+  async createUser(userData: registerDto, hashedPassword: string, publicIdCreator: string, permissions: string[]): Promise<boolean> {
     try {
       await this.usersEntity.create({
         publicId: userData.publicId,
@@ -49,7 +50,8 @@ export class UsersRepository {
         firstname: userData.firstname,
         lastname: userData.lastname,
         activeFlag: true,
-        role: userData.role,
+        role: userData.role.toUpperCase(),
+        permissions: permissions,
         createdDt: new Date(),
         createdBy: publicIdCreator,
         parent: publicIdCreator,
@@ -70,7 +72,7 @@ export class UsersRepository {
         firstname: userData.firstname,
         lastname: userData.lastname,
         activeFlag: true,
-        role: 'system-owner',
+        role: 'SO',
         createdDt: new Date(),
       });
       return true;

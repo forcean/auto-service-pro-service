@@ -64,9 +64,9 @@ export class AuthController {
 
   @Post('register/owner')
   async registerBy(
-    @Body() registerDto: registerDto,
+    @Body() registerDto: registerDto, privateKey: string,
   ) {
-    await this.authService.createSysOwner(registerDto);
+    await this.authService.createSysOwner(registerDto, privateKey);
     return {
       message: 'Register successful',
     };
@@ -116,7 +116,6 @@ export class AuthController {
     if (!req.cookies.accessToken) {
       throw new Error('No token provided');
     }
-
     const token = req.cookies.accessToken;
     await this.authService.revokeAccessToken(token);
     

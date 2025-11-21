@@ -5,6 +5,10 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ModelDefinition, MongooseModule, getModelToken } from "@nestjs/mongoose";
 import { TokenRepository } from "./token/token.repository";
 import { TokenEntity, TokenSchema } from "./token/token.schema";
+import { PoliciesEntity, PoliciesSchema,  } from "./permissions/policies.schema";
+import { PoliciesRepository } from "./permissions/policies.repository";
+import { MenuEntity, MenuSchema } from "./menus/menus.schema";
+import { MenuRepository } from "./menus/menus.repository";
 
 
 // const reposytories = [UsersRepository];
@@ -28,12 +32,14 @@ import { TokenEntity, TokenSchema } from "./token/token.schema";
   imports: [MongooseModule.forFeature(
     [
       { name: UsersEntity.name, schema: UsersSchema },
-      { name: TokenEntity.name, schema: TokenSchema }
+      { name: TokenEntity.name, schema: TokenSchema },
+      { name: PoliciesEntity.name, schema: PoliciesSchema },
+      { name: MenuEntity.name, schema: MenuSchema },
     ], 
     'autoservice')
   ],
-  providers: [UsersRepository, TokenRepository],
-  exports: [UsersRepository, TokenRepository],
+  providers: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository],
+  exports: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository],
 })
 
 export class RepositoryModule { }

@@ -5,9 +5,8 @@ import { UsersRepository } from 'src/repository/users/users.repository';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { refreshTokenDto } from './token.dto';
-import { FilterQuery } from 'mongoose';
 import { TokenRepository } from 'src/repository/token/token.repository';
-import { TokenEntity } from 'src/repository/token/token.schema';
+import { PoliciesRepository } from 'src/repository/permissions/policies.repository';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +17,7 @@ export class AuthService {
     private configService: ConfigService,
     @Inject(UsersRepository) private readonly usersRepository: UsersRepository,
     @Inject(TokenRepository) private readonly tokenRepository: TokenRepository,
+    @Inject(PoliciesRepository) private readonly policiesRepository: PoliciesRepository,
   ) { }
 
   async loginByPublicId(loginDto: LoginDto) {
@@ -86,28 +86,31 @@ export class AuthService {
 
       const hashedPassword = await bcrypt.hash(registerDto.painTextPassword, 10);
 
-      if (decodedToken.role === 'system-owner') {
-        const createAdmin = await this.usersRepository.createUserAdmin(registerDto, hashedPassword, decodedToken.publicId);
-        if (!createAdmin) {
-          throw new Error('Failed to create admin user');
-        }
-      } else if (decodedToken.role === 'admin') {
-        const createUser = await this.usersRepository.createUser(registerDto, hashedPassword, decodedToken.publicId);
-        if (!createUser) {
-          throw new Error('Failed to create user');
-        }
+      const getPermissions = await this.policiesRepository.getPermissionsByRole(registerDto.role);
+      if (!getPermissions?.length) {
+        throw new Error('Permisson does not exist on role in policies');
       }
+
+      const createUser = await this.usersRepository.createUser(registerDto, hashedPassword, decodedToken.publicId, getPermissions);
+      if (!createUser) {
+        throw new Error('Failed to create user');
+      }
+
     } catch (error) {
       throw new Error(`Register failed: ${error.message}`);
     }
   }
 
   //เช็ค logic กับชื่อ function ตั้งใหม่ให้ดี
-  async createSysOwner(registerDto: registerDto) {
+  async createSysOwner(registerDto: registerDto, privateKey: string) {
     try {
       const isUserExist = await this.usersRepository.getUserByPublicId(registerDto.publicId);
       if (isUserExist) {
         throw new Error('User already exists');
+      }
+
+      if (privateKey !== 'AUTOSERVICE_SYS_OWNER_CREATE_KEY_10112024') {
+        throw new Error('Invalid private key for sys owner creation');
       }
 
       const hashedPassword = await bcrypt.hash(registerDto.painTextPassword, 10);
