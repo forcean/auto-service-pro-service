@@ -1,9 +1,8 @@
 import { Controller, Body, Post, Res, Req } from '@nestjs/common';
 import type { Response, Request } from 'express';
-import { LoginDto, registerDto } from './auth.dto';
+import { LoginDto } from './auth.dto';
 import { AuthService } from './auth.service';
 import { refreshTokenDto } from './token.dto';
-import { access } from 'fs';
 // recheck ของข้างใน func ทั้งหมด
 @Controller('auth')
 export class AuthController {
@@ -43,32 +42,6 @@ export class AuthController {
         refreshTokenExpiresDt: userLogin.refreshTokenExpiresDt,
 
       }
-    };
-  }
-
-  @Post('register')
-  async register(
-    @Body() registerDto: registerDto,
-    @Req() req: Request,
-  ) {
-    if (!req.cookies.accessToken) {
-      throw new Error('No token provided');
-    }
-    const token = req.cookies?.accessToken;
-    // const userRegister = 
-    await this.authService.register(registerDto, token);
-    return {
-      message: 'Register successful',
-    };
-  }
-
-  @Post('register/owner')
-  async registerBy(
-    @Body() registerDto: registerDto, privateKey: string,
-  ) {
-    await this.authService.createSysOwner(registerDto, privateKey);
-    return {
-      message: 'Register successful',
     };
   }
 
