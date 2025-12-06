@@ -15,7 +15,7 @@ import { CoreModule } from './core/core.module';
     MongooseModule.forRoot(process.env.MONGO_URI!, { connectionName: 'autoservice' }),
     RouteModule,
     RepositoryModule,
-    CoreModule
+    // CoreModule
   ],
   controllers: [],
   providers: [],

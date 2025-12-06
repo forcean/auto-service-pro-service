@@ -29,4 +29,7 @@ export class registerDto {
   @IsNotEmpty()
   role: string;
 
+  @IsString()
+  managerId?: string;
+
 }

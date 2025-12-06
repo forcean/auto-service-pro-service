@@ -12,6 +12,9 @@ export class UsersEntity {
   email: string;
 
   @Prop({ type: String })
+  phoneNumber: string;
+
+  @Prop({ type: String })
   firstname: string;
 
   @Prop({ type: String })
@@ -33,7 +36,7 @@ export class UsersEntity {
   permissions: string[];
 
   @Prop({ type: String })
-  parent: string;
+  managerId?: string;
 }
 
 export const UsersSchema = SchemaFactory.createForClass(UsersEntity);

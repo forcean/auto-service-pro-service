@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { FilterQuery, Model } from 'mongoose';
-import { registerDto } from '../../routes/auth/auth.dto';
+import { registerDto } from '../../routes/user-management/user-manage.dto';
 import { UsersEntity } from './users.schema';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectModel } from '@nestjs/mongoose';
@@ -54,7 +54,7 @@ export class UsersRepository {
         permissions: permissions,
         createdDt: new Date(),
         createdBy: publicIdCreator,
-        parent: publicIdCreator,
+        managerId: userData.managerId,
       });
       return true;
     } catch (error) {
@@ -62,7 +62,7 @@ export class UsersRepository {
     }
   }
 
-  async createUserSysOwner(userData: registerDto, hashedPassword: string): Promise<boolean> {
+  async createUserSysOwner(userData: registerDto, hashedPassword: string, permissions: string[]): Promise<boolean> {
     try {
       await this.usersEntity.create({
         publicId: userData.publicId,
@@ -73,6 +73,7 @@ export class UsersRepository {
         lastname: userData.lastname,
         activeFlag: true,
         role: 'SO',
+        permissions: permissions,
         createdDt: new Date(),
       });
       return true;
