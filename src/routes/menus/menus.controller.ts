@@ -20,7 +20,7 @@ export class MenuController {
     const menus = await this.menuService.getMenu(authUser.permissions);
     return {
       message: 'Get menus successful',
-      data: {
+      resultData: {
         role: authUser.role,
         menus: menus.map(menu => ({
           seq: menu.seq,

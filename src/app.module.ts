@@ -5,7 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersEntity } from './repository/users/users.schema';
 import { RepositoryModule } from './repository/repository.module';
-import { AuthMiddleware } from './middleware/auth.middleware';
+import { AuthMiddleware } from './core/middleware/auth.middleware';
+import { CoreModule } from './core/core.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AuthMiddleware } from './middleware/auth.middleware';
     MongooseModule.forRoot(process.env.MONGO_URI!, { connectionName: 'autoservice' }),
     RouteModule,
     RepositoryModule,
+    CoreModule
   ],
   controllers: [],
   providers: [],

@@ -36,7 +36,7 @@ export class AuthController {
     });
     return {
       message: 'Login successful',
-      data: {
+      resultData: {
         accessToken: userLogin.accessToken,
         refreshToken: userLogin.refreshToken,
         accessTokenExpiresDt: userLogin.accessTokenExpiresDt,
@@ -98,7 +98,7 @@ export class AuthController {
 
     return {
       message: 'Create new access token successful',
-      data: {
+      resultData: {
         accessToken: token.accessToken,
         refreshToken: token.refreshToken,
         accessTokenExpiresDt: token.accessTokenExpiresDt,

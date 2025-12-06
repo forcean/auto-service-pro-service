@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { MenuRepository } from 'src/repository/menus/menus.repository';
 
 @Injectable()
 export class MenuService {
   constructor(
-    @Injectable(MenuRepository) private readonly menuRepository: MenuRepository,
+    @Inject(MenuRepository) private readonly menuRepository: MenuRepository,
   ) 
   { }
 

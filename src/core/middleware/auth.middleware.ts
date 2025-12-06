@@ -1,7 +1,7 @@
 import { Injectable, Inject, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { verify } from 'jsonwebtoken';
-import { AuthUser } from '../types/user.type';
+import { AuthUser } from '../../types/user.type';
 import { UsersRepository } from 'src/repository/users/users.repository';
 import { TokenPayload } from 'src/types/token.type';
 
@@ -23,7 +23,7 @@ export class AuthMiddleware implements NestMiddleware {
             req.authUser = user as AuthUser; // <-- สำคัญมาก
           }
         }
-      } catch (e) {
+      } catch (error) {
         console.error('Invalid token');
       }
     }
