@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class registerDto {
   @IsString()
@@ -30,6 +30,13 @@ export class registerDto {
   role: string;
 
   @IsString()
+  @IsOptional()
   managerId?: string;
 
+}
+
+export class getUserQueryParamsDto {
+  @IsString()
+  @IsOptional()
+  managerId?: string;
 }

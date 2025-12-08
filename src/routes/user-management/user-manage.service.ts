@@ -5,7 +5,9 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { PoliciesRepository } from 'src/repository/permissions/policies.repository';
-import { get } from 'http';
+import { getUserQueryParamsDto } from './user-manage.dto';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
+import { getPagination } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class UserManageService {
@@ -73,6 +75,40 @@ export class UserManageService {
 
     } catch (error) {
       throw new Error(`Create system owner failed: ${error.message}`);
+    }
+  }
+
+  async delUserByPublicId(publicId: string, role: string) {
+    try {
+      if (role !== 'ADM') {
+        throw new Error('Only system owner or admin can delete user');
+      }
+
+      const isUserExist = await this.usersRepository.getUserByPublicId(publicId);
+      if (!isUserExist) {
+        throw new Error('User does not exist');
+      }
+
+      const deleteUser = await this.usersRepository.delUserByPublicId(publicId);
+      if (!deleteUser) {
+        throw new Error('Failed to delete user');
+      }
+    } catch (error) {
+      throw new Error(`Delete user failed: ${error.message}`);
+    }
+  }
+
+  async getUserswithPagination(role: string, param: getUserQueryParamsDto, pagination: PaginationQuery) {
+    try {
+      if (role !== 'ADM' && role !== 'MNG') {
+        throw new Error('Only admin or manager can get user list');
+      }
+
+      const { page, limit, skip } = getPagination(pagination);
+
+      return await this.usersRepository.getUsersWithPaginated(param.managerId, { page, limit, skip });
+    } catch (error) {
+      throw new Error(`Get user failed: ${error.message}`);
     }
   }
 }

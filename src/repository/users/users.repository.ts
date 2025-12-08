@@ -1,9 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { FilterQuery, Model } from 'mongoose';
-import { registerDto } from '../../routes/user-management/user-manage.dto';
+import { registerDto, getUserQueryParamsDto } from '../../routes/user-management/user-manage.dto';
 import { UsersEntity } from './users.schema';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectModel } from '@nestjs/mongoose';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
+import { Filter } from 'typeorm';
 
 @Injectable()
 export class UsersRepository {
@@ -81,4 +83,35 @@ export class UsersRepository {
       return false;
     }
   }
+
+  async delUserByPublicId(userId: string): Promise<boolean> {
+    const delUser = await this.usersEntity.deleteOne({
+      publicId: userId
+    });
+    return delUser.deletedCount > 0;
+  }
+
+  async getUsersWithPaginated(managerId: string | undefined, pagination: { page: number; limit: number; skip: number }) {
+    const { page, limit, skip } = pagination;
+    const params: FilterQuery<UsersEntity> = {};
+    if (managerId) {
+      params.managerId = { $regex: managerId };
+    }
+
+    const users = await this.usersEntity.find(params)
+
+    const [data, total] = await Promise.all([
+      this.usersEntity.find(params).skip(skip).limit(limit).lean(),
+      this.usersEntity.countDocuments(params),
+    ]);
+
+    return {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      data,
+    };
+  }
+
 }
