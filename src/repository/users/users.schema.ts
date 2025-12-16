@@ -1,7 +1,11 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { ObjectId } from "typeorm";
 
 @Schema({ collection: 'users' })
 export class UsersEntity {
+  @Prop({ type: String })
+  id: string;
+
   @Prop({ type: String})
   publicId: string;
 
@@ -37,6 +41,15 @@ export class UsersEntity {
 
   @Prop({ type: String })
   managerId?: string;
+
+  @Prop({ type: Date })
+  updatedDt?: Date;
+
+  @Prop({ type: String })
+  updatedBy?: string;
+
+  @Prop({ type: Date })
+  lastAccessDt?: Date;
 }
 
 export const UsersSchema = SchemaFactory.createForClass(UsersEntity);

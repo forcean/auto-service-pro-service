@@ -1,11 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FilterQuery, Model } from 'mongoose';
-import { registerDto, getUserQueryParamsDto } from '../../routes/user-management/user-manage.dto';
+import { getUserQueryParamsDto, registerDto, updateUserDto } from '../../routes/user-management/user-manage.dto';
 import { UsersEntity } from './users.schema';
-import { InjectRepository } from '@nestjs/typeorm';
 import { InjectModel } from '@nestjs/mongoose';
-import { PaginationQuery } from 'src/common/dto/pagination.dto';
-import { Filter } from 'typeorm';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class UsersRepository {
@@ -84,21 +82,23 @@ export class UsersRepository {
     }
   }
 
-  async delUserByPublicId(userId: string): Promise<boolean> {
+  async delUserById(userId: string): Promise<boolean> {
     const delUser = await this.usersEntity.deleteOne({
-      publicId: userId
+      _id: userId
     });
     return delUser.deletedCount > 0;
   }
 
-  async getUsersWithPaginated(managerId: string | undefined, pagination: { page: number; limit: number; skip: number }) {
+  async getUsersWithPaginated(query: getUserQueryParamsDto, pagination: { page: number; limit: number; skip: number }) {
     const { page, limit, skip } = pagination;
     const params: FilterQuery<UsersEntity> = {};
-    if (managerId) {
-      params.managerId = { $regex: managerId };
+    if (query.managerId) {
+      params.managerId = { $regex: query.managerId };
     }
 
-    const users = await this.usersEntity.find(params)
+    if (query.role) {
+      params.role = query.role;
+    }
 
     const [data, total] = await Promise.all([
       this.usersEntity.find(params).skip(skip).limit(limit).lean(),
@@ -114,4 +114,50 @@ export class UsersRepository {
     };
   }
 
+  async updateUserByPublicId(data: updateUserDto, updateBy: string, publicId: string) {
+    const updateResult = await this.usersEntity.updateOne(
+      { publicId: publicId },
+      {
+        $set: {
+          ...data,
+          updatedBy: updateBy,
+          updatedDt: new Date(),
+        },
+      },
+    );
+    return updateResult.modifiedCount > 0;
+  }
+
+  async getUserById(userId: string) {
+    const query: FilterQuery<UsersEntity> = {
+      _id: userId
+    };
+    return await this.usersEntity.findOne(query);
+  }
+
+  async resetPassword(password: string, updateBy: string, id: string) {
+    const updateResult = await this.usersEntity.updateOne(
+      { _id: id },
+      {
+        $set: {
+          credentialId: password,
+          updatedBy: updateBy,
+          updatedDt: new Date(),
+        },
+      },
+    );
+    return updateResult.modifiedCount > 0;
+  }
+
+  async updateLastLogin(publicId: string) {
+    const updateResult = await this.usersEntity.updateOne(
+      { publicId: publicId },
+      {
+        $set: {
+          lastAccessDt: new Date(),
+        },
+      },
+    );
+    return updateResult.modifiedCount > 0;
+  }
 }

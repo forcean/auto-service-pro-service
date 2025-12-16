@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { UsersRepository } from 'src/repository/users/users.repository';
-import { registerDto } from './user-manage.dto';
+import { registerDto, updateUserDto } from './user-manage.dto';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
@@ -8,6 +8,7 @@ import { PoliciesRepository } from 'src/repository/permissions/policies.reposito
 import { getUserQueryParamsDto } from './user-manage.dto';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { getPagination } from 'src/common/utils/pagination.util';
+import { AuthUser } from 'src/types/user.type';
 
 @Injectable()
 export class UserManageService {
@@ -80,7 +81,7 @@ export class UserManageService {
 
   async delUserByPublicId(publicId: string, role: string) {
     try {
-      if (role !== 'ADM') {
+      if (role !== 'ADM' && role !== 'SO') {
         throw new Error('Only system owner or admin can delete user');
       }
 
@@ -89,7 +90,7 @@ export class UserManageService {
         throw new Error('User does not exist');
       }
 
-      const deleteUser = await this.usersRepository.delUserByPublicId(publicId);
+      const deleteUser = await this.usersRepository.delUserById(publicId);
       if (!deleteUser) {
         throw new Error('Failed to delete user');
       }
@@ -100,15 +101,69 @@ export class UserManageService {
 
   async getUserswithPagination(role: string, param: getUserQueryParamsDto, pagination: PaginationQuery) {
     try {
-      if (role !== 'ADM' && role !== 'MNG') {
+      if (role !== 'SO' && role !== 'ADM' && role !== 'MNG') {
         throw new Error('Only admin or manager can get user list');
       }
 
       const { page, limit, skip } = getPagination(pagination);
 
-      return await this.usersRepository.getUsersWithPaginated(param.managerId, { page, limit, skip });
+      return await this.usersRepository.getUsersWithPaginated(param, { page, limit, skip });
     } catch (error) {
       throw new Error(`Get user failed: ${error.message}`);
+    }
+  }
+
+  async updateUserByPublicId(data: updateUserDto, updateBy: string, publicId: string) {
+    try {
+      const isUserExist = await this.usersRepository.getUserByPublicId(publicId);
+      if (!isUserExist) {
+        throw new Error('User does not exist');
+      }
+      //มาเขียนเพิ่มเรื่องเช็คอีเมลว่าที่เปลี่ยนมีซ้ำกับคนอื่นไหมยกเว้นเขียนอันเดิมตัวเอง
+      const updateUser = await this.usersRepository.updateUserByPublicId(data, updateBy, publicId);
+      if (!updateUser) {
+        throw new Error('Failed to update user');
+      }
+    } catch (error) {
+      throw new Error(`Update user failed: ${error.message}`);
+    }
+  }
+
+  async getUserById(userId: string) {
+    try {
+      const user = await this.usersRepository.getUserById(userId);
+      if (!user) {
+        throw new Error('User does not exist');
+      }
+      return user;
+    } catch (error) {
+      throw new Error(`Get user failed: ${error.message}`);
+    }
+  }
+
+  async resetPassword(
+    userId: string,
+    newPainTextPassword: string,
+    authUser: AuthUser,
+  ) {
+    try {
+      if (authUser.role !== 'SO' && authUser.role !== 'ADM') {
+        throw new Error('Only system owner, admin can reset password');
+      }
+
+      const user = await this.usersRepository.getUserById(userId);
+      if (!user || user.activeFlag === false) {
+        throw new Error('User does not exist or inactive');
+      } //อาจเพิ่มเช็คเรื่อง Permissiom
+
+      const hashedNewPassword = await bcrypt.hash(newPainTextPassword, 10);
+      const resetPassword = await this.usersRepository.resetPassword(hashedNewPassword, authUser.publicId, userId);
+      if (!resetPassword) {
+        throw new Error('Failed to reset password');
+      }
+
+    } catch (error) {
+      throw new Error(`Reset password failed: ${error.message}`);
     }
   }
 }

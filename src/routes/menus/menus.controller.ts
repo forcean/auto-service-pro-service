@@ -10,10 +10,10 @@ export class MenuController {
 
   @Get()
   async getMenu(
-    // @Req() { authUser }: Request,
-    @Req() req: Request,
+    @Req() { authUser }: Request,
+    // @Req() req: Request,
   ) {
-    const authUser = req.authUser;
+    // const authUser = req.authUser;
     if (!authUser) {
       throw new Error('No auth user found');
     }

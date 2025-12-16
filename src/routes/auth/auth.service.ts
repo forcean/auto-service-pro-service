@@ -46,6 +46,11 @@ export class AuthService {
       const accessTokenExpiresDt = Date.now() + this.tokenExpire * 1000;
       const refreshTokenExpiresDt = Date.now() + this.refreshTokenExpire * 1000;
 
+      const insertLastLogin = await this.usersRepository.updateLastLogin(getUser.publicId);
+      if (!insertLastLogin) {
+        throw new Error('Failed to update last login');
+      }
+
       const insertToken = await this.tokenRepository.insertToken({
         publicId: getUser.publicId,
         accessToken: accessToken,
