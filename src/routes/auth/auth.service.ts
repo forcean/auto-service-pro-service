@@ -7,6 +7,7 @@ import * as jwt from 'jsonwebtoken';
 import { refreshTokenDto } from './token.dto';
 import { TokenRepository } from 'src/repository/token/token.repository';
 import { PoliciesRepository } from 'src/repository/permissions/policies.repository';
+import { BusinessException } from 'src/common/exceptions/business.exception';
 
 @Injectable()
 export class AuthService {
@@ -28,17 +29,17 @@ export class AuthService {
       const getUser = await this.usersRepository.getUserByPublicId(loginDto.publicId);
 
       if (!getUser) {
-        throw new Error('User not found');
+        throw new BusinessException(4040, 'User not found');
       }
 
       const checkPassword = await bcrypt.compare(loginDto.painTextPassword, getUser.credentialId);
       // const checkPassword = loginDto.painTextPassword === getUser.credentialId;
       if (!checkPassword) {
-        throw new Error('Invalid password');
+        throw new BusinessException(4010,'Invalid password');
       }
 
       if (!secret || !refreshSecret) {
-        throw new Error('JWT secrets are not defined');
+        throw new BusinessException(4012, 'JWT secrets are not defined');
       }
 
       const accessToken = jwt.sign({ publicId: getUser.publicId, role: getUser.role }, secret, { expiresIn: '1h' });
@@ -48,7 +49,7 @@ export class AuthService {
 
       const insertLastLogin = await this.usersRepository.updateLastLogin(getUser.publicId);
       if (!insertLastLogin) {
-        throw new Error('Failed to update last login');
+        throw new BusinessException(4011, 'Failed to update last login');
       }
 
       const insertToken = await this.tokenRepository.insertToken({
@@ -62,17 +63,18 @@ export class AuthService {
       })
 
       if (!insertToken) {
-        throw new Error('Failed to insert token');
+        throw new BusinessException(4011, 'Failed to insert token');
       }
 
       return {
-        accessToken,
-        refreshToken,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
         accessTokenExpiresDt: new Date(accessTokenExpiresDt).toISOString(),
         refreshTokenExpiresDt: new Date(refreshTokenExpiresDt).toISOString()
-      };
+      }
     } catch (error) {
-      throw new Error(`Login failed: ${error.message}`);
+      console.log(`Login failed: ${error.message}`);
+      throw error;
     }
   }
 
@@ -80,14 +82,14 @@ export class AuthService {
     try {
       const secret = this.configService.get<string>('JWT_SECRET');
       if (!secret) {
-        throw new Error('JWT secret not defined');
+        throw new BusinessException(4012, 'JWT secret not defined');
       }
 
       const decodedToken = jwt.verify(refreshTokenDto.accessToken, secret) as jwt.JwtPayload;
       const getToken = await this.tokenRepository.getToken(refreshTokenDto, decodedToken.publicId);
 
       if (!getToken) {
-        throw new Error('Token not found');
+        throw new BusinessException(4041, 'Token not found');
       }
 
       const newAccessToken = jwt.sign({ publicId: decodedToken.publicId, role: decodedToken.role }, secret, { expiresIn: '1h' });
@@ -105,7 +107,7 @@ export class AuthService {
       if (insertToken) {
         await this.tokenRepository.deleteOldToken(getToken.publicId, getToken.accessToken, getToken.refreshToken);
       } else {
-        throw new Error('Failed to insert new access token');
+        throw new BusinessException(4011, 'Failed to insert new access token');
       }
 
       return {
@@ -116,7 +118,8 @@ export class AuthService {
       };
 
     } catch (error) {
-      throw new Error(`Create new refresh token failed: ${error.message}`);
+      console.log(`Create new refresh token failed: ${error.message}`);
+      throw error;
     }
   }
 

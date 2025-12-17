@@ -160,4 +160,10 @@ export class UsersRepository {
     );
     return updateResult.modifiedCount > 0;
   }
+
+  async getUsersByIds(userIds: string[]) {
+    return await this.usersEntity.find({
+      _id: { $in: userIds },
+    });
+  }
 }

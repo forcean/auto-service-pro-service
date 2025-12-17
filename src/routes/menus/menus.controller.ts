@@ -1,6 +1,9 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Controller, Get, Req, UseInterceptors } from '@nestjs/common';
 import type { Request } from 'express';
 import { MenuService } from './menus.service';
+import { ResponseInterceptor } from 'src/common/response/response.interceptor';
+import { ResponseMessage, ResponseResultCode } from 'src/common/response/response.decorator';
+import { BusinessException } from 'src/common/exceptions/business.exception';
 
 @Controller('menu')
 export class MenuController {
@@ -9,28 +12,29 @@ export class MenuController {
   ) { }
 
   @Get()
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode(2000)
+  @ResponseMessage('Get menus successful')
   async getMenu(
     @Req() { authUser }: Request,
-    // @Req() req: Request,
   ) {
-    // const authUser = req.authUser;
     if (!authUser) {
-      throw new Error('No auth user found');
+      throw new BusinessException(4013, 'No auth user found');
     }
-    const menus = await this.menuService.getMenu(authUser.permissions);
-    return {
-      message: 'Get menus successful',
-      resultData: {
-        role: authUser.role,
-        menus: menus.map(menu => ({
-          seq: menu.seq,
-          key: menu.key,
-          displayName: menu.displayName,
-          icon: menu.icon,
-          endpoint: menu.endpoint,
-          activeFlag: menu.activeFlag
-        }))
-      }
-    };
+    return await this.menuService.getMenu(authUser);
+    // return {
+    //   message: 'Get menus successful',
+    //   resultData: {
+    //     role: authUser.role,
+    //     menus: menus.map(menu => ({
+    //       seq: menu.seq,
+    //       key: menu.key,
+    //       displayName: menu.displayName,
+    //       icon: menu.icon,
+    //       endpoint: menu.endpoint,
+    //       activeFlag: menu.activeFlag
+    //     }))
+    //   }
+    // };
   }
 }

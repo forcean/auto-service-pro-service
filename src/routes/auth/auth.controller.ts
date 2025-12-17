@@ -1,8 +1,11 @@
-import { Controller, Body, Post, Res, Req } from '@nestjs/common';
+import { Controller, Body, Post, Res, Req, UseInterceptors } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { LoginDto } from './auth.dto';
 import { AuthService } from './auth.service';
 import { refreshTokenDto } from './token.dto';
+import { ResponseInterceptor } from 'src/common/response/response.interceptor';
+import { ResponseMessage, ResponseResultCode } from 'src/common/response/response.decorator';
+import { BusinessException } from 'src/common/exceptions/business.exception';
 // recheck ของข้างใน func ทั้งหมด
 @Controller('auth')
 export class AuthController {
@@ -11,6 +14,9 @@ export class AuthController {
   ) { }
 
   @Post('login')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode(2000)
+  @ResponseMessage('User login successful')
   async loginByPublicId(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -33,19 +39,24 @@ export class AuthController {
       sameSite: 'strict',
       maxAge: refreshTokenExpiresDt - Date.now(), // 7 days
     });
-    return {
-      message: 'Login successful',
-      resultData: {
-        accessToken: userLogin.accessToken,
-        refreshToken: userLogin.refreshToken,
-        accessTokenExpiresDt: userLogin.accessTokenExpiresDt,
-        refreshTokenExpiresDt: userLogin.refreshTokenExpiresDt,
 
-      }
-    };
+    return userLogin;
+    // return {
+    //   message: 'Login successful',
+    //   resultData: {
+    //     accessToken: userLogin.accessToken,
+    //     refreshToken: userLogin.refreshToken,
+    //     accessTokenExpiresDt: userLogin.accessTokenExpiresDt,
+    //     refreshTokenExpiresDt: userLogin.refreshTokenExpiresDt,
+
+    //   }
+    // };
   }
 
   @Post('refresh')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode(2000)
+  @ResponseMessage('Create new access token successful')
   async getRefreshTokens(
     @Body() refreshTokenDto: refreshTokenDto,
     @Res({ passthrough: true }) res: Response,
@@ -69,34 +80,38 @@ export class AuthController {
       maxAge: refreshTokenExpiresDt - Date.now(), // 7 days
     });
 
-    return {
-      message: 'Create new access token successful',
-      resultData: {
-        accessToken: token.accessToken,
-        refreshToken: token.refreshToken,
-        accessTokenExpiresDt: token.accessTokenExpiresDt,
-        refreshTokenExpiresDt: token.refreshTokenExpiresDt,
-      }
-    };
+    return token;
+    // return {
+    //   message: 'Create new access token successful',
+    //   resultData: {
+    //     accessToken: token.accessToken,
+    //     refreshToken: token.refreshToken,
+    //     accessTokenExpiresDt: token.accessTokenExpiresDt,
+    //     refreshTokenExpiresDt: token.refreshTokenExpiresDt,
+    //   }
+    // };
   }
 
   @Post('revoke')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode(2000)
+  @ResponseMessage('User logout successful')
   async authlogout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
 
     if (!req.cookies.accessToken) {
-      throw new Error('No token provided');
+      throw new BusinessException(4012, 'No token provided');
     }
     const token = req.cookies.accessToken;
     await this.authService.revokeAccessToken(token);
-    
+
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
 
-    return {
-      message: 'Logout successful',
-    };
+    // return {
+    //   message: 'Logout successful',
+    // };
   }
 }
