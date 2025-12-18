@@ -19,6 +19,7 @@ export class MenuService {
         icon: menu.icon,
         endpoint: menu.endpoint,
         activeFlag: menu.activeFlag,
+        children: menu.children
       }))
     };
   }

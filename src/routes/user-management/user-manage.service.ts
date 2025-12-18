@@ -24,29 +24,29 @@ export class UserManageService {
     try {
       const secret = this.configService.get<string>('JWT_SECRET');
       if (!secret) {
-        throw new BusinessException(4012, 'JWT secret not defined');
+        throw new BusinessException('4012', 'JWT secret not defined');
       }
 
       const decodedToken = jwt.verify(token, secret) as jwt.JwtPayload;
       const isUserExist = await this.usersRepository.getUserByPublicId(registerDto.publicId);
       if (isUserExist) {
-        throw new BusinessException(4090, 'User already exists');
+        throw new BusinessException('4090', 'User already exists');
       }
 
       const hashedPassword = await bcrypt.hash(registerDto.painTextPassword, 10);
 
       const getPermissions = await this.policiesRepository.getPermissionsByRole(registerDto.role);
       if (!getPermissions?.length) {
-        throw new BusinessException(4031, 'Permisson does not exist on role in policies');
+        throw new BusinessException('4031', 'Permisson does not exist on role in policies');
       }
 
       if (decodedToken.role == 'ADM' || decodedToken.role == 'SO') {
         const createUser = await this.usersRepository.createUser(registerDto, hashedPassword, decodedToken.publicId, getPermissions);
         if (!createUser) {
-          throw new BusinessException(4011, 'Failed to create user');
+          throw new BusinessException('4011', 'Failed to create user');
         }
       } else {
-        throw new BusinessException(4030, 'Only system owner or admin can create user');
+        throw new BusinessException('4030', 'Only system owner or admin can create user');
       }
 
     } catch (error) {
@@ -59,22 +59,22 @@ export class UserManageService {
     try {
       const isUserExist = await this.usersRepository.getUserByPublicId(registerDto.publicId);
       if (isUserExist) {
-        throw new BusinessException(4090, 'User already exists');
+        throw new BusinessException('4090', 'User already exists');
       }
 
       if (privateKey !== 'AUTOSERVICE_SYS_OWNER_CREATE_KEY_10112024') {
-        throw new BusinessException(4032, 'Invalid private key for sys owner creation');
+        throw new BusinessException('4032', 'Invalid private key for sys owner creation');
       }
 
       const getPermissions = await this.policiesRepository.getPermissionsByRole(registerDto.role);
       if (!getPermissions?.length) {
-        throw new BusinessException(4031, 'Permisson does not exist on role in policies');
+        throw new BusinessException('4031', 'Permisson does not exist on role in policies');
       }
 
       const hashedPassword = await bcrypt.hash(registerDto.painTextPassword, 10);
       const createUserSysOwner = await this.usersRepository.createUserSysOwner(registerDto, hashedPassword, getPermissions);
       if (!createUserSysOwner) {
-        throw new BusinessException(4011, 'Failed to create user');
+        throw new BusinessException('4011', 'Failed to create user');
       }
 
     } catch (error) {
@@ -86,17 +86,17 @@ export class UserManageService {
   async delUserByPublicId(userId: string, role: string) {
     try {
       if (role !== 'ADM' && role !== 'SO') {
-        throw new BusinessException(4030, 'Only system owner or admin can delete user');
+        throw new BusinessException('4030', 'Only system owner or admin can delete user');
       }
 
       const isUserExist = await this.usersRepository.getUserById(userId);
       if (!isUserExist) {
-        throw new BusinessException(4040, 'User does not exist');
+        throw new BusinessException('4040', 'User does not exist');
       }
 
       const deleteUser = await this.usersRepository.delUserById(userId);
       if (!deleteUser) {
-        throw new BusinessException(4011, 'Failed to delete user');
+        throw new BusinessException('4011', 'Failed to delete user');
       }
     } catch (error) {
       console.log(`Delete user failed: ${error.message}`);
@@ -107,7 +107,7 @@ export class UserManageService {
   async getUserswithPagination(role: string, param: getUserQueryParamsDto, pagination: PaginationQuery) {
     try {
       if (role !== 'SO' && role !== 'ADM' && role !== 'MNG') {
-        throw new BusinessException(4030, 'Only admin or manager can get user list');
+        throw new BusinessException('4030', 'Only admin or manager can get user list');
       }
 
       const { page, limit, skip } = getPagination(pagination);
@@ -152,12 +152,12 @@ export class UserManageService {
     try {
       const isUserExist = await this.usersRepository.getUserByPublicId(publicId);
       if (!isUserExist) {
-        throw new BusinessException(4040, 'User does not exist');
+        throw new BusinessException('4040', 'User does not exist');
       }
       //มาเขียนเพิ่มเรื่องเช็คอีเมลว่าที่เปลี่ยนมีซ้ำกับคนอื่นไหมยกเว้นเขียนอันเดิมตัวเอง
       const updateUser = await this.usersRepository.updateUserByPublicId(data, updateBy, publicId);
       if (!updateUser) {
-        throw new BusinessException(4011, 'Failed to update user');
+        throw new BusinessException('4011', 'Failed to update user');
       }
     } catch (error) {
       console.log('Error updating user:', error.message);
@@ -169,7 +169,7 @@ export class UserManageService {
     try {
       const user = await this.usersRepository.getUserById(userId);
       if (!user) {
-        throw new BusinessException(4040, 'User does not exist');
+        throw new BusinessException('4040', 'User does not exist');
       }
       return {
         id: user._id,
@@ -200,18 +200,18 @@ export class UserManageService {
   ) {
     try {
       if (authUser.role !== 'SO' && authUser.role !== 'ADM') {
-        throw new BusinessException(4030, 'Only system owner, admin can reset password');
+        throw new BusinessException('4030', 'Only system owner, admin can reset password');
       }
 
       const user = await this.usersRepository.getUserById(userId);
       if (!user || user.activeFlag === false) {
-        throw new BusinessException(4040, 'User does not exist or inactive');
+        throw new BusinessException('4040', 'User does not exist or inactive');
       } //อาจเพิ่มเช็คเรื่อง Permissiom
 
       const hashedNewPassword = await bcrypt.hash(newPainTextPassword, 10);
       const resetPassword = await this.usersRepository.resetPassword(hashedNewPassword, authUser.publicId, userId);
       if (!resetPassword) {
-        throw new BusinessException(4011, 'Failed to reset password');
+        throw new BusinessException('4011', 'Failed to reset password');
       }
 
     } catch (error) {

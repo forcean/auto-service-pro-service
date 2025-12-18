@@ -15,7 +15,7 @@ export class AuthController {
 
   @Post('login')
   @UseInterceptors(ResponseInterceptor)
-  @ResponseResultCode(2000)
+  @ResponseResultCode('2000')
   @ResponseMessage('User login successful')
   async loginByPublicId(
     @Body() loginDto: LoginDto,
@@ -55,7 +55,7 @@ export class AuthController {
 
   @Post('refresh')
   @UseInterceptors(ResponseInterceptor)
-  @ResponseResultCode(2000)
+  @ResponseResultCode('2000')
   @ResponseMessage('Create new access token successful')
   async getRefreshTokens(
     @Body() refreshTokenDto: refreshTokenDto,
@@ -94,7 +94,7 @@ export class AuthController {
 
   @Post('revoke')
   @UseInterceptors(ResponseInterceptor)
-  @ResponseResultCode(2000)
+  @ResponseResultCode('2000')
   @ResponseMessage('User logout successful')
   async authlogout(
     @Req() req: Request,
@@ -102,7 +102,7 @@ export class AuthController {
   ) {
 
     if (!req.cookies.accessToken) {
-      throw new BusinessException(4012, 'No token provided');
+      throw new BusinessException('4012', 'No token provided');
     }
     const token = req.cookies.accessToken;
     await this.authService.revokeAccessToken(token);

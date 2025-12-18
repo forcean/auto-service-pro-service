@@ -2,7 +2,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class BusinessException extends HttpException {
   constructor(
-    public readonly resultCode: number,
+    public readonly resultCode: string,
     message: string,
     status: HttpStatus = HttpStatus.BAD_REQUEST,
   ) {
