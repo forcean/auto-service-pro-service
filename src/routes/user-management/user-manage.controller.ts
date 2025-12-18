@@ -47,7 +47,7 @@ export class UserManageController {
     // };
   }
 
-  @Post('corps/:userId')
+  @Post('corps/:userId/delete')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode(2000)
   @ResponseMessage('Delete user successful')
@@ -82,7 +82,7 @@ export class UserManageController {
     //   resultData: getUsers,
     // };
   }
- 
+
   @Patch(':publicId/update')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode(2000)
@@ -94,7 +94,7 @@ export class UserManageController {
     if (!authUser) {
       throw new BusinessException(4013, 'No auth user found');
     }
-    
+
     await this.userManageService.updateUserByPublicId(updateData, authUser.publicId, id);
     // return {
     //   message: 'Update user successful',
@@ -108,13 +108,13 @@ export class UserManageController {
   async getUserById(
     @Param('id') id: string,
   ) {
-     return await this.userManageService.getUserById(id);
-      // return {
-      //   message: 'Get user successful',
-      //   resultData: user,
-      // };
-  } 
-  
+    return await this.userManageService.getUserById(id);
+    // return {
+    //   message: 'Get user successful',
+    //   resultData: user,
+    // };
+  }
+
   @Patch('corps/:userId/resetPassword')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode(2000)

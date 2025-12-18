@@ -120,7 +120,7 @@ export class UserManageService {
       )
       const mappedData = result.data.map((user) => ({
         ...user,
-        managerName: managerMap.get(user.managerId?.toString()) ?? null
+        managerName: user.managerId ? managerMap.get(user.managerId.toString()) : null
       }))
 
       return {
