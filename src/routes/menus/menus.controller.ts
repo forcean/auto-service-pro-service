@@ -13,13 +13,13 @@ export class MenuController {
 
   @Get()
   @UseInterceptors(ResponseInterceptor)
-  @ResponseResultCode(2000)
+  @ResponseResultCode('2000')
   @ResponseMessage('Get menus successful')
   async getMenu(
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
-      throw new BusinessException(4013, 'No auth user found');
+      throw new BusinessException('4013', 'No auth user found');
     }
     return await this.menuService.getMenu(authUser);
     // return {

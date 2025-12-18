@@ -13,7 +13,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface BaseResponse<T> {
-  resultCode: number;
+  resultCode: string;
   developerMessage: string;
   resultData: T;
 }
@@ -29,10 +29,10 @@ export class ResponseInterceptor<T>
   ): Observable<BaseResponse<T>> {
     return next.handle().pipe(
       map((resultData) => {
-        const resultCode = this.reflector.get<number>(
+        const resultCode = this.reflector.get<string>(
           'response_code',
           context.getHandler(),
-        ) ?? 2000;
+        ) ?? '2000';
 
         const developerMessage = 
           this.reflector.get<string>(

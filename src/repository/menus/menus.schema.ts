@@ -19,6 +19,9 @@ export class MenuEntity {
 
   @Prop({ type: Boolean })
   activeFlag: boolean;
+
+  @Prop({ type: [String] })
+  children: string[];
 }
 
 export const MenuSchema = SchemaFactory.createForClass(MenuEntity);
