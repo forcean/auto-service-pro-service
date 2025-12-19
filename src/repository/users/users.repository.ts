@@ -114,9 +114,9 @@ export class UsersRepository {
     };
   }
 
-  async updateUserByPublicId(data: updateUserDto, updateBy: string, publicId: string) {
+  async updateUserByUserId(data: updateUserDto, updateBy: string, userId: string) {
     const updateResult = await this.usersEntity.updateOne(
-      { publicId: publicId },
+      { _id: userId },
       {
         $set: {
           ...data,
