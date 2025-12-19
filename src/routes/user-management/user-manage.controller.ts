@@ -82,20 +82,20 @@ export class UserManageController {
     //   resultData: getUsers,
     // };
   }
-
-  @Patch(':publicId/update')
+ 
+  @Patch(':id/update')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Update user successful')
-  async updateUserByPublicId(
+  async updateUserByUserId(
     @Req() { authUser }: Request,
-    @Param('publicId') id: string,
+    @Param('id') id: string,
     @Body() updateData: updateUserDto,) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-
-    await this.userManageService.updateUserByPublicId(updateData, authUser.publicId, id);
+    
+    await this.userManageService.updateUserByUserId(updateData, authUser.publicId, id);
     // return {
     //   message: 'Update user successful',
     // };
