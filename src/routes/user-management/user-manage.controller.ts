@@ -1,4 +1,4 @@
-import { Controller, UseInterceptors } from '@nestjs/common';
+import { Controller, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Get, Body, Post, Req, Param, Query, Patch } from '@nestjs/common';
 import type { Request } from 'express';
 import { registerDto, getUserQueryParamsDto, updateUserDto } from './user-manage.dto';
@@ -7,6 +7,8 @@ import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { ResponseInterceptor } from 'src/common/response/response.interceptor';
 import { ResponseMessage, ResponseResultCode } from 'src/common/response/response.decorator';
 import { BusinessException } from 'src/common/exceptions/business.exception';
+import { PermissionsGuard } from 'src/common/permission/permission.guard';
+import { Permissions } from 'src/common/permission/permission.decorator';
 
 
 
@@ -17,6 +19,8 @@ export class UserManageController {
   ) { }
 
   @Post('corps/register')
+  @UseGuards(PermissionsGuard)
+  @Permissions('create:user')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Create user successful')
@@ -35,6 +39,8 @@ export class UserManageController {
   }
 
   @Post('corps/register/owner')
+  @UseGuards(PermissionsGuard)
+  @Permissions('create:owner-user')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Create owner user successful')
@@ -48,6 +54,8 @@ export class UserManageController {
   }
 
   @Post('corps/:userId')
+  @UseGuards(PermissionsGuard)
+  @Permissions('delete:user')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Delete user successful')
@@ -65,6 +73,8 @@ export class UserManageController {
   }
 
   @Get('getListUsers')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:list-users')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Get list user successful')
@@ -82,8 +92,10 @@ export class UserManageController {
     //   resultData: getUsers,
     // };
   }
- 
+
   @Patch(':id/update')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:user')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Update user successful')
@@ -94,7 +106,7 @@ export class UserManageController {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-    
+
     await this.userManageService.updateUserByUserId(updateData, authUser.publicId, id);
     // return {
     //   message: 'Update user successful',
@@ -102,20 +114,24 @@ export class UserManageController {
   }
 
   @Get(':id/detail')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:user')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Get user detail successful')
   async getUserById(
     @Param('id') id: string,
   ) {
-     return await this.userManageService.getUserById(id);
-      // return {
-      //   message: 'Get user successful',
-      //   resultData: user,
-      // };
-  } 
-  
+    return await this.userManageService.getUserById(id);
+    // return {
+    //   message: 'Get user successful',
+    //   resultData: user,
+    // };
+  }
+
   @Patch('corps/:userId/resetPassword')
+  @UseGuards(PermissionsGuard)
+  @Permissions('resetPassword:user')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Reset password successful')
@@ -135,5 +151,31 @@ export class UserManageController {
     // return {
     //   message: 'Reset password successful',
     // };
+  }
+
+  @Patch('update/userPermissions')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:user-permissions')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Update user permissions successful')
+  async updateUserPermission(
+    @Req() { authUser }: Request) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+    await this.userManageService.updateUserPermissions(authUser);
+  }
+
+  @Get('permissions')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get user permissions successful')
+  async getUserPermissions(
+    @Req() { authUser }: Request) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+    return await this.userManageService.getUserPermissions(authUser);
   }
 }

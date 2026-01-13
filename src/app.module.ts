@@ -7,6 +7,8 @@ import { UsersEntity } from './repository/users/users.schema';
 import { RepositoryModule } from './repository/repository.module';
 import { AuthMiddleware } from './core/middleware/auth.middleware';
 import { CoreModule } from './core/core.module';
+import { APP_GUARD } from '@nestjs/core';
+import { PermissionsGuard } from './common/permission/permission.guard';
 
 @Module({
   imports: [
@@ -18,9 +20,14 @@ import { CoreModule } from './core/core.module';
     // CoreModule
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard
+    }
+  ],
 })
-export class AppModule implements NestModule { 
+export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
