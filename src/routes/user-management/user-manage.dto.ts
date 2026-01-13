@@ -63,4 +63,8 @@ export class getUserQueryParamsDto {
   @IsOptional()
   @IsEnum(UserRole)
   role?: string;
+
+  @IsString()
+  @IsOptional()
+  publicId?: string;
 }

@@ -18,7 +18,6 @@ export class AuthService {
     private configService: ConfigService,
     @Inject(UsersRepository) private readonly usersRepository: UsersRepository,
     @Inject(TokenRepository) private readonly tokenRepository: TokenRepository,
-    @Inject(PoliciesRepository) private readonly policiesRepository: PoliciesRepository,
   ) { }
 
   async loginByPublicId(loginDto: LoginDto) {

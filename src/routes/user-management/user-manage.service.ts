@@ -10,7 +10,6 @@ import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { getPagination } from 'src/common/utils/pagination.util';
 import { AuthUser } from 'src/types/user.type';
 import { BusinessException } from 'src/common/exceptions/business.exception';
-import { log } from 'console';
 
 @Injectable()
 export class UserManageService {
@@ -206,7 +205,7 @@ export class UserManageService {
       const user = await this.usersRepository.getUserById(userId);
       if (!user || user.activeFlag === false) {
         throw new BusinessException('4040', 'User does not exist or inactive');
-      } //อาจเพิ่มเช็คเรื่อง Permissiom
+      }
 
       const hashedNewPassword = await bcrypt.hash(newPainTextPassword, 10);
       const resetPassword = await this.usersRepository.resetPassword(hashedNewPassword, authUser.publicId, userId);
@@ -216,6 +215,35 @@ export class UserManageService {
 
     } catch (error) {
       console.log(`Reset password failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async updateUserPermissions(authUser: AuthUser) {
+    try {
+      const getPermissions = await this.policiesRepository.getPermissionsByRole(authUser.role);
+      if (!getPermissions?.length) {
+        throw new BusinessException('4031', 'Permisson does not exist on role in policies');
+      }
+      const updatePermissions = await this.usersRepository.updateUserPermissions(authUser.publicId, getPermissions);
+      if (!updatePermissions) {
+        throw new BusinessException('4011', 'Failed to update user permission');
+      }
+    } catch (error) {
+      console.log(`Update user permission failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async getUserPermissions(authUser: AuthUser) {
+    try {
+      const getPermissions = await this.usersRepository.getUserByPublicId(authUser.publicId);
+      if (!getPermissions) {
+        throw new BusinessException('4040', 'User does not exist');
+      }
+      return getPermissions.permissions;
+    } catch (error) {
+      console.log(`Get user permission failed: ${error.message}`);
       throw error;
     }
   }

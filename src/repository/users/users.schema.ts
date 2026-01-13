@@ -1,5 +1,4 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { ObjectId } from "typeorm";
 
 @Schema({ collection: 'users' })
 export class UsersEntity {

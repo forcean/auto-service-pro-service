@@ -100,6 +100,10 @@ export class UsersRepository {
       params.role = query.role;
     }
 
+    if (query.publicId) {
+      params.publicId = query.publicId;
+    }
+
     const [data, total] = await Promise.all([
       this.usersEntity.find(params).skip(skip).limit(limit).lean(),
       this.usersEntity.countDocuments(params),
@@ -165,5 +169,19 @@ export class UsersRepository {
     return await this.usersEntity.find({
       _id: { $in: userIds },
     });
+  }
+
+  async updateUserPermissions(publicId: string, permissions: string[]) {
+    const updateResult = await this.usersEntity.updateOne(
+      { publicId: publicId },
+      {
+        $set: {
+          permissions: permissions,
+          updatedDt: new Date(),
+          updatedBy: publicId,
+        },
+      },
+    );
+    return updateResult.modifiedCount > 0;
   }
 }
