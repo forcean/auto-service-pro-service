@@ -55,7 +55,7 @@ export class UserManageController {
 
   @Post('corps/:userId')
   @UseGuards(PermissionsGuard)
-  @Permissions('delete:user')
+  @Permissions('delete:user-account')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Delete user successful')
@@ -131,7 +131,7 @@ export class UserManageController {
 
   @Patch('corps/:userId/resetPassword')
   @UseGuards(PermissionsGuard)
-  @Permissions('resetPassword:user')
+  @Permissions('reset:user-password')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Reset password successful')
