@@ -18,15 +18,10 @@ export class UserManageService {
     @Inject(PoliciesRepository) private readonly policiesRepository: PoliciesRepository,
     @Inject(UsersRepository) private readonly usersRepository: UsersRepository,
   ) { }
-
-  async register(registerDto: registerDto, token: string) {
+//แก้เอา authUser ทำ
+  async register(registerDto: registerDto, authUser: AuthUser) {
     try {
-      const secret = this.configService.get<string>('JWT_SECRET');
-      if (!secret) {
-        throw new BusinessException('4012', 'JWT secret not defined');
-      }
-
-      const decodedToken = jwt.verify(token, secret) as jwt.JwtPayload;
+      
       const isUserExist = await this.usersRepository.getUserByPublicId(registerDto.publicId);
       if (isUserExist) {
         throw new BusinessException('4090', 'User already exists');
@@ -39,8 +34,8 @@ export class UserManageService {
         throw new BusinessException('4031', 'Permisson does not exist on role in policies');
       }
 
-      if (decodedToken.role == 'ADM' || decodedToken.role == 'SO') {
-        const createUser = await this.usersRepository.createUser(registerDto, hashedPassword, decodedToken.publicId, getPermissions);
+      if (authUser.role == 'ADM' || authUser.role == 'SO') {
+        const createUser = await this.usersRepository.createUser(registerDto, hashedPassword, authUser.publicId, getPermissions);
         if (!createUser) {
           throw new BusinessException('4011', 'Failed to create user');
         }
@@ -241,7 +236,7 @@ export class UserManageService {
       if (!getPermissions) {
         throw new BusinessException('4040', 'User does not exist');
       }
-      return getPermissions.permissions;
+      return { permissions: getPermissions.permissions };
     } catch (error) {
       console.log(`Get user permission failed: ${error.message}`);
       throw error;
