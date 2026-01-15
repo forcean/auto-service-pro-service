@@ -26,13 +26,14 @@ export class UserManageController {
   @ResponseMessage('Create user successful')
   async register(
     @Body() registerDto: registerDto,
-    @Req() req: Request,
+    @Req() { authUser }: Request,
   ) {
-    if (!req.cookies.accessToken) {
-      throw new BusinessException('4012', 'No token provided');
+
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
     }
-    const token = req.cookies?.accessToken;
-    await this.userManageService.register(registerDto, token);
+
+    await this.userManageService.register(registerDto, authUser);
     // return {
     //   message: 'Register successful',
     // };
