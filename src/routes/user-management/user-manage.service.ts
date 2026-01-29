@@ -14,7 +14,6 @@ import { BusinessException } from 'src/common/exceptions/business.exception';
 @Injectable()
 export class UserManageService {
   constructor(
-    private configService: ConfigService,
     @Inject(PoliciesRepository) private readonly policiesRepository: PoliciesRepository,
     @Inject(UsersRepository) private readonly usersRepository: UsersRepository,
   ) { }
