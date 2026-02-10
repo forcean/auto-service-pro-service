@@ -77,7 +77,10 @@ export class ProductsEntity {
   categoryId: string;
 
   @Prop({ type: [String] })
-  categories: string[];
+  categoryPath: string[];
+
+  @Prop({ type: String})
+  brandId: string;
 
   @Prop({ type: [Vehicles], _id: false, default: [] })
   vehicles: Vehicles[];

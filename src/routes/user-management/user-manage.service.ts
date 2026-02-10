@@ -43,7 +43,7 @@ export class UserManageService {
       }
 
     } catch (error) {
-      console.log('Error creating user: ${error.message}');
+      console.log(`Error creating user: ${error.message}`);
       throw error;
     }
   }
@@ -71,7 +71,7 @@ export class UserManageService {
       }
 
     } catch (error) {
-      console.log('Failed to create system owner: ${error.message}');
+      console.log(`Failed to create system owner: ${error.message}`);
       throw error;
     }
   }

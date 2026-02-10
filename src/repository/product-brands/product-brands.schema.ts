@@ -1,36 +1,31 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
+export class Media {
+  @Prop({ type: String })
+  fileId: string;
+
+  @Prop({ type: String })
+  url: string;
+}
 @Schema({ collection: 'productBrands' })
 export class ProductBrandsEntity {
   @Prop({ type: String })
   name: string;
 
-  @Prop({ type: String })
-  slug: string;
-
   @Prop({ type: String, unique: true })
   code: string;
 
-  @Prop({ type: Number })
-  level: number;
+  @Prop({ type: String })
+  slug: string;
 
   @Prop({ type: String })
-  parentId: string | null;
+  country: string;
 
   @Prop({ type: String })
-  path: string;
+  description: string;
 
-  @Prop({ type: Boolean })
-  isSelectable: boolean;
-
-  @Prop({ type: Number })
-  sortOrder: number;
-
-  @Prop({ type: Boolean })
-  allowVehicleBinding: boolean;
-
-  @Prop({ type: Boolean })
-  allowStock: boolean;
+  @Prop({ type: Media, _id: false, default: {} })
+  logo?: Media;
 
   @Prop({ type: Boolean })
   isActive: boolean;
