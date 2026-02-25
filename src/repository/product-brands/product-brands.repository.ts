@@ -15,5 +15,10 @@ export class ProductBrandsRepository {
       query.isActive = isActive;
     }
     return await this.productBrandsEntity.find(query);
-    };
+  };
+
+  async getBrandById(brandId: string) {
+    const query: FilterQuery<ProductBrandsEntity> = { _id: brandId };
+    return await this.productBrandsEntity.findOne(query);
   }
+}

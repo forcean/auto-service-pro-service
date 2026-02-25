@@ -67,6 +67,7 @@ export class ProductsController {
     return await this.productsService.getProductBrands(isActive);
   }
 
+  //fix
   @Get('vehicles')
   @UseGuards(PermissionsGuard)
   @Permissions()

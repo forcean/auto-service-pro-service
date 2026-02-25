@@ -6,6 +6,7 @@ import { AuthUser } from "src/types/user.type";
 import { ProductCategoriesRepository } from "src/repository/product-category/product-category.repository";
 import { ProductBrandsRepository } from "src/repository/product-brands/product-brands.repository";
 import { VehiclesRepository } from "src/repository/vehicles/vehicles.repository";
+import { SkuCountersRepository } from "src/repository/sku-counters/sku-counters.repository";
 
 @Injectable()
 export class ProductsService {
@@ -14,6 +15,7 @@ export class ProductsService {
     @Inject(ProductCategoriesRepository) private readonly productCategoriesRepository: ProductCategoriesRepository,
     @Inject(ProductBrandsRepository) private readonly productBrandsRepository: ProductBrandsRepository,
     @Inject(VehiclesRepository) private readonly vehiclesRepository: VehiclesRepository,
+    @Inject(SkuCountersRepository) private readonly skuCountersRepository: SkuCountersRepository,
   ) { }
 
   async createProduct(dto: createProductDto, authUser: AuthUser) {
@@ -23,12 +25,42 @@ export class ProductsService {
         throw new BusinessException('4030', 'Only system owner or admin can create product');
       }
 
-      const isProductExist = await this.productsRepository.getProductBySku(dto.sku);
+      const categoryCode = await this.productCategoriesRepository.getCategoryById(dto.categoryId);
+
+      if (!categoryCode) {
+        throw new BusinessException('4040', 'Product category not found');
+      }
+
+      const brandCode = await this.productBrandsRepository.getBrandById(dto.brandId);
+
+      if (!brandCode) {
+        throw new BusinessException('4041', 'Product brand not found');
+      }
+
+      const segments: string[] = [];
+
+      segments.push(categoryCode.code);
+      segments.push(brandCode.code);
+
+      if (dto.vehicles.length === 1) {
+        const vehicleCode = await this.vehiclesRepository.getVehicleById(dto.vehicles[0].vehicleId); //พังบรรทัดนี้
+        if (!vehicleCode) {
+          throw new BusinessException('4042', 'Product vehicle not found');
+        }
+        segments.push(vehicleCode.modelCode);
+        segments.push(vehicleCode.brandCode);
+      }
+
+      const prefix = segments.join('-');
+      const runningNumber = await this.skuCountersRepository.getNextSequence(prefix);
+      const sku = `${prefix}-${runningNumber.toString().padStart(3, '0')}`;
+
+      const isProductExist = await this.productsRepository.getProductBySku(sku);
       if (isProductExist) {
         throw new BusinessException('4091', 'Product with the same SKU already exists');
       }
 
-      const createProduct = await this.productsRepository.createProduct(dto, authUser.id);
+      const createProduct = await this.productsRepository.createProduct(sku, dto, authUser.id);
 
       if (!createProduct) {
         throw new BusinessException('4012', 'Failed to create product');
@@ -47,21 +79,7 @@ export class ProductsService {
       if (!getCategories) {
         throw new BusinessException('4040', 'No product categories found');
       }
-      return getCategories.map(category => ({
-        id: category._id,
-        name: category.name,
-        slug: category.slug,
-        code: category.code,
-        level: category.level,
-        parentId: category.parentId,
-        path: category.path,
-        isSelectable: category.isSelectable,
-        sortOrder: category.sortOrder,
-        allowVehicleBinding: category.allowVehicleBinding,
-        allowStock: category.allowStock,
-        isActive: category.isActive,
-        isDeleted: category.isDeleted,
-      }));
+      return getCategories;
     } catch (error) {
       console.error(`Error getting product categories: ${error.message}`);
       throw error;

@@ -16,4 +16,9 @@ export class VehiclesRepository {
     }
     return await this.vehiclesEntity.find(query);
   }
+
+  async getVehicleById(vehicleId: string) {
+    const query: FilterQuery<VehiclesEntity> = { _id: vehicleId };
+    return await this.vehiclesEntity.findOne(query);
+  }
 }

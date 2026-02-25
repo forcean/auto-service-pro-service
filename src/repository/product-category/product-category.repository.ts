@@ -22,4 +22,9 @@ export class ProductCategoriesRepository {
     }
     return await this.productCategoriesEntity.find(query);
   }
+
+  async getCategoryById(categoryId: string) {
+    const query: FilterQuery<ProductCategoriesEntity> = { _id: categoryId };
+    return await this.productCategoriesEntity.findOne(query);
+  }
 }

@@ -15,10 +15,10 @@ export class ProductsRepository {
     return await this.productsEntity.findOne(query);
   }
 
-  async createProduct(productData: createProductDto, userId: string): Promise<boolean> {
+  async createProduct(key: string, productData: createProductDto, userId: string): Promise<boolean> {
     try {
       await this.productsEntity.create({
-        sku: productData.sku,
+        sku: key,
         name: productData.name,
         description: productData.description,
         categoryId: productData.categoryId,
@@ -29,7 +29,7 @@ export class ProductsRepository {
         spec: productData.spec,
         media: productData.images,
         status: productData.status,
-        isDeleted: productData.isDeleted,
+        isDeleted: false,
         createdBy: userId,
         createdDt: new Date(),
       });

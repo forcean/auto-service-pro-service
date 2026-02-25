@@ -17,6 +17,8 @@ import { ProductCategoriesEntity, ProductCategoriesSchema } from "./product-cate
 import { ProductCategoriesRepository } from "./product-category/product-category.repository";
 import { VehiclesEntity, VehiclesSchema } from "./vehicles/vehicles.schema";
 import { VehiclesRepository } from "./vehicles/vehicles.repository";
+import { SkuCountersEntity, SkuCountersSchema } from "./sku-counters/sku-counters.schema";
+import { SkuCountersRepository } from "./sku-counters/sku-counters.repository";
 
 
 // const reposytories = [UsersRepository];
@@ -46,12 +48,13 @@ import { VehiclesRepository } from "./vehicles/vehicles.repository";
       { name: ProductsEntity.name, schema: ProductsSchema },
       { name: ProductBrandsEntity.name, schema: ProductBrandsSchema },
       { name: ProductCategoriesEntity.name, schema: ProductCategoriesSchema },
-      { name: VehiclesEntity.name, schema: VehiclesSchema }
+      { name: VehiclesEntity.name, schema: VehiclesSchema },
+      { name: SkuCountersEntity.name, schema: SkuCountersSchema },
     ], 
     'autoservice')
   ],
-  providers: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository, ProductsRepository, ProductBrandsRepository, ProductCategoriesRepository, VehiclesRepository],
-  exports: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository, ProductsRepository, ProductBrandsRepository, ProductCategoriesRepository, VehiclesRepository],
+  providers: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository, ProductsRepository, ProductBrandsRepository, ProductCategoriesRepository, VehiclesRepository, SkuCountersRepository],
+  exports: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository, ProductsRepository, ProductBrandsRepository, ProductCategoriesRepository, VehiclesRepository, SkuCountersRepository],
 })
 
 export class RepositoryModule { }
