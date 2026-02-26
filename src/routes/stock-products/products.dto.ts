@@ -46,7 +46,16 @@ export class priceDto {
   wholesale: number;
 }
 
-export class DimensionsDto {
+export class specDto {
+  @IsString()
+  @IsNotEmpty()
+  unit: string;
+
+  @Type(() => Number)
+  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @IsNotEmpty()
+  weight: number;
+
   @IsString()
   @IsNotEmpty()
   width: string;
@@ -58,22 +67,6 @@ export class DimensionsDto {
   @IsString()
   @IsNotEmpty()
   depth: string;
-}
-
-export class specDto {
-  @IsString()
-  @IsNotEmpty()
-  unit: string;
-
-  @Type(() => Number)
-  @IsNumber({ allowInfinity: false, allowNaN: false })
-  @IsNotEmpty()
-  weight: number;
-
-  @ValidateNested()
-  @Type(() => DimensionsDto)
-  @IsNotEmpty()
-  dimensions: DimensionsDto;
 }
 
 export class mediaDto {
@@ -144,10 +137,12 @@ export class createProductDto {
 
 export class getProductCategoriesDto {
   @IsOptional()
+  @Type(() => Boolean)
   @IsBoolean()
   isActive?: boolean;
 
   @IsOptional()
+  @Type(() => Boolean)
   @IsBoolean()
   isSelectable?: boolean;
 }

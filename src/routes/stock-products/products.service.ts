@@ -93,7 +93,14 @@ export class ProductsService {
       if (!getBrands) {
         throw new BusinessException('4041', 'No product brands found');
       }
-      return getBrands;
+      return { brands: getBrands.map(data => ({
+        id: data._id,
+        name: data.name,
+        slug: data.slug,
+        code: data.code,
+        country: data.country,
+        logoUrl : data.logo?.url
+      })) };
     } catch (error) {
       console.error(`Error getting product brands: ${error.message}`);
       throw error;

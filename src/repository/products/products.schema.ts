@@ -29,7 +29,13 @@ export class Price {
   wholesale: number;
 }
 
-export class Dimensions {
+export class Spec {
+  @Prop({ type: String })
+  unit: string;
+
+  @Prop({ type: Number })
+  weight: number;
+
   @Prop({ type: String })
   width: string;
 
@@ -38,17 +44,6 @@ export class Dimensions {
 
   @Prop({ type: String })
   depth: string;
-}
-
-export class Spec {
-  @Prop({ type: String })
-  unit: string;
-
-  @Prop({ type: Number })
-  weight: number;
-
-  @Prop({ type: Dimensions})
-  dimensions: Dimensions;
 }
 
 export class Media {
