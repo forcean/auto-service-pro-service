@@ -19,7 +19,10 @@ import { VehiclesEntity, VehiclesSchema } from "./vehicles/vehicles.schema";
 import { VehiclesRepository } from "./vehicles/vehicles.repository";
 import { SkuCountersEntity, SkuCountersSchema } from "./sku-counters/sku-counters.schema";
 import { SkuCountersRepository } from "./sku-counters/sku-counters.repository";
-
+import { VehicleBrandsEntity, VehicleBrandsSchema } from "./vehicle-brands/vehicle-brands.schema";
+import { VehicleBrandsRepository } from "./vehicle-brands/vehicle-brands.repository";
+import { VehicleModelsEntity, VehicleModelsSchema } from "./vehicle-models/vehicle-models.schema";
+import { VehicleModelsRepository } from "./vehicle-models/vehicle-models.repository";
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -50,11 +53,13 @@ import { SkuCountersRepository } from "./sku-counters/sku-counters.repository";
       { name: ProductCategoriesEntity.name, schema: ProductCategoriesSchema },
       { name: VehiclesEntity.name, schema: VehiclesSchema },
       { name: SkuCountersEntity.name, schema: SkuCountersSchema },
+      { name: VehicleBrandsEntity.name, schema: VehicleBrandsSchema },
+      { name: VehicleModelsEntity.name, schema: VehicleModelsSchema },
     ], 
     'autoservice')
   ],
-  providers: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository, ProductsRepository, ProductBrandsRepository, ProductCategoriesRepository, VehiclesRepository, SkuCountersRepository],
-  exports: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository, ProductsRepository, ProductBrandsRepository, ProductCategoriesRepository, VehiclesRepository, SkuCountersRepository],
+  providers: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository, ProductsRepository, ProductBrandsRepository, ProductCategoriesRepository, VehiclesRepository, SkuCountersRepository, VehicleBrandsRepository, VehicleModelsRepository],
+  exports: [UsersRepository, TokenRepository, PoliciesRepository, MenuRepository, ProductsRepository, ProductBrandsRepository, ProductCategoriesRepository, VehiclesRepository, SkuCountersRepository, VehicleBrandsRepository, VehicleModelsRepository],
 })
 
 export class RepositoryModule { }

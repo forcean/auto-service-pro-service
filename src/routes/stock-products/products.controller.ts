@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req, Res, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ProductsService } from "./products.service";
 import { PermissionsGuard } from "src/common/permission/permission.guard";
 import { Permissions } from "src/common/permission/permission.decorator";
@@ -67,14 +67,13 @@ export class ProductsController {
     return await this.productsService.getProductBrands(isActive);
   }
 
-  //fix
-  @Get('vehicles')
+  @Get('vehicles/brands')
   @UseGuards(PermissionsGuard)
   @Permissions()
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
-  @ResponseMessage('Get product vehicles successful')
-  async getVehicles(
+  @ResponseMessage('Get product vehicle brands successful')
+  async getVehicleBrands(
     @Query('isActive') isActive: boolean,
     @Req() { authUser }: Request,
   ) {
@@ -82,6 +81,44 @@ export class ProductsController {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.productsService.getVehicles(isActive);
+    return await this.productsService.getVehiclesBrand(isActive);
+  }
+
+  @Get('vehicles/:brandCode/models')
+  @UseGuards(PermissionsGuard)
+  @Permissions()
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get product vehicle models successful')
+  async getVehicleModelsByBrand(
+    @Query('isActive') isActive: boolean,
+    @Param('brandCode') brandCode: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return await this.productsService.getVehicleModelsByBrand(brandCode, isActive);
+  }
+
+  @Get('vehicles/:brandCode/:modelCode/:generation')
+  @UseGuards(PermissionsGuard)
+  @Permissions()
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get product vehicles successful')
+  async getVehicles(
+    @Query('isActive') isActive: boolean,
+    @Param('brandCode') brandCode: string,
+    @Param('modelCode') modelCode: string,
+    @Param('generation') generation: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return await this.productsService.getVehicles(brandCode, modelCode, generation, isActive);
   }
 }

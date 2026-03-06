@@ -20,7 +20,7 @@ export class ProductCategoriesRepository {
     if (dto.isSelectable !== undefined) {
       query.isSelectable = dto.isSelectable;
     }
-    return await this.productCategoriesEntity.find(query);
+    return await this.productCategoriesEntity.find(query).lean();
   }
 
   async getCategoryById(categoryId: string) {

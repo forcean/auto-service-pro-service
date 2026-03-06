@@ -18,8 +18,8 @@ export class ProductCategoriesEntity {
   @Prop({ type: String })
   parentId: string | null;
 
-  @Prop({ type: String })
-  path: string;
+  @Prop({ type: [String] })
+  path: string[];
 
   @Prop({ type: Boolean })
   isSelectable: boolean;

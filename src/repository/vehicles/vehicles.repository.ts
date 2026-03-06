@@ -9,8 +9,13 @@ export class VehiclesRepository {
     @InjectModel(VehiclesEntity.name, 'autoservice') private readonly vehiclesEntity: Model<VehiclesEntity>,
   ) { }
 
-  async getVehicles(isActive?: boolean) {
-    const query: FilterQuery<VehiclesEntity> = {}
+  async getVehicles(brand: string, model: string, generation: string, isActive?: boolean) {
+    const query: FilterQuery<VehiclesEntity> = {
+      brandCode: brand,
+      modelCode: model,
+      generation: generation
+    };
+    
     if (isActive !== undefined) {
       query.isActive = isActive;
     }
