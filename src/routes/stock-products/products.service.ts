@@ -9,6 +9,8 @@ import { VehiclesRepository } from "src/repository/vehicles/vehicles.repository"
 import { SkuCountersRepository } from "src/repository/sku-counters/sku-counters.repository";
 import { VehicleBrandsRepository } from "src/repository/vehicle-brands/vehicle-brands.repository";
 import { VehicleModelsRepository } from "src/repository/vehicle-models/vehicle-models.repository";
+import path from "path";
+import { platform } from "os";
 
 @Injectable()
 export class ProductsService {
@@ -46,8 +48,9 @@ export class ProductsService {
       segments.push(categoryCode.code);
       segments.push(brandCode.code);
 
-      if (dto.vehicles.length === 1) {
-        const vehicleCode = await this.vehiclesRepository.getVehicleById(dto.vehicles[0].vehicleId); //พังบรรทัดนี้
+      if (dto.vehicles?.length) {
+        const firstVehicle = dto.vehicles[0].vehicleId;
+        const vehicleCode = await this.vehiclesRepository.getVehicleById(firstVehicle);
         if (!vehicleCode) {
           throw new BusinessException('4042', 'Product vehicle not found');
         }
@@ -64,7 +67,7 @@ export class ProductsService {
         throw new BusinessException('4091', 'Product with the same SKU already exists');
       }
 
-      const createProduct = await this.productsRepository.createProduct(sku, dto, authUser.id);
+      const createProduct = await this.productsRepository.createProduct(sku, dto, authUser);
 
       if (!createProduct) {
         throw new BusinessException('4012', 'Failed to create product');
@@ -85,7 +88,7 @@ export class ProductsService {
       }
 
       const tree = await this.buildTree(getCategories);
-      return tree;
+      return { categories: tree };
     } catch (error) {
       console.error(`Error getting product categories: ${error.message}`);
       throw error;
@@ -115,18 +118,19 @@ export class ProductsService {
     }
   }
 
-  async getVehiclesBrand(isActive: boolean) {
+  async getVehicleBrands(isActive: boolean) {
     try {
       const getVehiclesBrand = await this.vehicleBrandsRepository.getVehicleBrands(isActive);
       if (!getVehiclesBrand) {
         throw new BusinessException('4042', 'No product vehicles found');
       }
 
-      const brand = getVehiclesBrand.map(data => ({
-        brand: data.brand,
-        brandCode: data.brandCode
-      }))
-      return brand;
+      return {
+        vehicleBrands: getVehiclesBrand.map(data => ({
+          name: data.brand,
+          code: data.brandCode
+        }))
+      };
     } catch (error) {
       console.error(`Error getting product vehicles by brand: ${error.message}`);
       throw error;
@@ -140,12 +144,13 @@ export class ProductsService {
         throw new BusinessException('4042', 'No product vehicles found');
       }
 
-      const model = getVehicleModels.map(data => ({
-        model: data.model,
-        modelCode: data.modelCode,
-        generation: data.generation
-      }))
-      return model;
+      return {
+        vehicleModels: getVehicleModels.map(data => ({
+          model: data.model,
+          modelCode: data.modelCode,
+          generation: data.generation
+        }))
+      };
     } catch (error) {
       console.error(`Error getting product vehicles by brand: ${error.message}`);
       throw error;
@@ -159,7 +164,24 @@ export class ProductsService {
       if (!getVehicles) {
         throw new BusinessException('4042', 'No product vehicles found');
       }
-      return getVehicles;
+      return {
+        vehicles: getVehicles.map(data => ({
+          id: data._id,
+          brand: data.brand,
+          brandCode: data.brandCode,
+          model: data.model,
+          modelCode: data.modelCode,
+          generation: data.generation,
+          platform: data.platform,
+          yearFrom: data.yearFrom,
+          yearTo: data.yearTo,
+          engines: data.engines.map(engine => ({
+            code: engine.code,
+            fuel: engine.fuel
+          })),
+          isActive: data.isActive
+        }))
+      };
     } catch (error) {
       console.error(`Error getting product vehicles: ${error.message}`);
       throw error;
@@ -171,7 +193,12 @@ export class ProductsService {
     const roots: any[] = [];
 
     categories.forEach(cat => {
-      map.set(cat._id.toString(), { ...cat, children: [] });
+      const { _id, ...rest } = cat;
+      map.set(_id.toString(), {
+        id: _id,
+        ...rest,
+        children: []
+      });
     });
 
     categories.forEach(cat => {

@@ -11,8 +11,18 @@ export class Vehicles {
   @Prop({ type: Number })
   yearTo: number;
 
-  @Prop({ type: [String] })
-  engine: string[];
+  @Prop({
+    type: [
+      {
+        code: { type: String },
+        fuel: { type: String }
+      }
+    ]
+  })
+  engine: {
+    code: string;
+    fuel: string;
+  }[];
 
   @Prop({ type: String })
   remark: string;
@@ -33,8 +43,8 @@ export class Spec {
   @Prop({ type: String })
   unit: string;
 
-  @Prop({ type: Number })
-  weight: number;
+  @Prop({ type: String })
+  weight: string;
 
   @Prop({ type: String })
   width: string;
@@ -74,11 +84,11 @@ export class ProductsEntity {
   @Prop({ type: [String] })
   categoryPath: string[];
 
-  @Prop({ type: String})
+  @Prop({ type: String })
   brandId: string;
 
   @Prop({ type: [Vehicles], _id: false, default: [] })
-  vehicles: Vehicles[];
+  vehicles?: Vehicles[];
 
   @Prop({ type: Price, _id: false, default: {} })
   price?: Price;

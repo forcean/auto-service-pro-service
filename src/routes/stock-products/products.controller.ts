@@ -81,7 +81,7 @@ export class ProductsController {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.productsService.getVehiclesBrand(isActive);
+    return await this.productsService.getVehicleBrands(isActive);
   }
 
   @Get('vehicles/:brandCode/models')

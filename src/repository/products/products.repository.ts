@@ -3,6 +3,7 @@ import { FilterQuery, Model } from "mongoose";
 import { ProductsEntity } from "./products.schema";
 import { InjectModel } from "@nestjs/mongoose";
 import { createProductDto } from "src/routes/stock-products/products.dto";
+import { AuthUser } from "src/types/user.type";
 
 @Injectable()
 export class ProductsRepository {
@@ -15,7 +16,7 @@ export class ProductsRepository {
     return await this.productsEntity.findOne(query);
   }
 
-  async createProduct(key: string, productData: createProductDto, userId: string): Promise<boolean> {
+  async createProduct(key: string, productData: createProductDto, user: AuthUser): Promise<boolean> {
     try {
       await this.productsEntity.create({
         sku: key,
@@ -30,7 +31,7 @@ export class ProductsRepository {
         media: productData.images,
         status: productData.status,
         isDeleted: false,
-        createdBy: userId,
+        createdBy: user.publicId,
         createdDt: new Date(),
       });
       return true;

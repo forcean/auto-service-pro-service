@@ -1,6 +1,16 @@
 import { IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
 import { Type } from "class-transformer"
 
+export class EngineDto {
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  @IsString()
+  @IsNotEmpty()
+  fuel: string;
+}
+
 export class vehiclesDto {
   @IsString()
   @IsNotEmpty()
@@ -17,9 +27,10 @@ export class vehiclesDto {
   yearTo: number;
 
   @IsArray()
-  @IsString({ each: true })
+  @ValidateNested({ each: true })
+  @Type(() => EngineDto)
   @IsNotEmpty({ each: true })
-  engine: string[];
+  engine: EngineDto[];
 
   @IsString()
   @IsNotEmpty()
@@ -51,10 +62,9 @@ export class specDto {
   @IsNotEmpty()
   unit: string;
 
-  @Type(() => Number)
-  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @IsString()
   @IsNotEmpty()
-  weight: number;
+  weight: string;
 
   @IsString()
   @IsNotEmpty()
@@ -104,11 +114,12 @@ export class createProductDto {
   @IsNotEmpty()
   brandId: string;
 
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => vehiclesDto)
   @IsArray()
   @IsNotEmpty({ each: true })
-  vehicles: vehiclesDto[];
+  vehicles?: vehiclesDto[];
 
   @IsOptional()
   @ValidateNested()
