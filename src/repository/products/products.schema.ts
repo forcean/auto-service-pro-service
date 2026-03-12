@@ -19,7 +19,7 @@ export class Vehicles {
       }
     ]
   })
-  engine: {
+  engines: {
     code: string;
     fuel: string;
   }[];
@@ -36,7 +36,7 @@ export class Price {
   retail: number;
 
   @Prop({ type: Number })
-  wholesale: number;
+  wholesale?: number;
 }
 
 export class Spec {
@@ -76,7 +76,7 @@ export class ProductsEntity {
   name: string;
 
   @Prop({ type: String })
-  description: string;
+  description?: string;
 
   @Prop({ type: String })
   categoryId: string;

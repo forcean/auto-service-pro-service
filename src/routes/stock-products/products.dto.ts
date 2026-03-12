@@ -30,11 +30,12 @@ export class vehiclesDto {
   @ValidateNested({ each: true })
   @Type(() => EngineDto)
   @IsNotEmpty({ each: true })
-  engine: EngineDto[];
+  engines: EngineDto[];
 
   @IsString()
+  @IsOptional()
   @IsNotEmpty()
-  remark: string;
+  remark?: string;
 }
 
 export class priceDto {
@@ -52,9 +53,10 @@ export class priceDto {
 
   @Type(() => Number)
   @IsNumber()
+  @IsOptional()
   @IsNotEmpty()
   @Min(0)
-  wholesale: number;
+  wholesale?: number;
 }
 
 export class specDto {
@@ -97,9 +99,10 @@ export class createProductDto {
   @IsNotEmpty()
   name: string;
 
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description?: string;
 
   @IsString()
   @IsNotEmpty()
