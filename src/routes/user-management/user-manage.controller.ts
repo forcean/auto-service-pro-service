@@ -1,4 +1,4 @@
-import { Controller, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Headers, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Get, Body, Post, Req, Param, Query, Patch } from '@nestjs/common';
 import type { Request } from 'express';
 import { registerDto, getUserQueryParamsDto, updateUserDto } from './user-manage.dto';
@@ -46,7 +46,8 @@ export class UserManageController {
   @ResponseResultCode('2000')
   @ResponseMessage('Create owner user successful')
   async registerBy(
-    @Body() registerDto: registerDto, privateKey: string,
+    @Body() registerDto: registerDto,
+    @Headers('x-private-key') privateKey: string,
   ) {
     await this.userManageService.createSysOwner(registerDto, privateKey);
     // return {
