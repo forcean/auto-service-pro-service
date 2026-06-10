@@ -1,18 +1,31 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ProductsService } from "./products.service";
-import { PermissionsGuard } from "src/common/permission/permission.guard";
-import { Permissions } from "src/common/permission/permission.decorator";
-import { ResponseInterceptor } from "src/common/response/response.interceptor";
-import { ResponseMessage, ResponseResultCode } from "src/common/response/response.decorator";
-import { createProductDto, getProductCategoriesDto } from "./products.dto";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { ProductsService } from './products.service';
+import { PermissionsGuard } from 'src/common/permission/permission.guard';
+import { Permissions } from 'src/common/permission/permission.decorator';
+import { ResponseInterceptor } from 'src/common/response/response.interceptor';
+import {
+  ResponseMessage,
+  ResponseResultCode,
+} from 'src/common/response/response.decorator';
+import { createProductDto, getProductCategoriesDto, updateProductDto } from './products.dto';
 import type { Request } from 'express';
-import { BusinessException } from "src/common/exceptions/business.exception";
+import { BusinessException } from 'src/common/exceptions/business.exception';
 
 @Controller('products')
 export class ProductsController {
-  constructor(
-    readonly productsService: ProductsService,
-  ) { }
+  constructor(readonly productsService: ProductsService) {}
 
   @Post()
   @UseGuards(PermissionsGuard)
@@ -24,7 +37,6 @@ export class ProductsController {
     @Body() createProductDto: createProductDto,
     @Req() { authUser }: Request,
   ) {
-
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
@@ -47,7 +59,6 @@ export class ProductsController {
     }
 
     return await this.productsService.getProductCategories(queryDto);
-
   }
 
   @Get('brands')
@@ -99,7 +110,10 @@ export class ProductsController {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.productsService.getVehicleModelsByBrand(brandCode, isActive);
+    return await this.productsService.getVehicleModelsByBrand(
+      brandCode,
+      isActive,
+    );
   }
 
   @Get('vehicles/:brandCode/:modelCode/:generation')
@@ -119,6 +133,29 @@ export class ProductsController {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.productsService.getVehicles(brandCode, modelCode, generation, isActive);
+    return await this.productsService.getVehicles(
+      brandCode,
+      modelCode,
+      generation,
+      isActive,
+    );
+  }
+
+  @Patch('update/:sku')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:product')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Update product successful')
+  async updateProductBySku(
+    @Param('sku') sku: string,
+    @Body() updateData: updateProductDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    await this.productsService.updateProductBySku(sku, updateData, authUser);
   }
 }

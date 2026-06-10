@@ -160,3 +160,56 @@ export class getProductCategoriesDto {
   @IsBoolean()
   isSelectable?: boolean;
 }
+
+export class updateProductDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  categoryId?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  categoryPath?: string[];
+
+  @IsString()
+  @IsOptional()
+  brandId?: string;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => vehiclesDto)
+  @IsArray()
+  @IsNotEmpty({ each: true })
+  vehicles?: vehiclesDto[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => priceDto)
+  @IsNotEmpty()
+  price?: priceDto;
+
+  @IsOptional()
+  @Type(() => specDto)
+  @ValidateNested()
+  @IsNotEmpty()
+  spec?: specDto;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => mediaDto)
+  images?: mediaDto[];
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['active', 'inactive', 'out_of_stock', 'discontinued'])
+  status?: string;
+}

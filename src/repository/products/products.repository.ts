@@ -1,22 +1,30 @@
-import { Injectable } from "@nestjs/common";
-import { FilterQuery, Model } from "mongoose";
-import { ProductsEntity } from "./products.schema";
-import { InjectModel } from "@nestjs/mongoose";
-import { createProductDto } from "src/routes/stock-products/products.dto";
-import { AuthUser } from "src/types/user.type";
+import { Injectable } from '@nestjs/common';
+import { FilterQuery, Model } from 'mongoose';
+import { ProductsEntity } from './products.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import {
+  createProductDto,
+  updateProductDto,
+} from 'src/routes/stock-products/products.dto';
+import { AuthUser } from 'src/types/user.type';
 
 @Injectable()
 export class ProductsRepository {
   constructor(
-    @InjectModel(ProductsEntity.name, 'autoservice') private readonly productsEntity: Model<ProductsEntity>,
-  ) { }
+    @InjectModel(ProductsEntity.name, 'autoservice')
+    private readonly productsEntity: Model<ProductsEntity>,
+  ) {}
 
   async getProductBySku(sku: string) {
     const query: FilterQuery<ProductsEntity> = { sku: sku };
     return await this.productsEntity.findOne(query);
   }
 
-  async createProduct(key: string, productData: createProductDto, user: AuthUser): Promise<boolean> {
+  async createProduct(
+    key: string,
+    productData: createProductDto,
+    user: AuthUser,
+  ): Promise<boolean> {
     try {
       await this.productsEntity.create({
         sku: key,
@@ -35,10 +43,26 @@ export class ProductsRepository {
         createdDt: new Date(),
       });
       return true;
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error created product', error);
       return false;
     }
+  }
+
+  async updateProductBySku(
+    sku: string,
+    updateData: updateProductDto,
+    user: AuthUser,
+  ) {
+    return await this.productsEntity.updateOne(
+      { sku: sku },
+      {
+        $set: {
+          ...updateData,
+          updatedBy: user.publicId,
+          updatedDt: new Date(),
+        },
+      },
+    );
   }
 }
