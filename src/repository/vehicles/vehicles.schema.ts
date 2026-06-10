@@ -3,28 +3,28 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 @Schema({ collection: 'vehicles' })
 export class VehiclesEntity {
   @Prop({ type: String })
-  brand: string;
+  brand!: string;
 
   @Prop({ type: String })
-  brandCode: string;
+  brandCode!: string;
 
   @Prop({ type: String })
-  model: string;
+  model!: string;
 
   @Prop({ type: String })
-  modelCode: string;
+  modelCode!: string;
 
   @Prop({ type: String })
-  generation: string;
+  generation!: string;
 
   @Prop({ type: String })
-  platform: string;
+  platform!: string;
 
   @Prop({ type: Number })
-  yearFrom: number;
+  yearFrom!: number;
 
   @Prop({ type: Number })
-  yearTo: number;
+  yearTo!: number;
 
   @Prop([
     {
@@ -32,13 +32,13 @@ export class VehiclesEntity {
       fuel: String,
     },
   ])
-  engines: {
+  engines!: {
     code: string;
     fuel: string;
   }[];
 
   @Prop({ type: Boolean, default: true })
-  isActive: boolean;
+  isActive!: boolean;
 }
 
 export const VehiclesSchema = SchemaFactory.createForClass(VehiclesEntity);

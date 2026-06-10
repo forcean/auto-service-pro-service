@@ -3,40 +3,40 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 @Schema({ collection: 'users' })
 export class UsersEntity {
   @Prop({ type: String })
-  id: string;
+  id!: string;
 
   @Prop({ type: String})
-  publicId: string;
+  publicId!: string;
 
   @Prop({ type: String})
-  credentialId: string;
+  credentialId!: string;
 
   @Prop({ type: String })
-  email: string;
+  email!: string;
 
   @Prop({ type: String })
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @Prop({ type: String })
-  firstname: string;
+  firstname!: string;
 
   @Prop({ type: String })
-  lastname: string;
+  lastname!: string;
 
   @Prop({ type: Boolean })
-  activeFlag: boolean;
+  activeFlag!: boolean;
 
   @Prop({ type: Date })
-  createdDt: Date;
+  createdDt!: Date;
 
   @Prop({ type: String })
-  createdBy: string;
+  createdBy!: string;
 
   @Prop({ type: String })
-  role: string;
+  role!: string;
 
   @Prop({ type: [String] })
-  permissions: string[];
+  permissions!: string[];
 
   @Prop({ type: String })
   managerId?: string;

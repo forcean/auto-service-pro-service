@@ -3,13 +3,13 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 @Schema({ collection: 'vehicleBrands' })
 export class VehicleBrandsEntity {
   @Prop({ type: String, unique: true })
-  brand: string;
+  brand!: string;
 
   @Prop({ type: String, unique: true })
-  brandCode: string;
+  brandCode!: string;
 
   @Prop({ type: Boolean, default: true })
-  isActive: boolean;
+  isActive!: boolean;
 }
 
 export const VehicleBrandsSchema = SchemaFactory.createForClass(VehicleBrandsEntity);

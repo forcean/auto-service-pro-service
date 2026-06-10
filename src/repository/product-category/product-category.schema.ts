@@ -4,40 +4,40 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 export class ProductCategoriesEntity {
 
   @Prop({ type: String })
-  name: string;
+  name!: string;
 
   @Prop({ type: String })
-  slug: string;
+  slug!: string;
 
   @Prop({ type: String, unique: true })
-  code: string;
+  code!: string;
 
   @Prop({ type: Number })
-  level: number;
+  level!: number;
 
   @Prop({ type: String })
-  parentId: string | null;
+  parentId!: string | null;
 
   @Prop({ type: [String] })
-  path: string[];
+  path!: string[];
 
   @Prop({ type: Boolean })
-  isSelectable: boolean;
+  isSelectable!: boolean;
 
   @Prop({ type: Number })
-  sortOrder: number;
+  sortOrder!: number;
 
   @Prop({ type: Boolean })
-  allowVehicleBinding: boolean;
+  allowVehicleBinding!: boolean;
 
   @Prop({ type: Boolean })
-  allowStock: boolean;
+  allowStock!: boolean;
 
   @Prop({ type: Boolean })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Prop({ type: Boolean })
-  isDeleted: boolean;
+  isDeleted!: boolean;
 
   @Prop({ type: Date })
   createdDt?: Date;

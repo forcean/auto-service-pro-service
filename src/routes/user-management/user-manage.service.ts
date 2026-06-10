@@ -17,7 +17,7 @@ export class UserManageService {
     @Inject(PoliciesRepository) private readonly policiesRepository: PoliciesRepository,
     @Inject(UsersRepository) private readonly usersRepository: UsersRepository,
   ) { }
-//แก้เอา authUser ทำ
+
   async register(registerDto: registerDto, authUser: AuthUser) {
     try {
       
@@ -30,7 +30,7 @@ export class UserManageService {
 
       const getPermissions = await this.policiesRepository.getPermissionsByRole(registerDto.role);
       if (!getPermissions?.length) {
-        throw new BusinessException('4031', 'Permisson does not exist on role in policies');
+        throw new BusinessException('4031', 'Permission does not exist on role in policies');
       }
 
       if (authUser.role == 'ADM' || authUser.role == 'SO') {
@@ -43,7 +43,7 @@ export class UserManageService {
       }
 
     } catch (error) {
-      console.log(`Error creating user: ${error.message}`);
+      console.log(`Error creating user: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -61,7 +61,7 @@ export class UserManageService {
 
       const getPermissions = await this.policiesRepository.getPermissionsByRole(registerDto.role);
       if (!getPermissions?.length) {
-        throw new BusinessException('4031', 'Permisson does not exist on role in policies');
+        throw new BusinessException('4031', 'Permission does not exist on role in policies');
       }
 
       const hashedPassword = await bcrypt.hash(registerDto.painTextPassword, 10);
@@ -71,7 +71,7 @@ export class UserManageService {
       }
 
     } catch (error) {
-      console.log(`Failed to create system owner: ${error.message}`);
+      console.log(`Failed to create system owner: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -92,12 +92,12 @@ export class UserManageService {
         throw new BusinessException('4011', 'Failed to delete user');
       }
     } catch (error) {
-      console.log(`Delete user failed: ${error.message}`);
+      console.log(`Delete user failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
 
-  async getUserswithPagination(role: string, param: getUserQueryParamsDto, pagination: PaginationQuery) {
+  async getUsersWithPagination(role: string, param: getUserQueryParamsDto, pagination: PaginationQuery) {
     try {
       if (role !== 'SO' && role !== 'ADM' && role !== 'MNG') {
         throw new BusinessException('4030', 'Only admin or manager can get user list');
@@ -136,7 +136,7 @@ export class UserManageService {
       };
 
     } catch (error) {
-      console.log(`Get user failed: ${error.message}`);
+      console.log(`Get user failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -153,7 +153,7 @@ export class UserManageService {
         throw new BusinessException('4011', 'Failed to update user');
       }
     } catch (error) {
-      console.log('Error updating user:', error.message);
+      console.log('Error updating user:', error instanceof Error ? error.message : 'Unknown error');
       throw error;
     }
   }
@@ -181,7 +181,7 @@ export class UserManageService {
         updatedBy: user.updatedBy,
       };
     } catch (error) {
-      console.log(`Get user failed: ${error.message}`);
+      console.log(`Get user failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -208,7 +208,7 @@ export class UserManageService {
       }
 
     } catch (error) {
-      console.log(`Reset password failed: ${error.message}`);
+      console.log(`Reset password failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -217,14 +217,14 @@ export class UserManageService {
     try {
       const getPermissions = await this.policiesRepository.getPermissionsByRole(authUser.role);
       if (!getPermissions?.length) {
-        throw new BusinessException('4031', 'Permisson does not exist on role in policies');
+        throw new BusinessException('4031', 'Permission does not exist on role in policies');
       }
       const updatePermissions = await this.usersRepository.updateUserPermissions(authUser.publicId, getPermissions);
       if (!updatePermissions) {
         throw new BusinessException('4011', 'Failed to update user permission');
       }
     } catch (error) {
-      console.log(`Update user permission failed: ${error.message}`);
+      console.log(`Update user permission failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -237,7 +237,7 @@ export class UserManageService {
       }
       return { permissions: getPermissions.permissions };
     } catch (error) {
-      console.log(`Get user permission failed: ${error.message}`);
+      console.log(`Get user permission failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }

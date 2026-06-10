@@ -4,33 +4,33 @@ import { Type } from "class-transformer"
 export class EngineDto {
   @IsString()
   @IsNotEmpty()
-  code: string;
+  code!: string;
 
   @IsString()
   @IsNotEmpty()
-  fuel: string;
+  fuel!: string;
 }
 
 export class vehiclesDto {
   @IsString()
   @IsNotEmpty()
-  vehicleId: string;
+  vehicleId!: string;
 
   @Type(() => Number)
   @IsInt()
   @IsNotEmpty()
-  yearFrom: number;
+  yearFrom!: number;
 
   @Type(() => Number)
   @IsInt()
   @IsNotEmpty()
-  yearTo: number;
+  yearTo!: number;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => EngineDto)
   @IsNotEmpty({ each: true })
-  engines: EngineDto[];
+  engines!: EngineDto[];
 
   @IsString()
   @IsOptional()
@@ -43,13 +43,13 @@ export class priceDto {
   @IsNumber()
   @IsNotEmpty()
   @Min(0)
-  cost: number;
+  cost!: number;
 
   @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
   @Min(0)
-  retail: number;
+  retail!: number;
 
   @Type(() => Number)
   @IsNumber()
@@ -62,42 +62,42 @@ export class priceDto {
 export class specDto {
   @IsString()
   @IsNotEmpty()
-  unit: string;
+  unit!: string;
 
   @IsString()
   @IsNotEmpty()
-  weight: string;
+  weight!: string;
 
   @IsString()
   @IsNotEmpty()
-  width: string;
+  width!: string;
 
   @IsString()
   @IsNotEmpty()
-  height: string;
+  height!: string;
 
   @IsString()
   @IsNotEmpty()
-  depth: string;
+  depth!: string;
 }
 
 export class mediaDto {
   @IsString()
   @IsNotEmpty()
-  fileId: string;
+  fileId!: string;
 
   @IsString()
   @IsNotEmpty()
-  url: string;
+  url!: string;
 
   @IsBoolean()
   @IsNotEmpty()
-  isPrimary: boolean;
+  isPrimary!: boolean;
 }
 export class createProductDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -106,16 +106,16 @@ export class createProductDto {
 
   @IsString()
   @IsNotEmpty()
-  categoryId: string;
+  categoryId!: string;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
-  categoryPath: string[];
+  categoryPath!: string[];
 
   @IsString()
   @IsNotEmpty()
-  brandId: string;
+  brandId!: string;
 
   @IsOptional()
   @ValidateNested({ each: true })
@@ -141,12 +141,12 @@ export class createProductDto {
   @ValidateNested({ each: true })
   @Type(() => mediaDto)
   @IsNotEmpty()
-  images: mediaDto[];
+  images!: mediaDto[];
 
   @IsString()
   @IsNotEmpty()
   @IsIn(['active', 'inactive', 'out_of_stock', 'discontinued'])
-  status: string;
+  status!: string;
 }
 
 export class getProductCategoriesDto {

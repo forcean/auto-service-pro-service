@@ -72,7 +72,7 @@ export class AuthService {
         refreshTokenExpiresDt: new Date(refreshTokenExpiresDt).toISOString()
       }
     } catch (error) {
-      console.log(`Login failed: ${error.message}`);
+      console.log(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -117,7 +117,7 @@ export class AuthService {
       };
 
     } catch (error) {
-      console.log(`Create new refresh token failed: ${error.message}`);
+      console.log(`Create new refresh token failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }

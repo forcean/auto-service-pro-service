@@ -2,36 +2,36 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
 export class Media {
   @Prop({ type: String })
-  fileId: string;
+  fileId!: string;
 
   @Prop({ type: String })
-  url: string;
+  url!: string;
 }
 @Schema({ collection: 'productBrands' })
 export class ProductBrandsEntity {
   @Prop({ type: String })
-  name: string;
+  name!: string;
 
   @Prop({ type: String, unique: true })
-  code: string;
+  code!: string;
 
   @Prop({ type: String })
-  slug: string;
+  slug!: string;
 
   @Prop({ type: String })
-  country: string;
+  country!: string;
 
   @Prop({ type: String })
-  description: string;
+  description!: string;
 
   @Prop({ type: Media, _id: false, default: {} })
   logo?: Media;
 
   @Prop({ type: Boolean })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Prop({ type: Boolean })
-  isDeleted: boolean;
+  isDeleted!: boolean;
 
   @Prop({ type: Date })
   createdDt?: Date;

@@ -3,25 +3,25 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 @Schema({ collection: 'token' })
 export class TokenEntity {
   @Prop({ type: String })
-  publicId: string;
+  publicId!: string;
 
   @Prop({ type: String })
-  accessToken: string;
+  accessToken!: string;
 
   @Prop({ type: Date })
-  accessTokenExpiresDt: Date;
+  accessTokenExpiresDt!: Date;
 
   @Prop({ type: Date })
-  loginDt: Date;
+  loginDt!: Date;
 
   @Prop({ type: String })
-  refreshToken: string;
+  refreshToken!: string;
 
   @Prop({ type: Date })
-  refreshTokenExpiresDt: Date;
+  refreshTokenExpiresDt!: Date;
 
   @Prop({ type: Boolean })
-  refreshFlag: boolean;
+  refreshFlag!: boolean;
 }
 
 export const TokenSchema = SchemaFactory.createForClass(TokenEntity);

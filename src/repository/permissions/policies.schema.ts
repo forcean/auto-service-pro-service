@@ -4,16 +4,16 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 export class PoliciesEntity {
 
   @Prop({ type: String })
-  role: string;
+  role!: string;
 
   @Prop({ type: String })
-  roleName: string;
+  roleName!: string;
 
   @Prop({ type: Boolean })
-  userAccessList: boolean;
+  userAccessList!: boolean;
 
   @Prop({ type: [String] })
-  permissions: string[];
+  permissions!: string[];
 }
 
 export const PoliciesSchema = SchemaFactory.createForClass(PoliciesEntity);

@@ -74,7 +74,7 @@ export class ProductsService {
       }
     }
     catch (error) {
-      console.error(`Error creating product: ${error.message}`);
+      console.error(`Error creating product: ${error instanceof Error? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -90,7 +90,7 @@ export class ProductsService {
       const tree = await this.buildTree(getCategories);
       return { categories: tree };
     } catch (error) {
-      console.error(`Error getting product categories: ${error.message}`);
+      console.error(`Error getting product categories: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -113,7 +113,7 @@ export class ProductsService {
         }))
       };
     } catch (error) {
-      console.error(`Error getting product brands: ${error.message}`);
+      console.error(`Error getting product brands: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -132,7 +132,7 @@ export class ProductsService {
         }))
       };
     } catch (error) {
-      console.error(`Error getting product vehicles by brand: ${error.message}`);
+      console.error(`Error getting product vehicles by brand: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -152,7 +152,7 @@ export class ProductsService {
         }))
       };
     } catch (error) {
-      console.error(`Error getting product vehicles by brand: ${error.message}`);
+      console.error(`Error getting product vehicles by brand: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -183,7 +183,7 @@ export class ProductsService {
         }))
       };
     } catch (error) {
-      console.error(`Error getting product vehicles: ${error.message}`);
+      console.error(`Error getting product vehicles: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }

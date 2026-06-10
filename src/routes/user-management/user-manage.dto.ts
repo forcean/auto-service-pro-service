@@ -4,32 +4,32 @@ import { UserRole } from 'src/common/dto/roles.enum';
 export class registerDto {
   @IsString()
   @IsNotEmpty()
-  publicId: string;
+  publicId!: string;
 
   @IsString()
   @IsNotEmpty()
-  painTextPassword: string;
+  painTextPassword!: string;
 
   @IsString()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @IsString()
   @IsNotEmpty()
-  firstname: string;
+  firstname!: string;
 
   @IsString()
   @IsNotEmpty()
-  lastname: string;
+  lastname!: string;
 
   @IsString()
   @IsNotEmpty()
   @IsEnum(UserRole)
-  role: string;
+  role!: string;
 
   @IsString()
   @IsOptional()

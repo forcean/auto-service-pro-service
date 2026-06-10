@@ -3,13 +3,13 @@ import { ObjectId as String } from 'typeorm';
 
 export class Vehicles {
   @Prop({ type: String })
-  vehicleId: string;
+  vehicleId!: string;
 
   @Prop({ type: Number })
-  yearFrom: number;
+  yearFrom!: number;
 
   @Prop({ type: Number })
-  yearTo: number;
+  yearTo!: number;
 
   @Prop({
     type: [
@@ -19,21 +19,21 @@ export class Vehicles {
       }
     ]
   })
-  engines: {
+  engines!: {
     code: string;
     fuel: string;
   }[];
 
   @Prop({ type: String })
-  remark: string;
+  remark!: string;
 }
 
 export class Price {
   @Prop({ type: Number })
-  cost: number;
+  cost!: number;
 
   @Prop({ type: Number })
-  retail: number;
+  retail!: number;
 
   @Prop({ type: Number })
   wholesale?: number;
@@ -41,51 +41,51 @@ export class Price {
 
 export class Spec {
   @Prop({ type: String })
-  unit: string;
+  unit!: string;
 
   @Prop({ type: String })
-  weight: string;
+  weight!: string;
 
   @Prop({ type: String })
-  width: string;
+  width!: string;
 
   @Prop({ type: String })
-  height: string;
+  height!: string;
 
   @Prop({ type: String })
-  depth: string;
+  depth!: string;
 }
 
 export class Media {
   @Prop({ type: String })
-  fileId: string;
+  fileId!: string;
 
   @Prop({ type: String })
-  url: string;
+  url!: string;
 
   @Prop({ type: Boolean })
-  isPrimary: boolean;
+  isPrimary!: boolean;
 }
 
 @Schema({ collection: 'products' })
 export class ProductsEntity {
   @Prop({ type: String, unique: true })
-  sku: string;
+  sku!: string;
 
   @Prop({ type: String })
-  name: string;
+  name!: string;
 
   @Prop({ type: String })
   description?: string;
 
   @Prop({ type: String })
-  categoryId: string;
+  categoryId!: string;
 
   @Prop({ type: [String] })
-  categoryPath: string[];
+  categoryPath!: string[];
 
   @Prop({ type: String })
-  brandId: string;
+  brandId!: string;
 
   @Prop({ type: [Vehicles], _id: false, default: [] })
   vehicles?: Vehicles[];
@@ -100,22 +100,22 @@ export class ProductsEntity {
   media?: Media[];
 
   @Prop({ type: String })
-  status: string;
+  status!: string;
 
   @Prop({ type: Boolean })
-  isDeleted: boolean;
+  isDeleted!: boolean;
 
   @Prop({ type: String })
-  createdBy: string;
+  createdBy!: string;
 
   @Prop({ type: Date })
-  createdDt: Date;
+  createdDt!: Date;
 
   @Prop({ type: String })
-  updatedBy: string;
+  updatedBy!: string;
 
   @Prop({ type: Date })
-  updatedDt: Date;
+  updatedDt!: Date;
 
 }
 

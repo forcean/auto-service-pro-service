@@ -88,7 +88,7 @@ export class UserManageController {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-    return await this.userManageService.getUserswithPagination(authUser.role, param, pagination);
+    return await this.userManageService.getUsersWithPagination(authUser.role, param, pagination);
     // return {
     //   message: 'Get users successful',
     //   resultData: getUsers,

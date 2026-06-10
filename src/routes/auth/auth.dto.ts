@@ -4,9 +4,9 @@ import { Unique } from 'typeorm';
 export class LoginDto {
   @IsString()
   @IsNotEmpty()
-  publicId: string;
+  publicId!: string;
 
   @IsString()
   @IsNotEmpty()
-  painTextPassword: string;
+  painTextPassword!: string;
 }

@@ -96,7 +96,7 @@ export class AuthController {
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('User logout successful')
-  async authlogout(
+  async authLogout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
