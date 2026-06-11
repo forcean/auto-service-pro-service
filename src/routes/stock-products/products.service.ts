@@ -79,6 +79,29 @@ export class ProductsService {
     }
   }
 
+  async deleteProduct(skuId: string, authUser: AuthUser) {
+    try {
+      if (authUser.role !== 'ADM' && authUser.role !== 'SO') {
+        throw new BusinessException('4030', 'Only system owner or admin can delete product');
+      }
+
+      const getProduct = await this.productsRepository.getProductBySku(skuId);
+
+      if (!getProduct) {
+        throw new BusinessException('4040', 'Product not found');
+      }
+
+      const deleteProduct = await this.productsRepository.deleteProductBySku(skuId,authUser);
+
+      if (!deleteProduct) {
+        throw new BusinessException('4012', 'Failed to delete product');
+      }
+    } catch (error) {
+      console.error(`Error deleting product: ${error.message}`);
+      throw error;
+    }
+  }
+
   async getProductCategories(dto: getProductCategoriesDto) {
     try {
       const getCategories = await this.productCategoriesRepository.getProductCategories(dto);
