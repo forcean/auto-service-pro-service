@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   createProductDto,
   getProductCategoriesDto,
+  getProductListDto,
   updateProductDto,
 } from './products.dto';
 import { BusinessException } from 'src/common/exceptions/business.exception';
@@ -13,8 +14,8 @@ import { VehiclesRepository } from 'src/repository/vehicles/vehicles.repository'
 import { SkuCountersRepository } from 'src/repository/sku-counters/sku-counters.repository';
 import { VehicleBrandsRepository } from 'src/repository/vehicle-brands/vehicle-brands.repository';
 import { VehicleModelsRepository } from 'src/repository/vehicle-models/vehicle-models.repository';
-import path from 'path';
-import { platform } from 'os';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
+import { getPagination } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class ProductsService {
@@ -293,7 +294,6 @@ export class ProductsService {
       if (!isUpdated) {
         throw new BusinessException('4040', 'Failed to update product');
       }
-
     } catch (error) {
       console.error(
         `Error updating product: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -301,4 +301,40 @@ export class ProductsService {
       throw error;
     }
   }
+
+  async getListProducts(dto: getProductListDto, pagination: PaginationQuery) {
+
+    const { page, limit, skip } = getPagination(pagination);
+      const getProducts = await this.productsRepository.getListProducts(dto, { page, limit, skip });
+      return {
+        page: getProducts.page,
+        limit: getProducts.limit,
+        total: getProducts.total,
+        totalPages: getProducts.totalPages,
+        products: getProducts.data,
+      }; 
+
+    } catch (error) {
+      console.error(
+        `Error getting list products: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      throw error;
+    }
+
+  async getProductDetail(sku: string) {
+    try {
+      const getProduct = await this.productsRepository.getProductBySku(sku);
+      if (!getProduct) {
+        throw new BusinessException('4040', 'Product not found');
+      }
+      return getProduct;
+    } catch (error) {
+      console.error(
+        `Error getting product detail: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      throw error;
+    }
+  }
 }
+
+

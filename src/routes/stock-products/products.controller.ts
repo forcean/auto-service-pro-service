@@ -19,9 +19,16 @@ import {
   ResponseMessage,
   ResponseResultCode,
 } from 'src/common/response/response.decorator';
-import { createProductDto, getProductCategoriesDto, updateProductDto } from './products.dto';
+import {
+  createProductDto,
+  getProductCategoriesDto,
+  getProductListDto,
+  updateProductDto,
+} from './products.dto';
 import type { Request } from 'express';
 import { BusinessException } from 'src/common/exceptions/business.exception';
+import { getUserQueryParamsDto } from '../user-management/user-manage.dto';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -157,5 +164,39 @@ export class ProductsController {
     }
 
     await this.productsService.updateProductBySku(sku, updateData, authUser);
+  }
+
+  @Get('listProducts')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:list-products')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get list products successful')
+  async getProducts(
+    @Query() dto: getProductListDto,
+    @Req() { authUser }: Request,
+    @Query() pagination: PaginationQuery,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return await this.productsService.getListProducts(dto, pagination);
+  }
+
+  @Get(':sku/detail')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:product-detail')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get product detail successful')
+  async getProductDetail(
+    @Param('sku') sku: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+    return await this.productsService.getProductDetail(sku);
   }
 }

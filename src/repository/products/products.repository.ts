@@ -4,6 +4,7 @@ import { ProductsEntity } from './products.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   createProductDto,
+  getProductListDto,
   updateProductDto,
 } from 'src/routes/stock-products/products.dto';
 import { AuthUser } from 'src/types/user.type';
@@ -64,5 +65,27 @@ export class ProductsRepository {
         },
       },
     );
+  }
+
+  async getListProducts(
+    param: getProductListDto,
+    pagination: { page: number; limit: number; skip: number },
+  ) {
+    const [data, total] = await Promise.all([
+      this.productsEntity
+        .find(param)
+        .skip(pagination.skip)
+        .limit(pagination.limit)
+        .lean(),
+      this.productsEntity.countDocuments(param),
+    ]);
+
+    return {
+      page: pagination.page,
+      limit: pagination.limit,
+      total,
+      totalPages: Math.ceil(total / pagination.limit),
+      data,
+    };
   }
 }

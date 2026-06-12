@@ -213,3 +213,31 @@ export class updateProductDto {
   @IsIn(['active', 'inactive', 'out_of_stock', 'discontinued'])
   status?: string;
 }
+
+export class getProductListDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  sku?: string;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  brandId?: string;
+  
+  @IsString()
+  @IsOptional()
+  @IsIn(['active', 'inactive', 'out_of_stock', 'discontinued'])
+  status?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  isStocked?: boolean;
+}

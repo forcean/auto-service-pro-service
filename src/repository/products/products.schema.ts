@@ -117,6 +117,9 @@ export class ProductsEntity {
   @Prop({ type: Date })
   updatedDt!: Date;
 
+  @Prop({ type: Boolean })
+  isStocked!: boolean;
+
 }
 
 export const ProductsSchema = SchemaFactory.createForClass(ProductsEntity);
