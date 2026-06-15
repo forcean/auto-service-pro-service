@@ -71,13 +71,23 @@ export class ProductsRepository {
     param: getProductListDto,
     pagination: { page: number; limit: number; skip: number },
   ) {
+    const filter = {
+      ...(param.name && {
+        name: { $regex: param.name, $options: 'i' },
+      }),
+      ...(param.sku && { sku: { $regex: param.sku, $options: 'i' } }),
+      ...(param.categoryId && { categoryId: param.categoryId }),
+      ...(param.brandId && { brandId: param.brandId }),
+      ...(param.status && { status: param.status }),
+      ...(param.isStocked !== undefined && { isStocked: param.isStocked }),
+    };
     const [data, total] = await Promise.all([
       this.productsEntity
-        .find(param)
+        .find(filter)
         .skip(pagination.skip)
         .limit(pagination.limit)
         .lean(),
-      this.productsEntity.countDocuments(param),
+      this.productsEntity.countDocuments(filter),
     ]);
 
     return {
