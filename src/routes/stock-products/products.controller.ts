@@ -47,8 +47,27 @@ export class ProductsController {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-
+    
     await this.productsService.createProduct(createProductDto, authUser);
+  }
+
+  @Post(':skuId/delete')
+  @UseGuards(PermissionsGuard)
+  @Permissions('delete:product')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Delete product successful')
+  async deleteProduct(
+    @Param('skuId') skuId: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+    await this.productsService.deleteProduct(skuId,authUser);
+    // return {
+    //   message: 'Delete product successful',
+    // };
   }
 
   @Get('categories')

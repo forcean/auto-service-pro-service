@@ -98,4 +98,30 @@ export class ProductsRepository {
       data,
     };
   }
+  
+  async deleteProductBySku(
+  sku: string,
+  authUser: AuthUser,
+): Promise<boolean> {
+  try {
+    const result = await this.productsEntity.updateOne(
+      {
+        sku,
+        isDeleted: { $ne: true },
+      },
+      {
+        $set: {
+          isDeleted: true,
+          deletedDt: new Date(),
+          deletedBy: authUser.publicId,
+        },
+      },
+    );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Error deleting product', error);
+    return false;
+  }
+}
 }

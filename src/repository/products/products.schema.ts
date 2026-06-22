@@ -120,6 +120,12 @@ export class ProductsEntity {
   @Prop({ type: Boolean })
   isStocked!: boolean;
 
+  @Prop({ type: Date })
+  deletedDt?: Date;
+
+  @Prop({ type: String })
+  deletedBy?: string;
+
 }
 
 export const ProductsSchema = SchemaFactory.createForClass(ProductsEntity);
