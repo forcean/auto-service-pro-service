@@ -6,7 +6,7 @@ import {
   createProductDto,
   getProductListDto,
   updateProductDto,
-} from 'src/routes/stock-products/products.dto';
+} from 'src/routes/products/products.dto';
 import { AuthUser } from 'src/types/user.type';
 
 @Injectable()
@@ -98,7 +98,7 @@ export class ProductsRepository {
       data,
     };
   }
-  
+
   async deleteProductBySku(
   sku: string,
   authUser: AuthUser,
