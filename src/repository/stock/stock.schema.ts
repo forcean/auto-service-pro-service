@@ -1,5 +1,12 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import {
+  Prop,
+  Schema,
+  SchemaFactory,
+} from '@nestjs/mongoose';
+import {
+  HydratedDocument,
+  Types,
+} from 'mongoose';
 
 export type StockDocument =
   HydratedDocument<StockEntity>;
@@ -16,7 +23,6 @@ export class StockEntity {
     type: Types.ObjectId,
     ref: 'Product',
     required: true,
-    index: true,
   })
   productId!: Types.ObjectId;
 
@@ -29,19 +35,13 @@ export class StockEntity {
     required: true,
     uppercase: true,
     trim: true,
-    index: true,
   })
   sku!: string;
 
-  /**
-   * Future Multi Warehouse Support
-   * ตอนนี้ยังไม่ใช้จริง
-   */
   @Prop({
     type: Types.ObjectId,
     ref: 'Warehouse',
     default: null,
-    index: true,
   })
   warehouseId?: Types.ObjectId | null;
 
@@ -78,13 +78,9 @@ export class StockEntity {
   })
   minStock!: number;
 
-  /**
-   * Soft Delete
-   */
   @Prop({
     type: Boolean,
     default: false,
-    index: true,
   })
   isDeleted!: boolean;
 
@@ -120,9 +116,9 @@ StockSchema.index({
 });
 
 StockSchema.index({
-  isDeleted: 1,
+  warehouseId: 1,
 });
 
 StockSchema.index({
-  warehouseId: 1,
+  isDeleted: 1,
 });

@@ -44,6 +44,14 @@ import {
 import { VehicleModelsRepository } from './vehicle-models/vehicle-models.repository';
 import { CustomersVehicleRepository } from './customers-vehicle/customers-vehicle.repository';
 import { CustomersVehicleEntity, CustomersVehicleSchema } from './customers-vehicle/customers-vehicle.schema';
+import { StockEntity, StockSchema } from './stock/stock.schema';
+import {
+  StockMovementEntity,
+  StockMovementSchema,
+} from './stock-movement/stock-movement.schema';
+import { StockMovementRepository } from './stock-movement/stock-movement.repository';
+import { StocksRepository } from './stock/stock.repository';
+
 // const reposytories = [UsersRepository];
 // const entities = [
 //   { entity: UsersEntity, schema: UsersSchema, connection: "autoservice" }
@@ -80,6 +88,8 @@ import { CustomersVehicleEntity, CustomersVehicleSchema } from './customers-vehi
           name: CustomersVehicleEntity.name,
           schema: CustomersVehicleSchema,
         },
+        { name: StockEntity.name, schema: StockSchema },
+        { name: StockMovementEntity.name, schema: StockMovementSchema },
       ],
       'autoservice',
     ),
@@ -97,6 +107,8 @@ import { CustomersVehicleEntity, CustomersVehicleSchema } from './customers-vehi
     VehicleBrandsRepository,
     VehicleModelsRepository,
     CustomersVehicleRepository,
+    StocksRepository,
+    StockMovementRepository,
   ],
   exports: [
     UsersRepository,
@@ -111,6 +123,8 @@ import { CustomersVehicleEntity, CustomersVehicleSchema } from './customers-vehi
     VehicleBrandsRepository,
     VehicleModelsRepository,
     CustomersVehicleRepository,
+    StocksRepository,
+    StockMovementRepository,
   ],
 })
 export class RepositoryModule {}

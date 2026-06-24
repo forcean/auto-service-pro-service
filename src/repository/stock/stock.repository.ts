@@ -4,7 +4,9 @@ import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 
 import { AuthUser } from 'src/types/user.type';
 import { StockEntity } from './stock.schema';
-import { createStockDto } from 'src/routes/stock-management/dtos/stock-management.dto';
+import { CreateStockDto } from 'src/routes/stock-management/dtos/stock-management.dto';
+import { IStockManagementResponse } from 'src/routes/stock-management/interfaces/stock-management.interface';
+import { mapMongoId } from 'src/common/helper/mongo.helper';
 
 @Injectable()
 export class StocksRepository {
@@ -18,7 +20,7 @@ export class StocksRepository {
   }
 
   async createStock(
-    payload: createStockDto,
+    payload: CreateStockDto,
     authUser: AuthUser,
   ): Promise<StockEntity> {
     const stock = new this.stockModel({
@@ -50,24 +52,38 @@ export class StocksRepository {
       .exec();
   }
 
-  async getByProductId(productId: string): Promise<StockEntity | null> {
-    return this.stockModel
+  async getByProductId(
+    productId: string,
+  ): Promise<IStockManagementResponse | null> {
+    const stock = await this.stockModel
       .findOne({
-        productId,
-        isDeleted: { $ne: true },
+        productId: new Types.ObjectId(productId),
+        isDeleted: {
+          $ne: true,
+        },
       })
       .lean()
       .exec();
+
+    if (!stock) {
+      return null;
+    }
+
+    return mapMongoId(stock);
   }
 
-  async getBySku(sku: string): Promise<StockEntity | null> {
-    return this.stockModel
+  async getBySku(sku: string): Promise<IStockManagementResponse | null> {
+    const stock = await this.stockModel
       .findOne({
         sku,
         isDeleted: { $ne: true },
       })
       .lean()
       .exec();
+    if (!stock) {
+      return null;
+    }
+    return mapMongoId(stock);
   }
 
   async existsByProductId(productId: string): Promise<boolean> {

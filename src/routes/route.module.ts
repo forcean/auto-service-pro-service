@@ -9,7 +9,7 @@ import { StockManagementModule } from './stock-management/stock-management.modul
 
 @Module({
   imports: [AuthModule, MenuModule, UserManageModule, ProductsModule, StockManagementModule],
-  providers: [StockManagementService],
-  controllers: [StockManagementController],
+  providers: [],
+  controllers: [],
 })
 export class RouteModule { }

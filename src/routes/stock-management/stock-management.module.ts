@@ -7,5 +7,6 @@ import { StockManagementService } from './stock-management.service';
   imports: [RepositoryModule],
   controllers: [StockManagementController],
   providers: [StockManagementService],
+  exports:[StockManagementService]
 })
 export class StockManagementModule {}

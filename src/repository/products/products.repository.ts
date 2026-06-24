@@ -8,6 +8,8 @@ import {
   updateProductDto,
 } from 'src/routes/products/products.dto';
 import { AuthUser } from 'src/types/user.type';
+import { IProduct } from 'src/routes/products/interfaces/products.interface';
+import { mapMongoId } from 'src/common/helper/mongo.helper';
 
 @Injectable()
 export class ProductsRepository {
@@ -16,9 +18,13 @@ export class ProductsRepository {
     private readonly productsEntity: Model<ProductsEntity>,
   ) {}
 
-  async getProductBySku(sku: string) {
-    const query: FilterQuery<ProductsEntity> = { sku: sku };
-    return await this.productsEntity.findOne(query);
+  async getProductBySku(sku: string): Promise<IProduct | null> {
+    const product = await this.productsEntity.findOne({ sku }).lean().exec();
+
+    if (!product) {
+      return null;
+    }
+    return mapMongoId(product);
   }
 
   async createProduct(
@@ -99,29 +105,26 @@ export class ProductsRepository {
     };
   }
 
-  async deleteProductBySku(
-  sku: string,
-  authUser: AuthUser,
-): Promise<boolean> {
-  try {
-    const result = await this.productsEntity.updateOne(
-      {
-        sku,
-        isDeleted: { $ne: true },
-      },
-      {
-        $set: {
-          isDeleted: true,
-          deletedDt: new Date(),
-          deletedBy: authUser.publicId,
+  async deleteProductBySku(sku: string, authUser: AuthUser): Promise<boolean> {
+    try {
+      const result = await this.productsEntity.updateOne(
+        {
+          sku,
+          isDeleted: { $ne: true },
         },
-      },
-    );
+        {
+          $set: {
+            isDeleted: true,
+            deletedDt: new Date(),
+            deletedBy: authUser.publicId,
+          },
+        },
+      );
 
-    return result.modifiedCount > 0;
-  } catch (error) {
-    console.error('Error deleting product', error);
-    return false;
+      return result.modifiedCount > 0;
+    } catch (error) {
+      console.error('Error deleting product', error);
+      return false;
+    }
   }
-}
 }

@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { EStockMovementType } from '../enums/stock.enum';
 
-export class createStockDto {
+export class CreateStockDto {
   @IsMongoId()
   @IsNotEmpty()
   productId!: string;
@@ -36,7 +36,7 @@ export class createStockDto {
   minStock?: number;
 }
 
-export class updateStockDto {
+export class UpdateStockDto {
   @IsOptional()
   @IsInt()
   @Min(0)

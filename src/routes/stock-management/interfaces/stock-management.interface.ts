@@ -1,13 +1,16 @@
+import { Types } from "mongoose";
+import { EStockStatus } from "../enums/stock.enum";
+
 export interface IStockManagementResponse {
   id: string;
-  productId: string;
+  productId: Types.ObjectId |string;
   sku: string;
-  warehouseId?: string | null;
+  warehouseId?: Types.ObjectId |string | null;
   quantity: number;
   reserved: number;
-  available: number;
+  available?: number;
   minStock: number;
-  status: 'normal' | 'low' | 'out';
+  status?: EStockStatus;
   createdAt?: Date;
   updatedAt?: Date;
   createdBy?: string;

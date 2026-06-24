@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ProductStatus } from 'src/routes/products/interfaces/products.interface';
 import { ObjectId as String } from 'typeorm';
 
 export class Vehicles {
@@ -99,8 +100,11 @@ export class ProductsEntity {
   @Prop({ type: [Media], _id: false, default: [] })
   media?: Media[];
 
-  @Prop({ type: String })
-  status!: string;
+  @Prop({ 
+    type: String ,
+    enum: ProductStatus
+  })
+  status!: ProductStatus;
 
   @Prop({ type: Boolean })
   isDeleted!: boolean;
