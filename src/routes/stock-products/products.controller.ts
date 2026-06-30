@@ -142,31 +142,6 @@ export class ProductsController {
     );
   }
 
-  @Get('vehicles/:brandCode/:modelCode/:generation')
-  @UseGuards(PermissionsGuard)
-  @Permissions()
-  @UseInterceptors(ResponseInterceptor)
-  @ResponseResultCode('2000')
-  @ResponseMessage('Get product vehicles successful')
-  async getVehicles(
-    @Query('isActive') isActive: boolean,
-    @Param('brandCode') brandCode: string,
-    @Param('modelCode') modelCode: string,
-    @Param('generation') generation: string,
-    @Req() { authUser }: Request,
-  ) {
-    if (!authUser) {
-      throw new BusinessException('4013', 'No auth user found');
-    }
-
-    return await this.productsService.getVehicles(
-      brandCode,
-      modelCode,
-      generation,
-      isActive,
-    );
-  }
-
   @Patch('update/:sku')
   @UseGuards(PermissionsGuard)
   @Permissions('update:product')

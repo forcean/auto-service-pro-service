@@ -1,9 +1,8 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import 'dotenv/config';
 import { HttpExceptionFilter } from './common/exceptions/http-exception.filter';
-import { ResponseInterceptor } from './common/response/response.interceptor';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {

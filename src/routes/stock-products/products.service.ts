@@ -124,7 +124,7 @@ export class ProductsService {
         throw new BusinessException('4012', 'Failed to delete product');
       }
     } catch (error) {
-      console.error(`Error deleting product: ${error.message}`);
+      console.error(`Error deleting product: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
@@ -217,49 +217,6 @@ export class ProductsService {
     } catch (error) {
       console.error(
         `Error getting product vehicles by brand: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-      throw error;
-    }
-  }
-
-  async getVehicles(
-    brand: string,
-    model: string,
-    generation: string,
-    isActive?: boolean,
-  ) {
-    try {
-      const getVehicles = await this.vehiclesRepository.getVehicles(
-        brand,
-        model,
-        generation,
-        isActive,
-      );
-
-      if (!getVehicles) {
-        throw new BusinessException('4042', 'No product vehicles found');
-      }
-      return {
-        vehicles: getVehicles.map((data) => ({
-          id: data._id,
-          brand: data.brand,
-          brandCode: data.brandCode,
-          model: data.model,
-          modelCode: data.modelCode,
-          generation: data.generation,
-          platform: data.platform,
-          yearFrom: data.yearFrom,
-          yearTo: data.yearTo,
-          engines: data.engines.map((engine) => ({
-            code: engine.code,
-            fuel: engine.fuel,
-          })),
-          isActive: data.isActive,
-        })),
-      };
-    } catch (error) {
-      console.error(
-        `Error getting product vehicles: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw error;
     }
