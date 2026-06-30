@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { EStockStatus } from "../enums/stock.enum";
 
 export interface IStockManagementResponse {
-  id: string;
+  id: string | Types.ObjectId;
   productId: Types.ObjectId |string;
   sku: string;
   warehouseId?: Types.ObjectId |string | null;

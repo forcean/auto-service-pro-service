@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   createProductDto,
+  stockRequestDto,
   getProductCategoriesDto,
   getProductListDto,
   updateProductDto,
@@ -18,6 +19,8 @@ import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { getPagination } from 'src/common/utils/pagination.util';
 import { IProductDetailResponse } from './interfaces/products.interface';
 import { StockManagementService } from '../stock-management/stock-management.service';
+import { CreateStockDto } from '../stock-management/dtos/stock-management.dto';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class ProductsService {
@@ -41,7 +44,9 @@ export class ProductsService {
   ) {}
 
   async createProduct(dto: createProductDto, authUser: AuthUser) {
+    const session = await this.productsRepository.startSession();
     try {
+      session.startTransaction();
       if (authUser.role !== 'ADM' && authUser.role !== 'SO') {
         throw new BusinessException(
           '4030',
@@ -97,16 +102,34 @@ export class ProductsService {
         sku,
         dto,
         authUser,
+        session,
       );
 
       if (!createProduct) {
         throw new BusinessException('4012', 'Failed to create product');
       }
+
+      if (dto.stockInfo) {
+        const res = this.buildCreateStock(dto.stockInfo, createProduct.id, sku);
+        const stocked = await this.stockManagementService.createStock(
+          res,
+          authUser,
+          session,
+        );
+        if (!stocked) {
+          throw new BusinessException('4012', 'Failed to create stock');
+        }
+      }
+      await session.commitTransaction();
+      return createProduct;
     } catch (error) {
+      await session.abortTransaction();
       console.error(
         `Error creating product: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw error;
+    } finally {
+      await session.endSession();
     }
   }
 
@@ -314,20 +337,27 @@ export class ProductsService {
     throw error;
   }
 
-  async getProductDetail(sku: string , productId?: string): Promise<IProductDetailResponse>{
+  async getProductDetail(sku: string): Promise<IProductDetailResponse> {
     try {
       const product = await this.productsRepository.getProductBySku(sku);
 
       if (!product) {
         throw new BusinessException('4040', 'Product not found');
       }
-      const stock = await this.stockManagementService.getStockDetail(product.id)
+      const stock = await this.stockManagementService.getStockDetail(
+        product.id,
+      );
 
       return {
         product: {
           ...product,
         },
-        stockInfo: stock,
+        stockInfo: stock
+          ? {
+              ...stock,
+              id: stock.id?.toString(),
+            }
+          : null,
       };
     } catch (error) {
       console.error(
@@ -338,5 +368,20 @@ export class ProductsService {
 
       throw error;
     }
+  }
+
+  private buildCreateStock(
+    request: stockRequestDto,
+    productId: string,
+    sku: string,
+  ): CreateStockDto {
+    return {
+      productId,
+      sku,
+      warehouseId: undefined,
+      quantity: request.quantity,
+      reserved: request.reserved,
+      minStock: request.minStock,
+    };
   }
 }

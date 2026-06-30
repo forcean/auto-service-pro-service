@@ -1,6 +1,5 @@
 import { IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
 import { Type } from "class-transformer"
-
 export class EngineDto {
   @IsString()
   @IsNotEmpty()
@@ -94,6 +93,24 @@ export class mediaDto {
   @IsNotEmpty()
   isPrimary!: boolean;
 }
+
+export class stockRequestDto{
+    @IsInt()
+    @IsNotEmpty()
+    @Min(0)
+    quantity!: number;
+  
+    @IsOptional()
+    @IsInt()
+    @Min(0)
+    reserved?: number;
+  
+    @IsOptional()
+    @IsInt()
+    @Min(0)
+    minStock?: number;
+  }
+
 export class createProductDto {
   @IsString()
   @IsNotEmpty()
@@ -147,6 +164,12 @@ export class createProductDto {
   @IsNotEmpty()
   @IsIn(['active', 'inactive', 'out_of_stock', 'discontinued'])
   status!: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => stockRequestDto)
+  stockInfo?: stockRequestDto;
+
 }
 
 export class getProductCategoriesDto {

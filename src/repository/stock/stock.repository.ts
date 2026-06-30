@@ -4,7 +4,10 @@ import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 
 import { AuthUser } from 'src/types/user.type';
 import { StockEntity } from './stock.schema';
-import { CreateStockDto } from 'src/routes/stock-management/dtos/stock-management.dto';
+import {
+  CreateStockDto,
+  UpdateStockDto,
+} from 'src/routes/stock-management/dtos/stock-management.dto';
 import { IStockManagementResponse } from 'src/routes/stock-management/interfaces/stock-management.interface';
 import { mapMongoId } from 'src/common/helper/mongo.helper';
 
@@ -22,24 +25,24 @@ export class StocksRepository {
   async createStock(
     payload: CreateStockDto,
     authUser: AuthUser,
+    session?: ClientSession,
   ): Promise<StockEntity> {
     const stock = new this.stockModel({
+      ...payload,
       productId: new Types.ObjectId(payload.productId),
-
       warehouseId: payload.warehouseId
         ? new Types.ObjectId(payload.warehouseId)
         : null,
-
       createdBy: authUser.publicId,
       createdDt: new Date(),
-
       updatedBy: authUser.publicId,
       updatedDt: new Date(),
-
       isDeleted: false,
     });
 
-    return stock.save();
+    return stock.save({
+      session,
+    });
   }
 
   async getById(id: string): Promise<StockEntity | null> {
@@ -135,13 +138,13 @@ export class StocksRepository {
 
   async updateByProductId(
     productId: string,
-    updateData: Partial<StockEntity>,
+    updateData: UpdateStockDto,
     authUser: AuthUser,
     session?: ClientSession,
   ): Promise<boolean> {
     const result = await this.stockModel.updateOne(
       {
-        productId,
+        productId: new Types.ObjectId(productId),
         isDeleted: {
           $ne: true,
         },
@@ -167,10 +170,8 @@ export class StocksRepository {
   ): Promise<boolean> {
     const result = await this.stockModel.updateOne(
       {
-        productId,
-        isDeleted: {
-          $ne: true,
-        },
+        productId: new Types.ObjectId(productId),
+        isDeleted: { $ne: true },
       },
       {
         $inc: {
@@ -195,7 +196,7 @@ export class StocksRepository {
   ): Promise<boolean> {
     const result = await this.stockModel.updateOne(
       {
-        productId,
+        productId: new Types.ObjectId(productId),
         quantity: {
           $gte: quantity,
         },
@@ -227,7 +228,7 @@ export class StocksRepository {
   ): Promise<boolean> {
     const result = await this.stockModel.updateOne(
       {
-        productId,
+        productId: new Types.ObjectId(productId),
         isDeleted: {
           $ne: true,
         },
@@ -255,7 +256,7 @@ export class StocksRepository {
   ): Promise<boolean> {
     const result = await this.stockModel.updateOne(
       {
-        productId,
+        productId: new Types.ObjectId(productId),
         reserved: {
           $gte: quantity,
         },
@@ -281,7 +282,7 @@ export class StocksRepository {
   async softDelete(productId: string, authUser: AuthUser): Promise<boolean> {
     const result = await this.stockModel.updateOne(
       {
-        productId,
+        productId: new Types.ObjectId(productId),
         isDeleted: {
           $ne: true,
         },
@@ -303,7 +304,7 @@ export class StocksRepository {
   async restore(productId: string, authUser: AuthUser): Promise<boolean> {
     const result = await this.stockModel.updateOne(
       {
-        productId,
+        productId: new Types.ObjectId(productId),
         isDeleted: true,
       },
       {

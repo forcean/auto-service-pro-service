@@ -1,15 +1,15 @@
-import { Type } from "@nestjs/common";
-import { Types } from "mongoose";
-import { EStockStatus } from "src/routes/stock-management/enums/stock.enum";
+import { Type } from '@nestjs/common';
+import { Types } from 'mongoose';
+import { EStockStatus } from 'src/routes/stock-management/enums/stock.enum';
 
-export enum ProductStatus {
+export enum EProductStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
   OUT_OF_STOCK = 'out_of_stock',
   DISCONTINUED = 'discontinued',
 }
 
-export enum StockMovementType {
+export enum EStockMovementType {
   RECEIVE = 'RECEIVE',
   ISSUE = 'ISSUE',
   ADJUST = 'ADJUST',
@@ -62,7 +62,7 @@ export interface IProduct {
   price?: IPrice;
   spec?: ISpec;
   media?: IMedia[];
-  status: ProductStatus;
+  status: EProductStatus;
   isDeleted: boolean;
   isStocked: boolean;
   createdBy: string;
@@ -74,27 +74,27 @@ export interface IProduct {
 }
 
 export interface IStockInfo {
-    id: string;
-    productId: Types.ObjectId |string;
-    sku: string;
-    warehouseId?: Types.ObjectId |string | null;
-    quantity: number;
-    reserved: number;
-    available?: number;
-    minStock: number;
-    status?: EStockStatus;
-    createdAt?: Date;
-    updatedAt?: Date;
-    createdBy?: string;
-    updatedBy?: string;
-    isDeleted?: boolean;
+  id: string;
+  productId: Types.ObjectId | string;
+  sku: string;
+  warehouseId?: Types.ObjectId | string | null;
+  quantity: number;
+  reserved: number;
+  available?: number;
+  minStock: number;
+  status?: EStockStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+  createdBy?: string;
+  updatedBy?: string;
+  isDeleted?: boolean;
 }
 
 export interface IStockMovement {
   id: string;
   productId: Types.ObjectId | string;
   sku: string;
-  movementType: StockMovementType;
+  movementType: EStockMovementType;
   quantity: number;
   beforeQty: number;
   afterQty: number;
@@ -111,7 +111,7 @@ export interface IProductStockSummary {
 
 export interface IProductDetailResponse {
   product: IProduct;
-  stockInfo: IStockInfo | null ;
+  stockInfo: IStockInfo | null;
   stockSummary?: IProductStockSummary;
   recentMovements?: IStockMovement[];
 }
@@ -127,7 +127,7 @@ export interface IReqCreateProduct {
   price?: IPrice;
   spec?: ISpec;
   media?: IMedia[];
-  status: ProductStatus;
+  status: EProductStatus;
   isStocked?: boolean;
 }
 
@@ -141,6 +141,28 @@ export interface IReqUpdateProduct {
   price?: IPrice;
   spec?: ISpec;
   media?: IMedia[];
-  status?: ProductStatus;
+  status?: EProductStatus;
   isStocked?: boolean;
+}
+export interface ICreateProductResponse {
+  id: string;
+  sku: string;
+  name: string;
+  description?: string;
+  categoryId: string;
+  categoryPath: string[];
+  brandId: string;
+  vehicles?: IVehicle[];
+  price?: IPrice;
+  spec?: ISpec;
+  media?: IMedia[];
+  status: EProductStatus;
+  isDeleted: boolean;
+  createdBy: string;
+  createdDt: Date;
+  updatedBy: string;
+  updatedDt: Date;
+  isStocked: boolean;
+  deletedDt?: Date;
+  deletedBy?: string;
 }

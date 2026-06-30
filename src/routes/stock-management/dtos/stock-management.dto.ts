@@ -5,8 +5,9 @@ import {
   IsOptional,
   IsString,
   Min,
+  IsEnum,
 } from 'class-validator';
-import { EStockMovementType } from '../enums/stock.enum';
+import { EStockMovementType, EStockReferenceType } from '../enums/stock.enum';
 
 export class CreateStockDto {
   @IsMongoId()
@@ -54,20 +55,18 @@ export class UpdateStockDto {
 }
 
 export class ReceiveStockDto {
-  @IsMongoId()
-  productId!: string;
 
   @IsInt()
   @Min(1)
   quantity!: number;
 
   @IsOptional()
-  @IsString()
-  referenceType?: string;
+  @IsEnum(EStockReferenceType)
+  referenceType?: EStockReferenceType; //ประเภทของเหตุการณ์หรือเอกสารต้นทาง
 
   @IsOptional()
   @IsString()
-  referenceId?: string;
+  referenceId?: string; //ID ของเอกสารต้นทาง
 
   @IsOptional()
   @IsString()
@@ -75,9 +74,6 @@ export class ReceiveStockDto {
 }
 
 export class IssueStockDto {
-  @IsMongoId()
-  productId!: string;
-
   @IsInt()
   @Min(1)
   quantity!: number;
@@ -96,30 +92,63 @@ export class IssueStockDto {
 }
 
 export class ReserveStockDto {
-  @IsMongoId()
-  productId!: string;
-
   @IsInt()
   @Min(1)
   quantity!: number;
 }
 
 export class ReleaseReservationDto {
-  @IsMongoId()
-  productId!: string;
-
   @IsInt()
   @Min(1)
   quantity!: number;
+
+  @IsOptional()
+  @IsString()
+  referenceType?: string;
+
+  @IsOptional()
+  @IsString()
+  referenceId?: string;
+
+  @IsOptional()
+  @IsString()
+  remark?: string;
+}
+
+export class ReturnStockDto {
+  @IsInt()
+  @Min(1)
+  quantity!: number;
+
+  @IsOptional()
+  @IsString()
+  referenceType?: string;
+
+  @IsOptional()
+  @IsString()
+  referenceId?: string;
+
+  @IsOptional()
+  @IsString()
+  remark?: string;
 }
 
 export class AdjustStockDto {
-  @IsMongoId()
-  productId!: string;
-
   @IsInt()
   @Min(0)
   actualQuantity!: number;
+
+  @IsOptional()
+  @IsString()
+  referenceType?: string;
+
+  @IsOptional()
+  @IsString()
+  referenceId?: string;
+
+  @IsOptional()
+  @IsString()
+  remark?: string;
 }
 
 export class CreateStockMovementDto {
@@ -134,4 +163,24 @@ export class CreateStockMovementDto {
   referenceId?: string;
 
   remark?: string;
+}
+
+export class getMovementListDto {
+  @IsOptional()
+  @IsString()
+  productId?: string;
+
+  @IsOptional()
+  @IsString()
+  sku?: string;
+  
+  @IsString()
+  @IsOptional()
+  @IsEnum(EStockMovementType)
+  movementType?: string;
+
+ @IsString()
+  @IsOptional()
+  @IsEnum(EStockReferenceType)
+  referenceType?: string;
 }

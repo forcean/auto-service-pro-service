@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { ProductStatus } from 'src/routes/products/interfaces/products.interface';
+import { EProductStatus } from 'src/routes/products/interfaces/products.interface';
 import { ObjectId as String } from 'typeorm';
 
 export class Vehicles {
@@ -102,9 +102,9 @@ export class ProductsEntity {
 
   @Prop({ 
     type: String ,
-    enum: ProductStatus
+    enum: EProductStatus
   })
-  status!: ProductStatus;
+  status!: EProductStatus;
 
   @Prop({ type: Boolean })
   isDeleted!: boolean;
