@@ -1,16 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { FilterQuery, Model } from 'mongoose';
-import { getUserQueryParamsDto, registerDto, updateUserDto } from '../../routes/user-management/dtos/user-manage.dto';
+import {
+  getUserQueryParamsDto,
+  registerDto,
+  updateUserDto,
+} from '../../routes/user-management/dtos/user-manage.dto';
 import { UsersEntity } from './users.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 
 @Injectable()
 export class UsersRepository {
-
   constructor(
-    @InjectModel(UsersEntity.name, 'autoservice') private readonly usersEntity: Model<UsersEntity>,
-  ) { }
+    @InjectModel(UsersEntity.name, 'autoservice')
+    private readonly usersEntity: Model<UsersEntity>,
+  ) {}
 
   async getUserByPublicId(publicId: string) {
     const query: FilterQuery<UsersEntity> = { publicId: publicId };
@@ -40,7 +44,12 @@ export class UsersRepository {
   //   }
   // }
 
-  async createUser(userData: registerDto, hashedPassword: string, publicIdCreator: string, permissions: string[]): Promise<boolean> {
+  async createUser(
+    userData: registerDto,
+    hashedPassword: string,
+    publicIdCreator: string,
+    permissions: string[],
+  ): Promise<boolean> {
     try {
       await this.usersEntity.create({
         publicId: userData.publicId,
@@ -62,7 +71,11 @@ export class UsersRepository {
     }
   }
 
-  async createUserSysOwner(userData: registerDto, hashedPassword: string, permissions: string[]): Promise<boolean> {
+  async createUserSysOwner(
+    userData: registerDto,
+    hashedPassword: string,
+    permissions: string[],
+  ): Promise<boolean> {
     try {
       await this.usersEntity.create({
         publicId: userData.publicId,
@@ -84,12 +97,15 @@ export class UsersRepository {
 
   async delUserById(userId: string): Promise<boolean> {
     const delUser = await this.usersEntity.deleteOne({
-      _id: userId
+      _id: { $eq: userId },
     });
     return delUser.deletedCount > 0;
   }
 
-  async getUsersWithPaginated(query: getUserQueryParamsDto, pagination: { page: number; limit: number; skip: number }) {
+  async getUsersWithPaginated(
+    query: getUserQueryParamsDto,
+    pagination: { page: number; limit: number; skip: number },
+  ) {
     const { page, limit, skip } = pagination;
     const params: FilterQuery<UsersEntity> = {};
     if (query.managerId) {
@@ -118,9 +134,13 @@ export class UsersRepository {
     };
   }
 
-  async updateUserByUserId(data: updateUserDto, updateBy: string, userId: string) {
+  async updateUserByUserId(
+    data: updateUserDto,
+    updateBy: string,
+    userId: string,
+  ) {
     const updateResult = await this.usersEntity.updateOne(
-      { _id: userId },
+      { _id: { $eq: userId } },
       {
         $set: {
           ...data,
@@ -134,14 +154,14 @@ export class UsersRepository {
 
   async getUserById(userId: string) {
     const query: FilterQuery<UsersEntity> = {
-      _id: userId
+      _id: { $eq: userId },
     };
     return await this.usersEntity.findOne(query);
   }
 
   async resetPassword(password: string, updateBy: string, id: string) {
     const updateResult = await this.usersEntity.updateOne(
-      { _id: id },
+      { _id: { $eq: id } },
       {
         $set: {
           credentialId: password,
