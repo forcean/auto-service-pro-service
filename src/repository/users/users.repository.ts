@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FilterQuery, Model } from 'mongoose';
-import { getUserQueryParamsDto, registerDto, updateUserDto } from '../../routes/user-management/user-manage.dto';
+import { getUserQueryParamsDto, registerDto, updateUserDto } from '../../routes/user-management/dtos/user-manage.dto';
 import { UsersEntity } from './users.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Types } from 'mongoose';

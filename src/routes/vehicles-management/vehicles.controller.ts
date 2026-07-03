@@ -9,7 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { VehiclesService as VehiclesService } from './vehicles.service';
+import { VehiclesService as VehiclesService } from './services/vehicles.service';
 import { PermissionsGuard } from 'src/common/permission/permission.guard';
 import { Permissions } from 'src/common/permission/permission.decorator';
 import { ResponseInterceptor } from 'src/common/response/response.interceptor';
@@ -19,8 +19,8 @@ import {
 } from 'src/common/response/response.decorator';
 import type { Request } from 'express';
 import { BusinessException } from 'src/common/exceptions/business.exception';
-import { customerVehicleDto, vehiclesDto } from './vehicles.dto';
-import { CustomersVehicleService } from './customers-vehicle.service';
+import { customerVehicleDto, vehiclesDto } from './dtos/vehicles.dto';
+import { CustomersVehicleService } from './services/customers-vehicle.service';
 
 @Controller('vehicles')
 export class VehiclesController {

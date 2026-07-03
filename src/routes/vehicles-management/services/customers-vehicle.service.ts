@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { customerVehicleDto } from './vehicles.dto';
+import { customerVehicleDto } from '../dtos/vehicles.dto';
 import { AuthUser } from 'src/types/user.type';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { CustomersVehicleRepository } from 'src/repository/customers-vehicle/customers-vehicle.repository';

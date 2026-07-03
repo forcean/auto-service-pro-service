@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { UserRole } from 'src/common/dto/roles.enum';
+import { EUserRole } from 'src/common/dto/roles.enum';
 
 export class registerDto {
   @IsString()
@@ -28,8 +28,8 @@ export class registerDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsEnum(UserRole)
-  role!: string;
+  @IsEnum(EUserRole)
+  role!: EUserRole;
 
   @IsString()
   @IsOptional()
@@ -61,8 +61,8 @@ export class getUserQueryParamsDto {
 
   @IsString()
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: string;
+  @IsEnum(EUserRole)
+  role?: EUserRole;
 
   @IsString()
   @IsOptional()

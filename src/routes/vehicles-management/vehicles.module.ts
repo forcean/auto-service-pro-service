@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
 import { RepositoryModule } from "src/repository/repository.module";
-import { VehiclesService } from "./vehicles.service";
+import { VehiclesService } from "./services/vehicles.service";
 import { VehiclesController } from "./vehicles.controller";
-import { CustomersVehicleService } from './customers-vehicle.service';
+import { CustomersVehicleService } from './services/customers-vehicle.service';
 
 @Module({
   imports: [RepositoryModule],

@@ -1,15 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { UsersRepository } from 'src/repository/users/users.repository';
-import { registerDto, updateUserDto } from './user-manage.dto';
+import { registerDto, updateUserDto } from './dtos/user-manage.dto';
 import * as bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
-import { ConfigService } from '@nestjs/config';
 import { PoliciesRepository } from 'src/repository/permissions/policies.repository';
-import { getUserQueryParamsDto } from './user-manage.dto';
+import { getUserQueryParamsDto } from './dtos/user-manage.dto';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { getPagination } from 'src/common/utils/pagination.util';
 import { AuthUser } from 'src/types/user.type';
 import { BusinessException } from 'src/common/exceptions/business.exception';
+import { IGetUser, IGetUserWithPagination } from './interfaces/user-management.interface';
 
 @Injectable()
 export class UserManageService {
@@ -97,7 +96,7 @@ export class UserManageService {
     }
   }
 
-  async getUsersWithPagination(role: string, param: getUserQueryParamsDto, pagination: PaginationQuery) {
+  async getUsersWithPagination(role: string, param: getUserQueryParamsDto, pagination: PaginationQuery):Promise<IGetUserWithPagination> {
     try {
       if (role !== 'SO' && role !== 'ADM' && role !== 'MNG') {
         throw new BusinessException('4030', 'Only admin or manager can get user list');
@@ -158,7 +157,7 @@ export class UserManageService {
     }
   }
 
-  async getUserById(userId: string) {
+  async getUserById(userId: string): Promise<IGetUser> {
     try {
       const user = await this.usersRepository.getUserById(userId);
       if (!user) {
