@@ -1,41 +1,131 @@
-name: Notify Discord on Develop Push
+name: Notify Discord on Develop
 
 on:
   push:
     branches:
       - develop
 
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - reopened
+
 jobs:
   notify:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Send Discord Embed Notification
+      - name: Send Discord Notification
         run: |
-          COMMIT_COUNT=$(jq '.commits | length' "$GITHUB_EVENT_PATH")
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
 
-          curl -H "Content-Type: application/json" \
-          -d "{
-            \"username\": \"DEV - Notification\",
-            \"embeds\": [{
-              \"title\": \"🚀 Develop Branch Updated\",
-              \"url\": \"${COMMIT_URL}\",
-              \"color\": 3447003,
-              \"fields\": [
-                { \"name\": \"📦 Repository\", \"value\": \"${{ github.repository }}\", \"inline\": true },
-                { \"name\": \"🌿 Branch\", \"value\": \"develop\", \"inline\": true },
-                { \"name\": \"👤 Author\", \"value\": \"${{ github.actor }}\", \"inline\": true },
+            PR_URL="${{ github.event.pull_request.html_url }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+            SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
+            TARGET_BRANCH="${{ github.event.pull_request.base.ref }}"
 
-                { \"name\": \"📝 Commit Message\", \"value\": \"${{ github.event.head_commit.message }}\" },
+            curl \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"username\":\"DEV - Notification\",
+                \"embeds\":[
+                  {
+                    \"title\":\"📣 New Pull Request\",
+                    \"url\":\"${PR_URL}\",
+                    \"color\":15844367,
+                    \"fields\":[
+                      {
+                        \"name\":\"📦 Repository\",
+                        \"value\":\"${{ github.repository }}\",
+                        \"inline\":true
+                      },
+                      {
+                        \"name\":\"👤 Author\",
+                        \"value\":\"${PR_AUTHOR}\",
+                        \"inline\":true
+                      },
+                      {
+                        \"name\":\"🔀 Branch\",
+                        \"value\":\"${SOURCE_BRANCH} → ${TARGET_BRANCH}\",
+                        \"inline\":false
+                      },
+                      {
+                        \"name\":\"📝 Title\",
+                        \"value\":\"${PR_TITLE}\",
+                        \"inline\":false
+                      },
+                      {
+                        \"name\":\"#️⃣ PR\",
+                        \"value\":\"#${PR_NUMBER}\",
+                        \"inline\":true
+                      }
+                    ],
+                    \"footer\":{
+                      \"text\":\"GitHub → Discord | Pull Request\"
+                    },
+                    \"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                  }
+                ]
+              }" \
+              "${{ secrets.DISCORD_WEBHOOK }}"
 
-                { \"name\": \"🔢 Commits in Push\", \"value\": \"${COMMIT_COUNT}\", \"inline\": true },
-                { \"name\": \"🔗 Commit SHA\", \"value\": \"[\`${SHORT_SHA}\`](${COMMIT_URL})\", \"inline\": true }
-              ],
-              \"footer\": {
-                \"text\": \"GitHub → Discord | Develop Branch\"
-              },
-              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }]
-          }" \
-          ${{ secrets.DISCORD_WEBHOOK }}
+          else
+
+            COMMIT_COUNT=$(jq '.commits | length' "$GITHUB_EVENT_PATH")
+            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+            COMMIT_URL="https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+
+            curl \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"username\":\"DEV - Notification\",
+                \"embeds\":[
+                  {
+                    \"title\":\"🚀 Develop Branch Updated\",
+                    \"url\":\"${COMMIT_URL}\",
+                    \"color\":3447003,
+                    \"fields\":[
+                      {
+                        \"name\":\"📦 Repository\",
+                        \"value\":\"${{ github.repository }}\",
+                        \"inline\":true
+                      },
+                      {
+                        \"name\":\"🌿 Branch\",
+                        \"value\":\"develop\",
+                        \"inline\":true
+                      },
+                      {
+                        \"name\":\"👤 Author\",
+                        \"value\":\"${{ github.actor }}\",
+                        \"inline\":true
+                      },
+                      {
+                        \"name\":\"📝 Commit Message\",
+                        \"value\":\"${{ github.event.head_commit.message }}\"
+                      },
+                      {
+                        \"name\":\"🔢 Commits in Push\",
+                        \"value\":\"${COMMIT_COUNT}\",
+                        \"inline\":true
+                      },
+                      {
+                        \"name\":\"🔗 Commit SHA\",
+                        \"value\":\"[\`${SHORT_SHA}\`](${COMMIT_URL})\",
+                        \"inline\":true
+                      }
+                    ],
+                    \"footer\":{
+                      \"text\":\"GitHub → Discord | Develop Branch\"
+                    },
+                    \"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                  }
+                ]
+              }" \
+              "${{ secrets.DISCORD_WEBHOOK }}"
+
+          fi
