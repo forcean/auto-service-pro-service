@@ -1,29 +1,27 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LoginDto } from './auth.dto';
+import { LoginDto } from './dtos/auth.dto';
 import { UsersRepository } from 'src/repository/users/users.repository';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import { refreshTokenDto } from './token.dto';
+import { refreshTokenDto } from './dtos/token.dto';
 import { TokenRepository } from 'src/repository/token/token.repository';
-import { PoliciesRepository } from 'src/repository/permissions/policies.repository';
 import { BusinessException } from 'src/common/exceptions/business.exception';
+import { IAuthTokenResponse } from './interface/token.interface';
+import { TOKEN_EXPIRE, TOKEN_REFRESH_EXPIRE, TOKEN_REFRESH_SECRET, TOKEN_SECRET } from './constants/auth.constant';
 
 @Injectable()
 export class AuthService {
-  private readonly tokenExpire: number = 3600;
-  private readonly refreshTokenExpire: number = 604800;
-
   constructor(
     private configService: ConfigService,
     @Inject(UsersRepository) private readonly usersRepository: UsersRepository,
     @Inject(TokenRepository) private readonly tokenRepository: TokenRepository,
   ) { }
 
-  async loginByPublicId(loginDto: LoginDto) {
+  async loginByPublicId(loginDto: LoginDto): Promise<IAuthTokenResponse> {
     try {
-      const secret = this.configService.get<string>('JWT_SECRET');
-      const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+      const secret = this.configService.get<string>(TOKEN_SECRET);
+      const refreshSecret = this.configService.get<string>(TOKEN_REFRESH_SECRET);
 
       const getUser = await this.usersRepository.getUserByPublicId(loginDto.publicId);
 
@@ -32,7 +30,6 @@ export class AuthService {
       }
 
       const checkPassword = await bcrypt.compare(loginDto.painTextPassword, getUser.credentialId);
-      // const checkPassword = loginDto.painTextPassword === getUser.credentialId;
       if (!checkPassword) {
         throw new BusinessException('4010','Invalid password');
       }
@@ -43,8 +40,8 @@ export class AuthService {
 
       const accessToken = jwt.sign({ publicId: getUser.publicId, role: getUser.role }, secret, { expiresIn: '1h' });
       const refreshToken = jwt.sign({ publicId: getUser.publicId }, refreshSecret, { expiresIn: '7d' });
-      const accessTokenExpiresDt = Date.now() + this.tokenExpire * 1000;
-      const refreshTokenExpiresDt = Date.now() + this.refreshTokenExpire * 1000;
+      const accessTokenExpiresDt = Date.now() + TOKEN_EXPIRE * 1000;
+      const refreshTokenExpiresDt = Date.now() + TOKEN_REFRESH_EXPIRE * 1000;
 
       const insertLastLogin = await this.usersRepository.updateLastLogin(getUser.publicId);
       if (!insertLastLogin) {
@@ -65,21 +62,21 @@ export class AuthService {
         throw new BusinessException('4011', 'Failed to insert token');
       }
 
-      return {
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        accessTokenExpiresDt: new Date(accessTokenExpiresDt).toISOString(),
-        refreshTokenExpiresDt: new Date(refreshTokenExpiresDt).toISOString()
-      }
+      return this.toTokenResponse(
+        accessToken,
+        refreshToken,
+        new Date(accessTokenExpiresDt).toISOString(),
+        new Date(refreshTokenExpiresDt).toISOString(),
+      );
     } catch (error) {
       console.log(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }
 
-  async createNewAccessToken(refreshTokenDto: refreshTokenDto) {
+  async createNewAccessToken(refreshTokenDto: refreshTokenDto): Promise<IAuthTokenResponse> {
     try {
-      const secret = this.configService.get<string>('JWT_SECRET');
+      const secret = this.configService.get<string>(TOKEN_SECRET);
       if (!secret) {
         throw new BusinessException('4012', 'JWT secret not defined');
       }
@@ -92,7 +89,7 @@ export class AuthService {
       }
 
       const newAccessToken = jwt.sign({ publicId: decodedToken.publicId, role: decodedToken.role }, secret, { expiresIn: '1h' });
-      const newAccessTokenExpiresDt = Date.now() + this.tokenExpire * 1000;
+      const newAccessTokenExpiresDt = Date.now() + TOKEN_EXPIRE * 1000;
       const insertToken = await this.tokenRepository.insertToken({
         publicId: decodedToken.publicId,
         accessToken: newAccessToken,
@@ -109,12 +106,12 @@ export class AuthService {
         throw new BusinessException('4011', 'Failed to insert new access token');
       }
 
-      return {
-        accessToken: newAccessToken,
-        refreshToken: refreshTokenDto.refreshToken,
-        accessTokenExpiresDt: new Date(newAccessTokenExpiresDt).toISOString(),
-        refreshTokenExpiresDt: insertToken.refreshTokenExpiresDt
-      };
+      return this.toTokenResponse(
+        newAccessToken,
+        refreshTokenDto.refreshToken,
+        new Date(newAccessTokenExpiresDt).toISOString(),
+        insertToken.refreshTokenExpiresDt.toISOString(),
+      );
 
     } catch (error) {
       console.log(`Create new refresh token failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -124,5 +121,19 @@ export class AuthService {
 
   async revokeAccessToken(token: string) {
     await this.tokenRepository.deleteByToken(token);
+  }
+
+  private toTokenResponse(
+    accessToken: string,
+    refreshToken: string,
+    accessTokenExpiresDt: string,
+    refreshTokenExpiresDt: string,
+  ): IAuthTokenResponse {
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      accessTokenExpiresDt: accessTokenExpiresDt,
+      refreshTokenExpiresDt: refreshTokenExpiresDt,
+    };
   }
 }

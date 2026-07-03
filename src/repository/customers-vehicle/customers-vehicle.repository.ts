@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CustomersVehicleEntity } from './customers-vehicle.schema';
 import { Model } from 'mongoose';
-import { customerVehicleDto } from 'src/routes/vehicles-management/vehicles.dto';
+import { customerVehicleDto } from 'src/routes/vehicles-management/dtos/vehicles.dto';
 import { AuthUser } from 'src/types/user.type';
 
 @Injectable()

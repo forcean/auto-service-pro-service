@@ -1,8 +1,8 @@
 import { Controller, Body, Post, Res, Req, UseInterceptors } from '@nestjs/common';
 import type { Response, Request } from 'express';
-import { LoginDto } from './auth.dto';
+import { LoginDto } from './dtos/auth.dto';
 import { AuthService } from './auth.service';
-import { refreshTokenDto } from './token.dto';
+import { refreshTokenDto } from './dtos/token.dto';
 import { ResponseInterceptor } from 'src/common/response/response.interceptor';
 import { ResponseMessage, ResponseResultCode } from 'src/common/response/response.decorator';
 import { BusinessException } from 'src/common/exceptions/business.exception';
@@ -41,16 +41,6 @@ export class AuthController {
     });
 
     return userLogin;
-    // return {
-    //   message: 'Login successful',
-    //   resultData: {
-    //     accessToken: userLogin.accessToken,
-    //     refreshToken: userLogin.refreshToken,
-    //     accessTokenExpiresDt: userLogin.accessTokenExpiresDt,
-    //     refreshTokenExpiresDt: userLogin.refreshTokenExpiresDt,
-
-    //   }
-    // };
   }
 
   @Post('refresh')
@@ -81,15 +71,6 @@ export class AuthController {
     });
 
     return token;
-    // return {
-    //   message: 'Create new access token successful',
-    //   resultData: {
-    //     accessToken: token.accessToken,
-    //     refreshToken: token.refreshToken,
-    //     accessTokenExpiresDt: token.accessTokenExpiresDt,
-    //     refreshTokenExpiresDt: token.refreshTokenExpiresDt,
-    //   }
-    // };
   }
 
   @Post('revoke')
@@ -109,9 +90,5 @@ export class AuthController {
 
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
-
-    // return {
-    //   message: 'Logout successful',
-    // };
   }
 }

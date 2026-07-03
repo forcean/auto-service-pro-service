@@ -1,22 +1,30 @@
-import { Controller, Headers, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Headers,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { Get, Body, Post, Req, Param, Query, Patch } from '@nestjs/common';
 import type { Request } from 'express';
-import { registerDto, getUserQueryParamsDto, updateUserDto } from './user-manage.dto';
+import {
+  registerDto,
+  getUserQueryParamsDto,
+  updateUserDto,
+} from './dtos/user-manage.dto';
 import { UserManageService } from './user-manage.service';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { ResponseInterceptor } from 'src/common/response/response.interceptor';
-import { ResponseMessage, ResponseResultCode } from 'src/common/response/response.decorator';
+import {
+  ResponseMessage,
+  ResponseResultCode,
+} from 'src/common/response/response.decorator';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { PermissionsGuard } from 'src/common/permission/permission.guard';
 import { Permissions } from 'src/common/permission/permission.decorator';
 
-
-
 @Controller('users')
 export class UserManageController {
-  constructor(
-    private readonly userManageService: UserManageService,
-  ) { }
+  constructor(private readonly userManageService: UserManageService) {}
 
   @Post('corps/register')
   @UseGuards(PermissionsGuard)
@@ -28,15 +36,11 @@ export class UserManageController {
     @Body() registerDto: registerDto,
     @Req() { authUser }: Request,
   ) {
-
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
     await this.userManageService.register(registerDto, authUser);
-    // return {
-    //   message: 'Register successful',
-    // };
   }
 
   @Post('corps/register/owner')
@@ -50,9 +54,6 @@ export class UserManageController {
     @Headers('x-private-key') privateKey: string,
   ) {
     await this.userManageService.createSysOwner(registerDto, privateKey);
-    // return {
-    //   message: 'Register successful',
-    // };
   }
 
   @Post('corps/:userId')
@@ -69,9 +70,6 @@ export class UserManageController {
       throw new BusinessException('4013', 'No auth user found');
     }
     await this.userManageService.delUserByPublicId(id, authUser.role);
-    // return {
-    //   message: 'Delete user successful',
-    // };
   }
 
   @Get('getListUsers')
@@ -80,19 +78,19 @@ export class UserManageController {
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Get list user successful')
-  async getUserBymanagerId(
+  async getUserByManagerId(
     @Req() { authUser }: Request,
     @Query() pagination: PaginationQuery,
-    @Query() param: getUserQueryParamsDto
+    @Query() param: getUserQueryParamsDto,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-    return await this.userManageService.getUsersWithPagination(authUser.role, param, pagination);
-    // return {
-    //   message: 'Get users successful',
-    //   resultData: getUsers,
-    // };
+    return await this.userManageService.getUsersWithPagination(
+      authUser.role,
+      param,
+      pagination,
+    );
   }
 
   @Patch(':id/update')
@@ -104,15 +102,17 @@ export class UserManageController {
   async updateUserByUserId(
     @Req() { authUser }: Request,
     @Param('id') id: string,
-    @Body() updateData: updateUserDto,) {
+    @Body() updateData: updateUserDto,
+  ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    await this.userManageService.updateUserByUserId(updateData, authUser.publicId, id);
-    // return {
-    //   message: 'Update user successful',
-    // };
+    await this.userManageService.updateUserByUserId(
+      updateData,
+      authUser.publicId,
+      id,
+    );
   }
 
   @Get(':id/detail')
@@ -121,14 +121,8 @@ export class UserManageController {
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Get user detail successful')
-  async getUserById(
-    @Param('id') id: string,
-  ) {
+  async getUserById(@Param('id') id: string) {
     return await this.userManageService.getUserById(id);
-    // return {
-    //   message: 'Get user successful',
-    //   resultData: user,
-    // };
   }
 
   @Patch('corps/:userId/resetPassword')
@@ -148,11 +142,8 @@ export class UserManageController {
     await this.userManageService.resetPassword(
       userId,
       newPainTextPassword,
-      authUser
+      authUser,
     );
-    // return {
-    //   message: 'Reset password successful',
-    // };
   }
 
   @Patch('update/userPermissions')
@@ -161,8 +152,7 @@ export class UserManageController {
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Update user permissions successful')
-  async updateUserPermission(
-    @Req() { authUser }: Request) {
+  async updateUserPermission(@Req() { authUser }: Request) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
@@ -173,8 +163,7 @@ export class UserManageController {
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Get user permissions successful')
-  async getUserPermissions(
-    @Req() { authUser }: Request) {
+  async getUserPermissions(@Req() { authUser }: Request) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }

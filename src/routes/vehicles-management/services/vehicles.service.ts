@@ -3,8 +3,9 @@ import { BusinessException } from 'src/common/exceptions/business.exception';
 import { VehiclesRepository } from 'src/repository/vehicles/vehicles.repository';
 import { VehicleBrandsRepository } from 'src/repository/vehicle-brands/vehicle-brands.repository';
 import { VehicleModelsRepository } from 'src/repository/vehicle-models/vehicle-models.repository';
-import { vehiclesDto } from './vehicles.dto';
+import { vehiclesDto } from '../dtos/vehicles.dto';
 import { AuthUser } from 'src/types/user.type';
+import { IVehicleBrandsResponse, IVehicleModelsResponse, IVehicleResponse } from '../interfaces/vehicles.interface';
 
 @Injectable()
 export class VehiclesService {
@@ -45,7 +46,7 @@ export class VehiclesService {
     }
   }
 
-  async getVehicleBrands(isActive: boolean) {
+  async getVehicleBrands(isActive: boolean): Promise<IVehicleBrandsResponse> {
     try {
       const getVehiclesBrand =
         await this.vehicleBrandsRepository.getVehicleBrands(isActive);
@@ -67,7 +68,7 @@ export class VehiclesService {
     }
   }
 
-  async getVehicleModelsByBrand(brandCode: string, isActive: boolean) {
+  async getVehicleModelsByBrand(brandCode: string, isActive: boolean):Promise<IVehicleModelsResponse> {
     try {
       const getVehicleModels =
         await this.vehicleModelsRepository.getModelsByBrand(
@@ -98,7 +99,7 @@ export class VehiclesService {
     model: string,
     generation: string,
     isActive?: boolean,
-  ) {
+  ) :Promise<IVehicleResponse>{
     try {
       const getVehicles = await this.vehiclesRepository.getVehicles(
         brand,
