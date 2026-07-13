@@ -12,6 +12,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { EVehicleStatus } from '../enums/customers-vehicle.enum';
 
 export class EngineDto {
   @IsString()
@@ -70,30 +71,67 @@ export class vehiclesDto {
 }
 
 export class customerVehicleDto {
-  @IsString({message: 'transaction_id must be a string'})
-  @IsNotEmpty({message: 'transaction_id is required'})
+  @IsString({message: 'firstname must be a string'})
+  @IsNotEmpty({message: 'firstname is required'})
   firstname!: string;
 
-  @IsString({message: 'transaction_id must be a string'})
-  @IsNotEmpty({message: 'transaction_id is required'})
+  @IsString({message: 'lastname must be a string'})
+  @IsNotEmpty({message: 'lastname is required'})
   lastname!: string;
 
-  @IsString({ message: 'mobile_no must be a string' })
-  @IsNotEmpty({ message: 'mobile_no is required' })
+  @IsString({ message: 'phoneNumber must be a string' })
+  @IsNotEmpty({ message: 'phoneNumber is required' })
   @Matches(/^0\d{9}$/, {
-    message: 'mobile_no must start with 0 and contain exactly 10 digits',
+    message: 'phoneNumber must start with 0 and contain exactly 10 digits',
   })
   phoneNumber!: string;
 
-  @IsString({message: 'transaction_id must be a string'})
-  @IsNotEmpty({message: 'transaction_id is required'})
+  @IsString({message: 'licensePlate must be a string'})
+  @IsNotEmpty({message: 'licensePlate is required'})
   licensePlate!: string;
 
-  @IsString({message: 'transaction_id must be a string'})
-  @IsNotEmpty({message: 'transaction_id is required'})
+  @IsString({message: 'province must be a string'})
+  @IsNotEmpty({message: 'province is required'})
   province!: string;
+
+  @IsIn(Object.values(EVehicleStatus))
+  @IsNotEmpty({message: 'status is required'})
+  status!: EVehicleStatus;
 
   @IsNotEmpty()
   @Type(() => vehiclesDto)
   vehicle!: vehiclesDto;
+}
+export class updateCustomerVehicleDto {
+
+  @IsOptional()
+  @IsString({message: 'firstname must be a string'})
+  firstname?: string;
+
+  @IsOptional()
+  @IsString({message: 'lastname must be a string'})
+  lastname?: string;
+
+  @IsOptional()
+  @IsString({ message: 'phoneNumber must be a string' })
+  @Matches(/^0\d{9}$/, {
+    message: 'phoneNumber must start with 0 and contain exactly 10 digits',
+  })
+  phoneNumber?: string;
+
+  @IsOptional()
+  @IsString({message: 'licensePlate must be a string'})
+  licensePlate!: string;
+
+  @IsOptional()
+  @IsString({message: 'province must be a string'})
+  province?: string;
+
+  @IsOptional()
+  @IsIn(Object.values(EVehicleStatus))
+  status?: EVehicleStatus;
+
+  @IsOptional()
+  @Type(() => vehiclesDto)
+  vehicle?: vehiclesDto;
 }

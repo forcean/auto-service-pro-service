@@ -14,11 +14,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse() as any;
 
+    const developerMessage =
+      typeof exceptionResponse === 'string'
+        ? exceptionResponse
+        : exceptionResponse?.developerMessage ??
+          (Array.isArray(exceptionResponse?.message)
+            ? exceptionResponse.message.join(' | ')
+            : exceptionResponse?.message ?? exception.message);
+
     res.status(status).json({
-      resultCode: exceptionResponse.resultCode ?? status,
+      resultCode: exceptionResponse?.resultCode ?? status,
       resultStatus: 'Error',
-      developerMessage:
-        exceptionResponse.developerMessage ?? exception.message,
+      developerMessage,
+      ...(exceptionResponse?.data
+        ? { data: exceptionResponse.data }
+        : {}),
     });
   }
 }

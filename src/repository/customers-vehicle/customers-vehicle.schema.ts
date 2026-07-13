@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { EVehicleStatus } from 'src/routes/vehicles-management/enums/customers-vehicle.enum';
 
 export class Vehicle {
   @Prop({ type: String })
@@ -60,11 +61,20 @@ export class CustomersVehicleEntity {
   @Prop({ required: true, type: Vehicle, _id: false })
   vehicle!: Vehicle;
 
+  @Prop({ required: true, enum: EVehicleStatus })
+  status!: EVehicleStatus;
+
   @Prop({ type: Date })
-  registrationDate!: Date;
+  registrationDt!: Date;
 
   @Prop({ type: String })
   createdBy!: string;
+
+  @Prop({ type: Date })
+  updatedDt!: Date;
+
+  @Prop({ type: String })
+  updatedBy!: string;
 }
 
 export const CustomersVehicleSchema = SchemaFactory.createForClass(
