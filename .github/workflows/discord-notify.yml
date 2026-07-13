@@ -11,6 +11,8 @@ on:
     types:
       - opened
       - reopened
+      - synchronize
+      - closed
 
 jobs:
   notify:
@@ -19,6 +21,7 @@ jobs:
     steps:
       - name: Send Discord Notification
         run: |
+
           if [ "${{ github.event_name }}" = "pull_request" ]; then
 
             PR_URL="${{ github.event.pull_request.html_url }}"
@@ -28,51 +31,172 @@ jobs:
             SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
             TARGET_BRANCH="${{ github.event.pull_request.base.ref }}"
 
-            curl \
-              -H "Content-Type: application/json" \
-              -d "{
-                \"username\":\"DEV - Notification\",
-                \"embeds\":[
-                  {
-                    \"title\":\"📣 New Pull Request\",
-                    \"url\":\"${PR_URL}\",
-                    \"color\":15844367,
-                    \"fields\":[
-                      {
-                        \"name\":\"📦 Repository\",
-                        \"value\":\"${{ github.repository }}\",
-                        \"inline\":true
-                      },
-                      {
-                        \"name\":\"👤 Author\",
-                        \"value\":\"${PR_AUTHOR}\",
-                        \"inline\":true
-                      },
-                      {
-                        \"name\":\"🔀 Branch\",
-                        \"value\":\"${SOURCE_BRANCH} → ${TARGET_BRANCH}\",
-                        \"inline\":false
-                      },
-                      {
-                        \"name\":\"📝 Title\",
-                        \"value\":\"${PR_TITLE}\",
-                        \"inline\":false
-                      },
-                      {
-                        \"name\":\"#️⃣ PR\",
-                        \"value\":\"#${PR_NUMBER}\",
-                        \"inline\":true
-                      }
-                    ],
-                    \"footer\":{
-                      \"text\":\"GitHub → Discord | Pull Request\"
-                    },
-                    \"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-                  }
-                ]
-              }" \
-              "${{ secrets.DISCORD_WEBHOOK }}"
+            ##############################################
+            # PR MERGED
+            ##############################################
+            if [ "${{ github.event.action }}" = "closed" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
 
+              MERGED_BY="${{ github.event.pull_request.merged_by.login }}"
+
+              TITLE="✅ Pull Request Merged"
+              COLOR=5763719
+              FOOTER="GitHub → Discord | PR Merged"
+
+              curl \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"username\":\"DEV - Notification\",
+                  \"embeds\":[
+                    {
+                      \"title\":\"${TITLE}\",
+                      \"url\":\"${PR_URL}\",
+                      \"color\":${COLOR},
+                      \"fields\":[
+                        {
+                          \"name\":\"📦 Repository\",
+                          \"value\":\"${{ github.repository }}\",
+                          \"inline\":true
+                        },
+                        {
+                          \"name\":\"👤 Author\",
+                          \"value\":\"${PR_AUTHOR}\",
+                          \"inline\":true
+                        },
+                        {
+                          \"name\":\"🙋 Merged By\",
+                          \"value\":\"${MERGED_BY}\",
+                          \"inline\":true
+                        },
+                        {
+                          \"name\":\"🔀 Branch\",
+                          \"value\":\"${SOURCE_BRANCH} → ${TARGET_BRANCH}\"
+                        },
+                        {
+                          \"name\":\"📝 Title\",
+                          \"value\":\"${PR_TITLE}\"
+                        },
+                        {
+                          \"name\":\"#️⃣ PR\",
+                          \"value\":\"#${PR_NUMBER}\",
+                          \"inline\":true
+                        }
+                      ],
+                      \"footer\":{
+                        \"text\":\"${FOOTER}\"
+                      },
+                      \"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                    }
+                  ]
+                }" \
+                "${{ secrets.DISCORD_WEBHOOK }}"
+
+            ##############################################
+            # PR CLOSED (NOT MERGED)
+            ##############################################
+            elif [ "${{ github.event.action }}" = "closed" ]; then
+
+              curl \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"username\":\"DEV - Notification\",
+                  \"embeds\":[
+                    {
+                      \"title\":\"❌ Pull Request Closed\",
+                      \"url\":\"${PR_URL}\",
+                      \"color\":15158332,
+                      \"fields\":[
+                        {
+                          \"name\":\"📦 Repository\",
+                          \"value\":\"${{ github.repository }}\",
+                          \"inline\":true
+                        },
+                        {
+                          \"name\":\"👤 Author\",
+                          \"value\":\"${PR_AUTHOR}\",
+                          \"inline\":true
+                        },
+                        {
+                          \"name\":\"🔀 Branch\",
+                          \"value\":\"${SOURCE_BRANCH} → ${TARGET_BRANCH}\"
+                        },
+                        {
+                          \"name\":\"📝 Title\",
+                          \"value\":\"${PR_TITLE}\"
+                        }
+                      ],
+                      \"footer\":{
+                        \"text\":\"GitHub → Discord | PR Closed\"
+                      },
+                      \"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                    }
+                  ]
+                }" \
+                "${{ secrets.DISCORD_WEBHOOK }}"
+
+            ##############################################
+            # NEW / REOPEN / UPDATE PR
+            ##############################################
+            else
+
+              if [ "${{ github.event.action }}" = "opened" ]; then
+                TITLE="📣 New Pull Request"
+                COLOR=15844367
+              elif [ "${{ github.event.action }}" = "reopened" ]; then
+                TITLE="♻️ Pull Request Reopened"
+                COLOR=15844367
+              else
+                TITLE="🔄 Pull Request Updated"
+                COLOR=3447003
+              fi
+
+              curl \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"username\":\"DEV - Notification\",
+                  \"embeds\":[
+                    {
+                      \"title\":\"${TITLE}\",
+                      \"url\":\"${PR_URL}\",
+                      \"color\":${COLOR},
+                      \"fields\":[
+                        {
+                          \"name\":\"📦 Repository\",
+                          \"value\":\"${{ github.repository }}\",
+                          \"inline\":true
+                        },
+                        {
+                          \"name\":\"👤 Author\",
+                          \"value\":\"${PR_AUTHOR}\",
+                          \"inline\":true
+                        },
+                        {
+                          \"name\":\"🔀 Branch\",
+                          \"value\":\"${SOURCE_BRANCH} → ${TARGET_BRANCH}\"
+                        },
+                        {
+                          \"name\":\"📝 Title\",
+                          \"value\":\"${PR_TITLE}\"
+                        },
+                        {
+                          \"name\":\"#️⃣ PR\",
+                          \"value\":\"#${PR_NUMBER}\",
+                          \"inline\":true
+                        }
+                      ],
+                      \"footer\":{
+                        \"text\":\"GitHub → Discord | Pull Request\"
+                      },
+                      \"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                    }
+                  ]
+                }" \
+                "${{ secrets.DISCORD_WEBHOOK }}"
+
+            fi
+
+          #################################################
+          # PUSH DEVELOP
+          #################################################
           else
 
             COMMIT_COUNT=$(jq '.commits | length' "$GITHUB_EVENT_PATH")
