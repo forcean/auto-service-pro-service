@@ -90,6 +90,7 @@ import { StocksRepository } from './stock/stock.repository';
         },
         { name: StockEntity.name, schema: StockSchema },
         { name: StockMovementEntity.name, schema: StockMovementSchema },
+        { name: CustomersVehicleEntity.name, schema: CustomersVehicleSchema },
       ],
       'autoservice',
     ),
@@ -109,6 +110,7 @@ import { StocksRepository } from './stock/stock.repository';
     CustomersVehicleRepository,
     StocksRepository,
     StockMovementRepository,
+    CustomersVehicleRepository,
   ],
   exports: [
     UsersRepository,
@@ -125,6 +127,7 @@ import { StocksRepository } from './stock/stock.repository';
     CustomersVehicleRepository,
     StocksRepository,
     StockMovementRepository,
+    CustomersVehicleRepository,
   ],
 })
 export class RepositoryModule {}

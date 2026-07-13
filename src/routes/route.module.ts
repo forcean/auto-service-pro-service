@@ -6,9 +6,10 @@ import { ProductsModule } from "./products/products.module";
 import { StockManagementService } from './stock-management/stock-management.service';
 import { StockManagementController } from './stock-management/stock-management.controller';
 import { StockManagementModule } from './stock-management/stock-management.module';
+import { VehiclesModule } from './vehicles-management/vehicles.module';
 
 @Module({
-  imports: [AuthModule, MenuModule, UserManageModule, ProductsModule, StockManagementModule],
+  imports: [AuthModule, MenuModule, UserManageModule, ProductsModule, StockManagementModule, VehiclesModule],
   providers: [],
   controllers: [],
 })

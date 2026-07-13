@@ -1,4 +1,5 @@
 import { ObjectId } from 'typeorm';
+import { EVehicleStatus } from '../enums/customers-vehicle.enum';
 
 export interface IVehicleBrands {
   name: string;
@@ -40,4 +41,18 @@ export interface IVehicles {
 
 export interface IVehicleResponse {
   vehicles: IVehicles;
+}
+
+export interface ICustomerVehicle {
+  firstname: string;
+  lastname: string;
+  phoneNumber: string;
+  licensePlate: string;
+  province: string;
+  status: EVehicleStatus;
+  vehicle: IVehicles;
+  registrationDt: Date;
+  createdBy: string;
+  updatedDt?: Date;
+  updatedBy?: string;
 }
