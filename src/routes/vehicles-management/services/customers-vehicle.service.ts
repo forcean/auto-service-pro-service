@@ -7,6 +7,9 @@ import { AuthUser } from 'src/types/user.type';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { CustomersVehicleRepository } from 'src/repository/customers-vehicle/customers-vehicle.repository';
 import { ICustomerVehicle } from '../interfaces/vehicles.interface';
+import { getPagination } from 'src/common/utils/pagination.util';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class CustomersVehicleService {
@@ -127,6 +130,22 @@ export class CustomersVehicleService {
       if (!deletedVehicle) {
         throw new BusinessException('4011', 'Failed to delete vehicle');
       }
+    } catch (error) {
+      console.error(
+        `Error getting customer vehicle: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      throw error;
+    }
+  }
+ 
+  async getVehiclesWithPagination( pagination: PaginationQuery, sortBy: SortCriterial) {
+    try {
+      const { page, limit, skip } = getPagination(pagination);
+
+      const result = await this.customersVehicleRepository.findAllWithPaginated({ page, limit, skip }, sortBy); 
+
+      return result;
+      
     } catch (error) {
       console.error(
         `Error getting customer vehicle: ${error instanceof Error ? error.message : 'Unknown error'}`,

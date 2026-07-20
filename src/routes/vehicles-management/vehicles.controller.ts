@@ -21,9 +21,11 @@ import {
 } from 'src/common/response/response.decorator';
 import type { Request } from 'express';
 import { BusinessException } from 'src/common/exceptions/business.exception';
-import { customerVehicleDto, updateCustomerVehicleDto, vehiclesDto } from './dtos/vehicles.dto';
+import { customerVehicleDto, getVehiclesDto, getVehiclesWithPaginationDto, updateCustomerVehicleDto, vehiclesDto } from './dtos/vehicles.dto';
 import { CustomersVehicleService } from './services/customers-vehicle.service';
-
+import {ParseSortPipe} from 'src/common/pipes/parse-sort.pipe';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 @Controller('vehicles')
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService,
@@ -43,67 +45,21 @@ export class VehiclesController {
     await this.vehiclesService.createVehicle(data, authUser);
   }
 
-  @Get('brands')
+  @Get('/details')
   @UseGuards(PermissionsGuard)
   @Permissions()
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
-  @ResponseMessage('Get product vehicle brands successful')
-  async getVehicleBrands(
-    @Query('isActive') isActive: boolean,
+  @ResponseMessage('Get vehicle detail successful')
+  async getVehicleDetail(
+    @Query() query: getVehiclesDto,
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.vehiclesService.getVehicleBrands(isActive);
-  }
-
-  @Get(':brandCode/models')
-  @UseGuards(PermissionsGuard)
-  @Permissions()
-  @UseInterceptors(ResponseInterceptor)
-  @ResponseResultCode('2000')
-  @ResponseMessage('Get product vehicle models successful')
-  async getVehicleModelsByBrand(
-    @Query('isActive') isActive: boolean,
-    @Param('brandCode') brandCode: string,
-    @Req() { authUser }: Request,
-  ) {
-    if (!authUser) {
-      throw new BusinessException('4013', 'No auth user found');
-    }
-
-    return await this.vehiclesService.getVehicleModelsByBrand(
-      brandCode,
-      isActive,
-    );
-  }
-
-  @Get(':generation/:brandCode/:modelCode/detail')
-  @UseGuards(PermissionsGuard)
-  @Permissions()
-  @UseInterceptors(ResponseInterceptor)
-  @ResponseResultCode('2000')
-  @ResponseMessage('Get product vehicles successful')
-  async getVehicles(
-    @Query('isActive') isActive: boolean,
-    @Param('brandCode') brandCode: string,
-    @Param('modelCode') modelCode: string,
-    @Param('generation') generation: string,
-    @Req() { authUser }: Request,
-  ) {
-    if (!authUser) {
-      throw new BusinessException('4013', 'No auth user found');
-    }
-
-    return await this.vehiclesService.getVehicles(
-      brandCode,
-      modelCode,
-      generation,
-      isActive,
-    );
+    return await this.vehiclesService.getVehicleDetail(query);
   }
 
   @Post('customer')
@@ -125,7 +81,7 @@ export class VehiclesController {
 
   @Get('customer/:licensePlate/detail')
   @UseGuards(PermissionsGuard)
-  @Permissions('view:customer-vehicle')
+  @Permissions()
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Get customer vehicle successful')
@@ -173,5 +129,23 @@ export class VehiclesController {
     }
 
     return await this.customersVehicleService.deleteCustomerVehicleByLicensePlate(authUser, licensePlate);
+  }
+
+  @Get('customer')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:customer-vehicle')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Created customer vehicles successful')
+  async getVehiclesWithPagination(
+    @Query() query: getVehiclesWithPaginationDto,
+    @Query('sort', ParseSortPipe) sortBy: SortCriterial,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+   return await this.customersVehicleService.getVehiclesWithPagination(query, sortBy);
   }
 }

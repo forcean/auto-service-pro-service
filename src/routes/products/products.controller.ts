@@ -27,7 +27,7 @@ import {
 } from './products.dto';
 import type { Request } from 'express';
 import { BusinessException } from 'src/common/exceptions/business.exception';
-import { getUserQueryParamsDto } from '../user-management/dtos/user-manage.dto';
+import { getUserWithPaginationDto } from '../user-management/dtos/user-manage.dto';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 
 @Controller('products')

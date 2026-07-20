@@ -3,7 +3,7 @@ import { UsersRepository } from 'src/repository/users/users.repository';
 import { registerDto, updateUserDto } from './dtos/user-manage.dto';
 import * as bcrypt from 'bcrypt';
 import { PoliciesRepository } from 'src/repository/permissions/policies.repository';
-import { getUserQueryParamsDto } from './dtos/user-manage.dto';
+import { getUserWithPaginationDto } from './dtos/user-manage.dto';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { getPagination } from 'src/common/utils/pagination.util';
 import { AuthUser } from 'src/types/user.type';
@@ -96,13 +96,13 @@ export class UserManageService {
     }
   }
 
-  async getUsersWithPagination(role: string, param: getUserQueryParamsDto, pagination: PaginationQuery):Promise<IGetUserWithPagination> {
+  async getUsersWithPagination(role: string, param: getUserWithPaginationDto):Promise<IGetUserWithPagination> {
     try {
       if (role !== 'SO' && role !== 'ADM' && role !== 'MNG') {
         throw new BusinessException('4030', 'Only admin or manager can get user list');
       }
-
-      const { page, limit, skip } = getPagination(pagination);
+ 
+      const { page, limit, skip } = getPagination({page: param.page, limit: param.limit});
 
       const result = await this.usersRepository.getUsersWithPaginated(param, { page, limit, skip });
       const managerIds = result.data.map(user => user.managerId).filter(id => id !== undefined && id !== null);

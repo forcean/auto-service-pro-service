@@ -8,6 +8,7 @@ import {
 } from 'src/routes/vehicles-management/dtos/vehicles.dto';
 import { AuthUser } from 'src/types/user.type';
 import { ICustomerVehicleRecord } from 'src/routes/vehicles-management/interfaces/vehicles-record.interface';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Injectable()
 export class CustomersVehicleRepository {
@@ -59,5 +60,21 @@ export class CustomersVehicleRepository {
       licensePlate,
     });
     return result.deletedCount > 0;
+  }
+
+  async findAllWithPaginated(pagination: { page: number; limit: number; skip: number }, sortBy: SortCriterial) {
+    const { page, limit, skip } = pagination;
+    const [data, total] = await Promise.all([
+    this.CustomersVehicleEntity.find().sort(sortBy?? 'registrationDt.desc').skip(skip).limit(limit).lean(),
+    this.CustomersVehicleEntity.countDocuments(),
+    ])
+
+    return {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      data,
+    };
   }
 }

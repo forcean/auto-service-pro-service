@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FilterQuery, Model } from 'mongoose';
 import {
-  getUserQueryParamsDto,
+  getUserWithPaginationDto,
   registerDto,
   updateUserDto,
 } from '../../routes/user-management/dtos/user-manage.dto';
@@ -103,7 +103,7 @@ export class UsersRepository {
   }
 
   async getUsersWithPaginated(
-    query: getUserQueryParamsDto,
+    query: getUserWithPaginationDto,
     pagination: { page: number; limit: number; skip: number },
   ) {
     const { page, limit, skip } = pagination;

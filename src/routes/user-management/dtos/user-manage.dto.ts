@@ -1,4 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { EUserRole } from 'src/common/dto/roles.enum';
 
 export class registerDto {
@@ -54,7 +55,7 @@ export class updateUserDto {
   @IsOptional()
   lastname?: string;
 }
-export class getUserQueryParamsDto {
+export class getUserWithPaginationDto extends PaginationQuery {
   @IsString()
   @IsOptional()
   managerId?: string;

@@ -13,6 +13,8 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EVehicleStatus } from '../enums/customers-vehicle.enum';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 export class EngineDto {
   @IsString()
@@ -134,4 +136,28 @@ export class updateCustomerVehicleDto {
   @IsOptional()
   @Type(() => vehiclesDto)
   vehicle?: vehiclesDto;
+}
+
+export class getVehiclesDto {
+  @IsString({message: 'brandCode must be a string'})
+  @IsOptional()
+  brandCode?: string;
+
+  @IsString({message: 'modelCode must be a string'})
+  @IsOptional()
+  modelCode?: string;
+
+  @IsString({message: 'generation must be a string'})
+  @IsOptional()
+  generation?: string;
+
+  @IsBoolean({message: 'isActive must be a boolean'})
+  @IsOptional()
+  isActive!: boolean;
+}
+
+export class getVehiclesWithPaginationDto extends PaginationQuery {
+  @IsString({ message: 'sort must be a string' })
+  @IsOptional()
+  sort?: string;
 }

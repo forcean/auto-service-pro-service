@@ -8,7 +8,7 @@ import { Get, Body, Post, Req, Param, Query, Patch } from '@nestjs/common';
 import type { Request } from 'express';
 import {
   registerDto,
-  getUserQueryParamsDto,
+  getUserWithPaginationDto,
   updateUserDto,
 } from './dtos/user-manage.dto';
 import { UserManageService } from './user-manage.service';
@@ -80,8 +80,7 @@ export class UserManageController {
   @ResponseMessage('Get list user successful')
   async getUserByManagerId(
     @Req() { authUser }: Request,
-    @Query() pagination: PaginationQuery,
-    @Query() param: getUserQueryParamsDto,
+    @Query() param: getUserWithPaginationDto,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
@@ -89,7 +88,6 @@ export class UserManageController {
     return await this.userManageService.getUsersWithPagination(
       authUser.role,
       param,
-      pagination,
     );
   }
 
