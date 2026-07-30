@@ -21,15 +21,22 @@ import {
 } from 'src/common/response/response.decorator';
 import type { Request } from 'express';
 import { BusinessException } from 'src/common/exceptions/business.exception';
-import { customerVehicleDto, getVehiclesDto, getVehiclesWithPaginationDto, updateCustomerVehicleDto, vehiclesDto } from './dtos/vehicles.dto';
+import {
+  customerVehicleDto,
+  getVehiclesDto,
+  getVehiclesWithPaginationDto,
+  updateCustomerVehicleDto,
+  vehiclesDto,
+} from './dtos/vehicles.dto';
 import { CustomersVehicleService } from './services/customers-vehicle.service';
-import {ParseSortPipe} from 'src/common/pipes/parse-sort.pipe';
+import { ParseSortPipe } from 'src/common/pipes/parse-sort.pipe';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 @Controller('vehicles')
 export class VehiclesController {
-  constructor(private readonly vehiclesService: VehiclesService,
-    private readonly customersVehicleService:CustomersVehicleService
+  constructor(
+    private readonly vehiclesService: VehiclesService,
+    private readonly customersVehicleService: CustomersVehicleService,
   ) {}
 
   @Post()
@@ -79,7 +86,7 @@ export class VehiclesController {
     await this.customersVehicleService.createCustomersVehicle(dto, authUser);
   }
 
-  @Get('customer/:licensePlate/detail')
+  @Get('customer/:province/:licensePlate/detail')
   @UseGuards(PermissionsGuard)
   @Permissions()
   @UseInterceptors(ResponseInterceptor)
@@ -87,16 +94,20 @@ export class VehiclesController {
   @ResponseMessage('Get customer vehicle successful')
   async getCustomerVehicles(
     @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.customersVehicleService.getCustomerVehicleByLicensePlate(licensePlate);
+    return await this.customersVehicleService.getCustomerVehicleByLicensePlate(
+      licensePlate,
+      province,
+    );
   }
 
-  @Patch('customer/:licensePlate')
+  @Patch('customer/:province/:licensePlate')
   @UseGuards(PermissionsGuard)
   @Permissions('update:customer-vehicle')
   @UseInterceptors(ResponseInterceptor)
@@ -105,16 +116,22 @@ export class VehiclesController {
   async updateCustomerVehicle(
     @Body() dto: updateCustomerVehicleDto,
     @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.customersVehicleService.updateCustomerVehicleByLicensePlate(authUser, dto, licensePlate);
+    return await this.customersVehicleService.updateCustomerVehicleByLicensePlate(
+      authUser,
+      dto,
+      licensePlate,
+      province,
+    );
   }
 
-  @Post('customer/:licensePlate')
+  @Post('customer/:province/:licensePlate')
   @UseGuards(PermissionsGuard)
   @Permissions('delete:customer-vehicle')
   @UseInterceptors(ResponseInterceptor)
@@ -122,13 +139,18 @@ export class VehiclesController {
   @ResponseMessage('Deleted customer vehicle successful')
   async deleteCustomerVehicle(
     @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.customersVehicleService.deleteCustomerVehicleByLicensePlate(authUser, licensePlate);
+    return await this.customersVehicleService.deleteCustomerVehicleByLicensePlate(
+      authUser,
+      licensePlate,
+      province
+    );
   }
 
   @Get('customer')
@@ -146,6 +168,9 @@ export class VehiclesController {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-   return await this.customersVehicleService.getVehiclesWithPagination(query, sortBy);
+    return await this.customersVehicleService.getVehiclesWithPagination(
+      query,
+      sortBy,
+    );
   }
 }

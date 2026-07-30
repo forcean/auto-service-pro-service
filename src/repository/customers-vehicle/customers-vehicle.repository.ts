@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CustomersVehicleEntity } from './customers-vehicle.schema';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import {
   customerVehicleDto,
+  getVehiclesWithPaginationDto,
   updateCustomerVehicleDto,
 } from 'src/routes/vehicles-management/dtos/vehicles.dto';
-import { AuthUser } from 'src/types/user.type';
 import { ICustomerVehicleRecord } from 'src/routes/vehicles-management/interfaces/vehicles-record.interface';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
@@ -19,8 +19,12 @@ export class CustomersVehicleRepository {
 
   async getVehicleByLicensePlate(
     plate: string,
+    province: string,
   ): Promise<ICustomerVehicleRecord | null> {
-    return this.CustomersVehicleEntity.findOne({ licensePlate: plate });
+    return this.CustomersVehicleEntity.findOne({
+      licensePlate: plate,
+      province: province,
+    });
   }
 
   async createCustomerVehicle(dto: customerVehicleDto, publicId: string) {
@@ -35,11 +39,12 @@ export class CustomersVehicleRepository {
 
   async updateCustomerVehicleByLicensePlate(
     licensePlate: string,
+    province: string,
     dto: updateCustomerVehicleDto,
     publicId: string,
   ): Promise<ICustomerVehicleRecord | null> {
     return this.CustomersVehicleEntity.findOneAndUpdate(
-      { licensePlate: licensePlate },
+      { licensePlate: licensePlate, province: province },
       {
         $set: {
           ...dto,
@@ -55,19 +60,52 @@ export class CustomersVehicleRepository {
 
   async deleteCustomerVehicleByLicensePlate(
     licensePlate: string,
+    province: string,
   ): Promise<boolean> {
     const result = await this.CustomersVehicleEntity.deleteOne({
       licensePlate,
+      province,
     });
     return result.deletedCount > 0;
   }
 
-  async findAllWithPaginated(pagination: { page: number; limit: number; skip: number }, sortBy: SortCriterial) {
+  async findAllWithPaginated(
+    pagination: { page: number; limit: number; skip: number },
+    query: getVehiclesWithPaginationDto,
+    sortBy: SortCriterial,
+  ) {
     const { page, limit, skip } = pagination;
+
+    const filter: FilterQuery<CustomersVehicleEntity> = { }
+
+    if (query.licensePlate) {
+      filter.licensePlate = query.licensePlate;
+    }
+
+    if (query.province) {
+      filter.province = query.province.toUpperCase();
+    }
+
+    if (query.status) {
+      filter.status = query.status.toUpperCase();
+    }
+
+    if (query.model) {
+      filter.model = query.model;
+    }
+
+    if (query.brand) {
+      filter.brand = query.brand;
+    }
+
     const [data, total] = await Promise.all([
-    this.CustomersVehicleEntity.find().sort(sortBy?? 'registrationDt.desc').skip(skip).limit(limit).lean(),
-    this.CustomersVehicleEntity.countDocuments(),
-    ])
+      this.CustomersVehicleEntity.find(filter)
+        .sort(sortBy ?? 'registrationDt.desc')
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.CustomersVehicleEntity.countDocuments(),
+    ]);
 
     return {
       page,

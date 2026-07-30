@@ -41,7 +41,7 @@ export class Vehicle {
   isActive!: boolean;
 }
 
-@Schema({ collection: 'customers_vehicle' })
+@Schema({ collection: 'customersVehicle' })
 export class CustomersVehicleEntity {
   @Prop({ required: true, type: String })
   firstname!: string;
@@ -63,6 +63,18 @@ export class CustomersVehicleEntity {
 
   @Prop({ required: true, enum: EVehicleStatus })
   status!: EVehicleStatus;
+
+  @Prop({ required: true, type: String })
+  vin!: string;
+
+  @Prop({ type: String })
+  engine_no?: string;
+
+  @Prop({ type: String })
+  color?: string;
+
+  @Prop({ required: true, type: String })
+  mileage!: string;
 
   @Prop({ type: Date })
   registrationDt!: Date;
