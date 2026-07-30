@@ -1,0 +1,22 @@
+export enum EQuotationStatus {
+  DRAFT = 'DRAFT',
+  WAITING_APPROVAL = 'WAITING_APPROVAL',
+  APPROVED = 'APPROVED',
+  PARTIAL_APPROVED = 'PARTIAL_APPROVED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum EApprovalMethod {
+  PHONE = 'PHONE',
+  LINE = 'LINE',
+  FACEBOOK = 'FACEBOOK',
+  IN_PERSON = 'IN_PERSON',
+}
+
+export enum ECustomerDecision {
+  APPROVED = 'APPROVED',
+  PARTIAL = 'PARTIAL',
+  REJECTED = 'REJECTED',
+}

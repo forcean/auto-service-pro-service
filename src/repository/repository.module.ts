@@ -51,6 +51,10 @@ import {
 } from './stock-movement/stock-movement.schema';
 import { StockMovementRepository } from './stock-movement/stock-movement.repository';
 import { StocksRepository } from './stock/stock.repository';
+import { WorkOrderEntity, WorkOrderSchema } from './work-order/work-order.schema';
+import { WorkOrderRepository } from './work-order/work-order.repository';
+import { CounterRepository } from './counters/counter.repository';
+import { CounterEntity, CounterSchema } from './counters/counter.schema';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -91,6 +95,8 @@ import { StocksRepository } from './stock/stock.repository';
         { name: StockEntity.name, schema: StockSchema },
         { name: StockMovementEntity.name, schema: StockMovementSchema },
         { name: CustomersVehicleEntity.name, schema: CustomersVehicleSchema },
+        { name: WorkOrderEntity.name, schema: WorkOrderSchema },
+        { name: CounterEntity.name, schema: CounterSchema },
       ],
       'autoservice',
     ),
@@ -111,6 +117,8 @@ import { StocksRepository } from './stock/stock.repository';
     StocksRepository,
     StockMovementRepository,
     CustomersVehicleRepository,
+    WorkOrderRepository,
+    CounterRepository
   ],
   exports: [
     UsersRepository,
@@ -128,6 +136,8 @@ import { StocksRepository } from './stock/stock.repository';
     StocksRepository,
     StockMovementRepository,
     CustomersVehicleRepository,
+    WorkOrderRepository,
+    CounterRepository
   ],
 })
 export class RepositoryModule {}
