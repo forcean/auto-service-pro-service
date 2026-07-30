@@ -5,7 +5,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { AuthUser } from 'src/types/user.type';
 import { WorkOrderEntity, WorkOrderDocument } from './work-order.schema';
 import { EWorkOrderStatus } from 'src/routes/work-order/enums/work-order.enum';
-import { CreateWorkOrderDto } from 'src/routes/work-order/dtos/work-order.dto';
+import { CreateWorkOrderDto, UpdateWorkOrderDto } from 'src/routes/work-order/dtos/work-order.dto';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Injectable()
 export class WorkOrderRepository {
@@ -60,9 +61,9 @@ export class WorkOrderRepository {
     });
   }
 
-  async update(
+  async updateWorkOrder(
     id: string,
-    payload: Partial<WorkOrderEntity>,
+    payload: UpdateWorkOrderDto,
     user: AuthUser,
     session?: ClientSession,
   ) {
@@ -107,13 +108,6 @@ export class WorkOrderRepository {
     );
   }
 
-  async find(filter: FilterQuery<WorkOrderEntity>) {
-    return this.model.find({
-      ...filter,
-      isDeleted: false,
-    });
-  }
-
   async softDelete(id: string, user: AuthUser) {
     return this.model.findByIdAndUpdate(
       id,
@@ -139,4 +133,20 @@ export class WorkOrderRepository {
       })
       .lean();
   }
+
+  async findAllWithPaginated(pagination: { page: number; limit: number; skip: number }, sortBy: SortCriterial) {
+      const { page, limit, skip } = pagination;
+      const [data, total] = await Promise.all([
+      this.model.find().sort(sortBy?? 'registrationDt.desc').skip(skip).limit(limit).lean(),
+      this.model.countDocuments(),
+      ])
+  
+      return {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        data,
+      };
+    }
 }

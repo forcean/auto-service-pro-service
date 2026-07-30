@@ -1,7 +1,11 @@
 import {
   Body,
   Controller,
+  Get,
+  Param,
+  Patch,
   Post,
+  Query,
   Req,
   UseGuards,
   UseInterceptors,
@@ -16,7 +20,14 @@ import {
 } from 'src/common/response/response.decorator';
 import type { Request } from 'express';
 import { BusinessException } from 'src/common/exceptions/business.exception';
-import { CreateWorkOrderDto } from './dtos/work-order.dto';
+import {
+  CreateWorkOrderDto,
+  getWorkOrdersWithPaginationDto,
+  UpdateWorkOrderDto,
+  UpdateWorkOrderStatusDto,
+} from './dtos/work-order.dto';
+import { ParseSortPipe } from 'src/common/pipes/parse-sort.pipe';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Controller('work-order')
 export class WorkOrderController {
@@ -37,5 +48,97 @@ export class WorkOrderController {
     }
 
     return this.workOrderService.createWorkOrder(data, authUser);
+  }
+
+  @Patch('/:workOrderId/')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update-work-order')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Update work order successful')
+  async updateWorkOrder(
+    @Body() data: UpdateWorkOrderDto,
+    @Req() { authUser }: Request,
+    @Param('workOrderId') workOrderId: string,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.workOrderService.updateWorkOrder(workOrderId, data, authUser);
+  }
+
+  @Patch('/:workOrderId/status')
+  //   @UseGuards(PermissionsGuard)
+  //   @Permissions('update-work-order')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Update status work order successful')
+  async updateWorkOrderStatus(
+    @Body() dto: UpdateWorkOrderStatusDto,
+    @Req() { authUser }: Request,
+    @Param('workOrderId') workOrderId: string,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.workOrderService.updateStatus(
+      workOrderId,
+      dto.status,
+      authUser,
+    );
+  }
+
+  @Post('/:workOrderId/delete')
+  @UseGuards(PermissionsGuard)
+  @Permissions('delete-work-order')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Delete work order successful')
+  async deleteWorkOrder(
+    @Req() { authUser }: Request,
+    @Param('workOrderId') workOrderId: string,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.workOrderService.deleteWorkOrder(workOrderId, authUser);
+  }
+
+  @Get()
+  //   @UseGuards(PermissionsGuard)
+  //   @Permissions('update-work-order')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('get list work order successful')
+  async getListWorkOrder(
+    @Query() query: getWorkOrdersWithPaginationDto,
+    @Query('sort', ParseSortPipe) sortBy: SortCriterial,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.workOrderService.getVehiclesWithPagination(query, sortBy);
+  }
+
+  @Get('/:workOrderNo')
+  //   @UseGuards(PermissionsGuard)
+  //   @Permissions('update-work-order')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get work order successful')
+  async getWorkOrderByNo(
+    @Req() { authUser }: Request,
+    @Param('workOrderNo') workOrderNo: string,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.workOrderService.getWorkOrderByNo(workOrderNo);
   }
 }

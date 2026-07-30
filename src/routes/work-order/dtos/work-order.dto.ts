@@ -10,7 +10,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { EFuelLevel } from '../enums/work-order.enum';
+import { EFuelLevel, EWorkOrderStatus } from '../enums/work-order.enum';
+import { PartialType } from '@nestjs/mapped-types';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
+
 
 export class ComplaintDto {
   @IsString()
@@ -85,4 +88,19 @@ export class CreateWorkOrderDto {
   @IsOptional()
   @IsMongoId()
   advisorId?: string;
+}
+
+export class UpdateWorkOrderDto extends PartialType(
+  CreateWorkOrderDto,
+) {}
+
+export class UpdateWorkOrderStatusDto {
+  @IsEnum(EWorkOrderStatus)
+  status!: EWorkOrderStatus;
+}
+
+export class getWorkOrdersWithPaginationDto extends PaginationQuery {
+  @IsString({ message: 'sort must be a string' })
+  @IsOptional()
+  sort?: string;
 }
