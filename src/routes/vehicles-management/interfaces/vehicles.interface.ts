@@ -50,6 +50,10 @@ export interface ICustomerVehicle {
   licensePlate: string;
   province: string;
   status: EVehicleStatus;
+  vin: string;
+  engine_no: string;
+  color: string;
+  mileage: string;
   vehicle: IVehicles;
   registrationDt: Date;
   createdBy: string;

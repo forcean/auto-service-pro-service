@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   customerVehicleDto,
+  getVehiclesWithPaginationDto,
   updateCustomerVehicleDto,
 } from '../dtos/vehicles.dto';
 import { AuthUser } from 'src/types/user.type';
@@ -24,6 +25,7 @@ export class CustomersVehicleService {
       const existingVehicle =
         await this.customersVehicleRepository.getVehicleByLicensePlate(
           dto.licensePlate,
+          dto.province,
         );
 
       if (existingVehicle) {
@@ -49,11 +51,13 @@ export class CustomersVehicleService {
 
   async getCustomerVehicleByLicensePlate(
     licensePlate: string,
+    province: string,
   ): Promise<ICustomerVehicle> {
     try {
       const getVehicle =
         await this.customersVehicleRepository.getVehicleByLicensePlate(
           licensePlate,
+          province,
         );
 
       if (!getVehicle) {
@@ -73,6 +77,7 @@ export class CustomersVehicleService {
     user: AuthUser,
     dto: updateCustomerVehicleDto,
     licensePlate: string,
+    province: string,
   ): Promise<ICustomerVehicle | null> {
     try {
       this.userRoleValidation(user.role);
@@ -80,6 +85,7 @@ export class CustomersVehicleService {
       const existingVehicle =
         await this.customersVehicleRepository.getVehicleByLicensePlate(
           licensePlate,
+          province,
         );
 
       if (!existingVehicle) {
@@ -89,6 +95,7 @@ export class CustomersVehicleService {
       const updatedVehicle =
         await this.customersVehicleRepository.updateCustomerVehicleByLicensePlate(
           licensePlate,
+          province,
           dto,
           user.publicId,
         );
@@ -109,6 +116,7 @@ export class CustomersVehicleService {
   async deleteCustomerVehicleByLicensePlate(
     user: AuthUser,
     licensePlate: string,
+    province: string,
   ): Promise<void> {
     try {
       this.userRoleValidation(user.role);
@@ -116,6 +124,7 @@ export class CustomersVehicleService {
       const existingVehicle =
         await this.customersVehicleRepository.getVehicleByLicensePlate(
           licensePlate,
+          province,
         );
 
       if (!existingVehicle) {
@@ -125,6 +134,7 @@ export class CustomersVehicleService {
       const deletedVehicle =
         await this.customersVehicleRepository.deleteCustomerVehicleByLicensePlate(
           licensePlate,
+          province,
         );
 
       if (!deletedVehicle) {
@@ -137,15 +147,20 @@ export class CustomersVehicleService {
       throw error;
     }
   }
- 
-  async getVehiclesWithPagination( pagination: PaginationQuery, sortBy: SortCriterial) {
-    try {
-      const { page, limit, skip } = getPagination(pagination);
 
-      const result = await this.customersVehicleRepository.findAllWithPaginated({ page, limit, skip }, sortBy); 
+  async getVehiclesWithPagination(
+    query: getVehiclesWithPaginationDto,
+    sortBy: SortCriterial,
+  ) {
+    try {
+      const { page, limit, skip } = getPagination(query);
+      const result = await this.customersVehicleRepository.findAllWithPaginated(
+        { page, limit, skip },
+        query,
+        sortBy,
+      );
 
       return result;
-      
     } catch (error) {
       console.error(
         `Error getting customer vehicle: ${error instanceof Error ? error.message : 'Unknown error'}`,
