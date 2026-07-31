@@ -103,4 +103,9 @@ export class getWorkOrdersWithPaginationDto extends PaginationQuery {
   @IsString({ message: 'sort must be a string' })
   @IsOptional()
   sort?: string;
+
+//   @IsString({ message: 'sort must be a string' })
+//   @IsOptional()
+//   sort?: string;
+
 }

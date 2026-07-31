@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { WorkOrderRepository } from 'src/repository/work-order/work-order.repository';
 import { AuthUser } from 'src/types/user.type';
-import { CreateWorkOrderDto, UpdateWorkOrderDto } from '../dtos/work-order.dto';
+import { CreateWorkOrderDto, getWorkOrdersWithPaginationDto, UpdateWorkOrderDto } from '../dtos/work-order.dto';
 import { EUserRole } from 'src/common/dto/roles.enum';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { Session } from 'inspector/promises';
@@ -132,14 +132,15 @@ export class WorkOrderService {
   }
 
   async getVehiclesWithPagination(
-    pagination: PaginationQuery,
+    query: getWorkOrdersWithPaginationDto,
     sortBy: SortCriterial,
   ) {
     try {
-      const { page, limit, skip } = getPagination(pagination);
+      const { page, limit, skip } = getPagination(query);
 
       const result = await this.workOrderRepository.findAllWithPaginated(
         { page, limit, skip },
+        query,
         sortBy,
       );
 

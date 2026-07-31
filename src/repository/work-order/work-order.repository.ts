@@ -5,7 +5,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { AuthUser } from 'src/types/user.type';
 import { WorkOrderEntity, WorkOrderDocument } from './work-order.schema';
 import { EWorkOrderStatus } from 'src/routes/work-order/enums/work-order.enum';
-import { CreateWorkOrderDto, UpdateWorkOrderDto } from 'src/routes/work-order/dtos/work-order.dto';
+import {
+  CreateWorkOrderDto,
+  getWorkOrdersWithPaginationDto,
+  UpdateWorkOrderDto,
+} from 'src/routes/work-order/dtos/work-order.dto';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Injectable()
@@ -134,19 +138,51 @@ export class WorkOrderRepository {
       .lean();
   }
 
-  async findAllWithPaginated(pagination: { page: number; limit: number; skip: number }, sortBy: SortCriterial) {
-      const { page, limit, skip } = pagination;
-      const [data, total] = await Promise.all([
-      this.model.find().sort(sortBy?? 'registrationDt.desc').skip(skip).limit(limit).lean(),
+  async findAllWithPaginated(
+    pagination: { page: number; limit: number; skip: number },
+    query: getWorkOrdersWithPaginationDto,
+    sortBy: SortCriterial,
+  ) {
+    const { page, limit, skip } = pagination;
+
+    const filter: FilterQuery<WorkOrderEntity> = {};
+
+    // if (query.licensePlate) {
+    //   filter.licensePlate = query.licensePlate;
+    // }
+
+    // if (query.province) {
+    //   filter.province = query.province.toUpperCase();
+    // }
+
+    // if (query.status) {
+    //   filter.status = query.status.toUpperCase();
+    // }
+
+    // if (query.model) {
+    //   filter.model = query.model;
+    // }
+
+    // if (query.brand) {
+    //   filter.brand = query.brand;
+    // }
+
+    const [data, total] = await Promise.all([
+      this.model
+        .find(filter)
+        .sort(sortBy ?? 'checkInDate.desc')
+        .skip(skip)
+        .limit(limit)
+        .lean(),
       this.model.countDocuments(),
-      ])
-  
-      return {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        data,
-      };
-    }
+    ]);
+
+    return {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      data,
+    };
+  }
 }
