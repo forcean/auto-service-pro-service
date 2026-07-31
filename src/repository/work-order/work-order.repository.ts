@@ -11,6 +11,7 @@ import {
   UpdateWorkOrderDto,
 } from 'src/routes/work-order/dtos/work-order.dto';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
+import { IWorkOrderRecord } from 'src/routes/work-order/interfaces/work-order-record.interface';
 
 @Injectable()
 export class WorkOrderRepository {
@@ -39,7 +40,7 @@ export class WorkOrderRepository {
     return doc;
   }
 
-  async getById(id: string) {
+  async getById(id: string): Promise<IWorkOrderRecord | null> {
     return this.model
       .findOne({
         _id: new Types.ObjectId(id),
@@ -48,7 +49,7 @@ export class WorkOrderRepository {
       .populate('vehicleId')
       .populate('customerId')
       .populate('advisorId')
-      .lean();
+      .lean<IWorkOrderRecord>();
   }
 
   async getByWorkOrderNo(workOrderNo: string) {
@@ -170,7 +171,7 @@ export class WorkOrderRepository {
     const [data, total] = await Promise.all([
       this.model
         .find(filter)
-        .sort(sortBy ?? 'checkInDate.desc')
+        .sort(sortBy ?? { checkInDate: 'desc' })
         .skip(skip)
         .limit(limit)
         .lean(),

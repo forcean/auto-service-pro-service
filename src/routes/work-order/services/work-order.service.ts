@@ -1,7 +1,11 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { WorkOrderRepository } from 'src/repository/work-order/work-order.repository';
 import { AuthUser } from 'src/types/user.type';
-import { CreateWorkOrderDto, getWorkOrdersWithPaginationDto, UpdateWorkOrderDto } from '../dtos/work-order.dto';
+import {
+  CreateWorkOrderDto,
+  getWorkOrdersWithPaginationDto,
+  UpdateWorkOrderDto,
+} from '../dtos/work-order.dto';
 import { EUserRole } from 'src/common/dto/roles.enum';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { Session } from 'inspector/promises';
@@ -44,7 +48,9 @@ export class WorkOrderService {
       }
 
       return workOrder;
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getWorkOrderById(id: string) {
@@ -56,7 +62,9 @@ export class WorkOrderService {
       }
 
       return workOrder;
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getWorkOrderByNo(workOrderNo: string) {
@@ -69,7 +77,9 @@ export class WorkOrderService {
       }
 
       return workOrder;
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateWorkOrder(
@@ -92,11 +102,19 @@ export class WorkOrderService {
       }
 
       return workOrder;
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateStatus(id: string, status: EWorkOrderStatus, user: AuthUser) {
     try {
+      if (status === EWorkOrderStatus.COMPLETED) {
+        throw new BusinessException(
+          '4001',
+          'Completed work order cannot be updated',
+        );
+      }
       await this.getWorkOrderById(id);
       const workOrder = await this.workOrderRepository.updateStatus(
         id,
@@ -112,7 +130,9 @@ export class WorkOrderService {
       }
 
       return workOrder;
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   }
 
   async deleteWorkOrder(id: string, user: AuthUser) {
@@ -128,10 +148,12 @@ export class WorkOrderService {
       return {
         success: true,
       };
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async getVehiclesWithPagination(
+  async getWorkOrdersWithPagination(
     query: getWorkOrdersWithPaginationDto,
     sortBy: SortCriterial,
   ) {
@@ -149,6 +171,98 @@ export class WorkOrderService {
       console.error(
         `Error getting customer vehicle: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
+      throw error;
+    }
+  }
+
+  async assignQuotation(
+    workOrderId: string,
+    quotationId: string,
+    user: AuthUser,
+  ) {
+    try {
+      const workOrder = await this.getWorkOrderById(workOrderId);
+      if (!workOrder) {
+        throw new BusinessException('4040', 'not found');
+      }
+
+      if (workOrder.status === EWorkOrderStatus.COMPLETED) {
+        throw new BusinessException('4001', 'Work order already completed');
+      }
+
+      return this.workOrderRepository.updateCurrentQuotation(
+        workOrderId,
+        quotationId,
+        user,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateCurrentQuotation(
+    workOrderId: string,
+    quotationId: string,
+    user: AuthUser,
+  ) {
+    try {
+      await this.getWorkOrderById(workOrderId);
+
+      const workOrder = await this.workOrderRepository.updateCurrentQuotation(
+        workOrderId,
+        quotationId,
+        user,
+      );
+
+      if (!workOrder) {
+        throw new BusinessException('5005', 'Failed to update quotation');
+      }
+
+      return workOrder;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async closeWorkOrder(workOrderId: string, user: AuthUser) {
+    try {
+      const workOrder = await this.getWorkOrderById(workOrderId);
+      if (!workOrder) {
+        throw new BusinessException('4040', 'not found');
+      }
+      if (workOrder.status === EWorkOrderStatus.COMPLETED) {
+        throw new BusinessException('4002', 'Work order already completed');
+      }
+
+      return this.workOrderRepository.updateStatus(
+        workOrderId,
+        EWorkOrderStatus.COMPLETED,
+        user,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async cancelWorkOrder(workOrderId: string, user: AuthUser) {
+    try {
+      const workOrder = await this.getWorkOrderById(workOrderId);
+      if (!workOrder) {
+        throw new BusinessException('4040', 'not found');
+      }
+      if (workOrder.status === EWorkOrderStatus.COMPLETED) {
+        throw new BusinessException(
+          '4003',
+          'Completed work order cannot be cancelled',
+        );
+      }
+
+      return this.workOrderRepository.updateStatus(
+        workOrderId,
+        EWorkOrderStatus.CANCELLED,
+        user,
+      );
+    } catch (error) {
       throw error;
     }
   }

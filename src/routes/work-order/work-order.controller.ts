@@ -35,7 +35,7 @@ export class WorkOrderController {
 
   @Post()
   @UseGuards(PermissionsGuard)
-  @Permissions('create-work-order')
+  @Permissions('create:work-order')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Create work order successful')
@@ -52,7 +52,7 @@ export class WorkOrderController {
 
   @Patch('/:workOrderId/')
   @UseGuards(PermissionsGuard)
-  @Permissions('update-work-order')
+  @Permissions('update:work-order')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Update work order successful')
@@ -69,8 +69,8 @@ export class WorkOrderController {
   }
 
   @Patch('/:workOrderId/status')
-  //   @UseGuards(PermissionsGuard)
-  //   @Permissions('update-work-order')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:work-order')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Update status work order successful')
@@ -92,7 +92,7 @@ export class WorkOrderController {
 
   @Post('/:workOrderId/delete')
   @UseGuards(PermissionsGuard)
-  @Permissions('delete-work-order')
+  @Permissions('delete:work-order')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Delete work order successful')
@@ -108,8 +108,8 @@ export class WorkOrderController {
   }
 
   @Get()
-  //   @UseGuards(PermissionsGuard)
-  //   @Permissions('update-work-order')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:work-orders')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('get list work order successful')
@@ -122,12 +122,12 @@ export class WorkOrderController {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return this.workOrderService.getVehiclesWithPagination(query, sortBy);
+    return this.workOrderService.getWorkOrdersWithPagination(query, sortBy);
   }
 
   @Get('/:workOrderNo')
-  //   @UseGuards(PermissionsGuard)
-  //   @Permissions('update-work-order')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:work-orders')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Get work order successful')
