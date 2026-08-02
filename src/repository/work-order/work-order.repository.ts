@@ -100,6 +100,7 @@ export class WorkOrderRepository {
     workOrderId: string,
     quotationId: string,
     user: AuthUser,
+    session?: ClientSession,
   ) {
     return this.model.findByIdAndUpdate(
       workOrderId,
@@ -109,6 +110,7 @@ export class WorkOrderRepository {
       },
       {
         new: true,
+        session,
       },
     );
   }

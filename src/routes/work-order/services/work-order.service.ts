@@ -204,6 +204,7 @@ export class WorkOrderService {
     workOrderId: string,
     quotationId: string,
     user: AuthUser,
+    session?: ClientSession,
   ) {
     try {
       await this.getWorkOrderById(workOrderId);
@@ -212,10 +213,14 @@ export class WorkOrderService {
         workOrderId,
         quotationId,
         user,
+        session,
       );
 
       if (!workOrder) {
-        throw new BusinessException('5005', 'Failed to update quotation');
+        throw new BusinessException(
+          '5005',
+          'Failed to update current quotation',
+        );
       }
 
       return workOrder;

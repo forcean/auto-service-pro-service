@@ -8,5 +8,6 @@ import { DocumentNoService } from 'src/common/services/document-no.service';
   imports: [RepositoryModule],
   controllers: [WorkOrderController],
   providers: [WorkOrderService,DocumentNoService],
+  exports:[WorkOrderService]
 })
 export class WorkOrderModule {}

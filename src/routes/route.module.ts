@@ -8,6 +8,7 @@ import { StockManagementController } from './stock-management/stock-management.c
 import { StockManagementModule } from './stock-management/stock-management.module';
 import { VehiclesModule } from './vehicles-management/vehicles.module';
 import { WorkOrderModule } from './work-order/work-order.module';
+import { QuotationModule } from './quotation/quotation.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WorkOrderModule } from './work-order/work-order.module';
     StockManagementModule,
     VehiclesModule,
     WorkOrderModule,
+    QuotationModule,
   ],
   providers: [],
   controllers: [],

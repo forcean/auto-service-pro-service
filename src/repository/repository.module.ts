@@ -55,6 +55,8 @@ import { WorkOrderEntity, WorkOrderSchema } from './work-order/work-order.schema
 import { WorkOrderRepository } from './work-order/work-order.repository';
 import { CounterRepository } from './counters/counter.repository';
 import { CounterEntity, CounterSchema } from './counters/counter.schema';
+import { QuotationRepository } from './quotation/quotation.repository';
+import { QuotationEntity, QuotationSchema } from './quotation/quotation.schema';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -97,6 +99,7 @@ import { CounterEntity, CounterSchema } from './counters/counter.schema';
         { name: CustomersVehicleEntity.name, schema: CustomersVehicleSchema },
         { name: WorkOrderEntity.name, schema: WorkOrderSchema },
         { name: CounterEntity.name, schema: CounterSchema },
+        { name: QuotationEntity.name, schema: QuotationSchema },
       ],
       'autoservice',
     ),
@@ -118,7 +121,8 @@ import { CounterEntity, CounterSchema } from './counters/counter.schema';
     StockMovementRepository,
     CustomersVehicleRepository,
     WorkOrderRepository,
-    CounterRepository
+    CounterRepository,
+    QuotationRepository
   ],
   exports: [
     UsersRepository,
@@ -137,7 +141,8 @@ import { CounterEntity, CounterSchema } from './counters/counter.schema';
     StockMovementRepository,
     CustomersVehicleRepository,
     WorkOrderRepository,
-    CounterRepository
+    CounterRepository,
+    QuotationRepository
   ],
 })
 export class RepositoryModule {}

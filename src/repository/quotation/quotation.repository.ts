@@ -1,38 +1,41 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Quotation, QuotationDocument } from './quotation.schema';
+import { QuotationEntity, QuotationDocument } from './quotation.schema';
 import { ClientSession, Model, Types } from 'mongoose';
 import { AuthUser } from 'src/types/user.type';
 import { Type } from 'class-transformer';
+import { CreateQuotationDto } from 'src/routes/quotation/dtos/quotation.dto';
+import { ICreateQuotation } from 'src/routes/quotation/interfaces/quotation-record.interface';
 
 @Injectable()
 export class QuotationRepository {
   constructor(
-    @InjectModel(Quotation.name)
-    private readonly model: Model<QuotationDocument>,
+    @InjectModel(QuotationEntity.name, 'autoservice')
+    private readonly quotationEntity: Model<QuotationDocument>,
   ) {}
 
-  async create(
-    payload: Partial<Quotation>,
+  async createQuotation(
+    payload: ICreateQuotation,
     user: AuthUser,
-    session: ClientSession,
+    session?: ClientSession,
   ) {
-    const [doc] = await this.model.create(
+    const [quotation] = await this.quotationEntity.create(
       [
         {
           ...payload,
-          createBy: user.publicId,
+          createdBy: user.id,
         },
       ],
       {
         session,
       },
     );
-    return doc;
+
+    return quotation;
   }
 
   async getQuotationById(id: string) {
-    return this.model
+    return this.quotationEntity
       .findOne({
         _id: new Types.ObjectId(id),
         isDeleted: false,
@@ -41,10 +44,12 @@ export class QuotationRepository {
       .lean();
   }
 
-  async getByQuotationNo( quotationNo: string){
-    return this.model.findOne({
-        quotationNo,
-        isDeleted: false
-    })
+  async getByQuotationNo(quotationNo: string) {
+    return this.quotationEntity.findOne({
+      quotationNo,
+      isDeleted: false,
+    });
   }
+
+  async findCurrentQuotation(workOrderId: string) {}
 }
