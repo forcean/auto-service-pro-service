@@ -7,14 +7,22 @@ import { QuotationRepository } from 'src/repository/quotation/quotation.reposito
 import { WorkOrderService } from 'src/routes/work-order/services/work-order.service';
 import { AuthUser } from 'src/types/user.type';
 import {
+  ApproveQuotationDto,
   CreateQuotationDto,
   CreateQuotationItemDto,
   EQuotationItemType,
+  getQuotationWithPaginationDto,
 } from '../dtos/quotation.dto';
 import { ProductsService } from 'src/routes/products/products.service';
-import { IQuotationItem } from '../interfaces/quotation-record.interface';
+import { IQuotationRecord } from '../interfaces/quotation-record.interface';
 import { error } from 'console';
 import { InjectConnection } from '@nestjs/mongoose';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
+import { getPagination } from 'src/common/utils/pagination.util';
+import { EQuotationStatus } from '../enums/quotation.enum';
+import { QuotationMapper } from '../mapper/quotation.mapper';
+import { IQuotationItem } from '../interfaces/quotation.interface';
+import { mapMongoId } from 'src/common/helper/mongo.helper';
 
 @Injectable()
 export class QuotationService {
@@ -214,5 +222,221 @@ export class QuotationService {
       description: p.name,
       unitPrice: Number(p.prices?.retail ?? 0),
     };
+  }
+
+  async deleteQuotation(quotationId: string, user: AuthUser) {
+    try {
+      const quotation = await this.quotationRepository.softDelete(
+        quotationId,
+        user,
+      );
+      if (!quotation) {
+        throw new BusinessException('5004', 'Failed to delete quotation');
+      }
+      return {
+        success: true,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getQuotationByNo(quotationNo: string) {
+    try {
+      const quotation =
+        await this.quotationRepository.getByQuotationNo(quotationNo);
+
+      if (!quotation) {
+        throw new BusinessException('4040', 'Quotation not found');
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getQuotationById(id: string): Promise<IQuotationRecord> {
+    try {
+      const quotation = await this.quotationRepository.getQuotationById(id);
+
+      if (!quotation) {
+        throw new BusinessException('4040', 'Quotation not found');
+      }
+
+      return QuotationMapper.toRecord(quotation);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateQuotationStatus(id: string, status: string, user: AuthUser) {
+    try {
+      // if (status) { เช็คว่าห้าม update status นี้ถ้าเป็น
+
+      // }
+      const quotation = await this.quotationRepository.updateStatus(
+        id,
+        status,
+        user,
+      );
+
+      if (!quotation) {
+        throw new BusinessException(
+          '5003',
+          'Failed to update quotation status',
+        );
+      }
+
+      return quotation;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getQuotationWithPagination(
+    query: getQuotationWithPaginationDto,
+    sortBy: SortCriterial,
+  ) {
+    try {
+      const { page, limit, skip } = getPagination(query);
+
+      const result = await this.quotationRepository.findAllWithPaginated(
+        { page, limit, skip },
+        query,
+        sortBy,
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async approveQuotation(
+    quotationId: string,
+    payload: ApproveQuotationDto,
+    user: AuthUser,
+  ) {
+    const session = await this.connection.startSession();
+
+    try {
+      session.startTransaction();
+
+      const quotation = await this.getQuotationById(quotationId);
+
+      if (quotation.status !== EQuotationStatus.PENDING_APPROVAL) {
+        throw new BusinessException('4001', 'Quotation cannot be approved');
+      }
+
+      const result = await this.quotationRepository.approveQuotation(
+        quotationId,
+        payload,
+        user,
+        session,
+      );
+
+      if (!result) {
+        throw new BusinessException('5003', 'Failed to approve quotation');
+      }
+
+      await session.commitTransaction();
+
+      return mapMongoId(result);
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async createRevision(quotationId: string, user: AuthUser) {
+    const session = await this.connection.startSession();
+
+    try {
+      session.startTransaction();
+
+      const oldQuotation = await this.getQuotationById(quotationId);
+
+      if (!oldQuotation.isLatest) {
+        throw new BusinessException(
+          '4001',
+          'Only latest quotation can create revision',
+        );
+      }
+
+      const quotationNo = await this.documentNoService.generate(
+        EDocumentType.QUOTATION,
+      );
+
+      await this.quotationRepository.markOldVersion(quotationId, user, session);
+
+      const quotation = await this.quotationRepository.createQuotation(
+        {
+          quotationNo,
+          workOrderId: oldQuotation.workOrder.id,
+          version: oldQuotation.version + 1,
+          isLatest: true,
+          partTotal: oldQuotation.partTotal,
+          laborTotal: oldQuotation.laborTotal,
+          serviceTotal: oldQuotation.serviceTotal,
+          grandTotal: oldQuotation.grandTotal,
+          includeVat: oldQuotation.includeVat,
+          taxPercent: oldQuotation.taxPercent,
+          discountAmount: oldQuotation.discountAmount,
+          vatAmount: oldQuotation.vatAmount,
+          validUntil: oldQuotation.validUntil,
+          customerRemark: oldQuotation.customerRemark,
+          internalRemark: oldQuotation.internalRemark,
+          items: oldQuotation.items,
+        },
+        user,
+        session,
+      );
+
+      await session.commitTransaction();
+
+      return quotation;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async expireQuotation() {
+    return await this.quotationRepository.expireQuotation();
+  }
+
+  async rejectQuotation(quotationId: string, reason: string, user: AuthUser) {
+    const session = await this.connection.startSession();
+
+    try {
+      session.startTransaction();
+      const quotation = await this.getQuotationById(quotationId);
+
+      if (quotation.status !== EQuotationStatus.PENDING_APPROVAL) {
+        throw new BusinessException('4001', 'Quotation cannot be rejected');
+      }
+
+      const result = await this.quotationRepository.rejectQuotation(
+        quotationId,
+        reason,
+        user,
+        session,
+      );
+
+      if (!result) {
+        throw new BusinessException('5003', 'Failed to reject quotation');
+      }
+
+      await session.commitTransaction();
+
+      return result;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 }

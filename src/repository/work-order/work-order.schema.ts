@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { EFuelLevel, EWorkOrderStatus } from 'src/routes/work-order/enums/work-order.enum';
 import { VehiclesEntity } from '../vehicles/vehicles.schema';
-import { QuotationEntity } from '../quotation/quotation.schema';
 import { UsersEntity } from '../users/users.schema';
 
 export type WorkOrderDocument = HydratedDocument<WorkOrderEntity>;
@@ -120,7 +119,7 @@ export class WorkOrderEntity {
 
   @Prop({
     type: Types.ObjectId,
-    ref: QuotationEntity.name,
+    ref: 'QuotationEntity',
   })
   currentQuotationId?: Types.ObjectId;
 

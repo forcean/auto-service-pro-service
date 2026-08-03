@@ -6,13 +6,17 @@ import {
   IsDateString,
   IsEnum,
   IsMongoId,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
+import { EApprovalMethod } from '../enums/quotation.enum';
 
 export enum EQuotationItemType {
   PART = 'PART',
@@ -95,3 +99,48 @@ export class CreateQuotationDto {
 }
 
 export class UpdateQuotationDto extends PartialType(CreateQuotationDto) {}
+
+export class getQuotationWithPaginationDto extends PaginationQuery {
+  @IsString({ message: 'sort must be a string' })
+  @IsOptional()
+  sort?: string;
+
+  //   @IsString({ message: 'sort must be a string' })
+  //   @IsOptional()
+  //   sort?: string;
+}
+export class RejectQuotationDto {
+  // @ApiProperty({
+  //   example: 'ลูกค้าไม่อนุมัติราคา',
+  //   description: 'เหตุผลที่ปฏิเสธใบเสนอราคา',
+  //   maxLength: 500,
+  // })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class ApproveQuotationDto {
+  // @ApiProperty({
+  //   enum: EApprovalMethod,
+  //   example: EApprovalMethod.LINE,
+  // })
+  @IsEnum(EApprovalMethod)
+  method!: EApprovalMethod;
+
+  // @ApiProperty({
+  //   example: 'สมชาย ใจดี',
+  // })
+  @IsString()
+  @MaxLength(100)
+  customerName!: string;
+
+  // @ApiPropertyOptional({
+  //   example: 'ลูกค้าอนุมัติผ่าน LINE',
+  // })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}

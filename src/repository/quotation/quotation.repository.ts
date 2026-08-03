@@ -1,11 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { QuotationEntity, QuotationDocument } from './quotation.schema';
-import { ClientSession, Model, Types } from 'mongoose';
+import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 import { AuthUser } from 'src/types/user.type';
 import { Type } from 'class-transformer';
-import { CreateQuotationDto } from 'src/routes/quotation/dtos/quotation.dto';
-import { ICreateQuotation } from 'src/routes/quotation/interfaces/quotation-record.interface';
+import {
+  ApproveQuotationDto,
+  CreateQuotationDto,
+  getQuotationWithPaginationDto,
+} from 'src/routes/quotation/dtos/quotation.dto';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
+import {
+  EApprovalMethod,
+  ECustomerDecision,
+  EQuotationStatus,
+} from 'src/routes/quotation/enums/quotation.enum';
+import { ICreateQuotation } from 'src/routes/quotation/interfaces/quotation.interface';
 
 @Injectable()
 export class QuotationRepository {
@@ -23,12 +33,17 @@ export class QuotationRepository {
       [
         {
           ...payload,
-          createdBy: user.id,
+          workOrderId: new Types.ObjectId(payload.workOrderId),
+          items: payload.items.map((item) => ({
+            ...item,
+            productId: item.productId
+              ? new Types.ObjectId(item.productId)
+              : undefined,
+          })),
+          createdBy: user.publicId,
         },
       ],
-      {
-        session,
-      },
+      { session },
     );
 
     return quotation;
@@ -40,7 +55,10 @@ export class QuotationRepository {
         _id: new Types.ObjectId(id),
         isDeleted: false,
       })
-      .populate('workOrderId')
+      .populate({
+        path: 'workOrderId',
+        select: 'workOrderNo vehicleId customerId advisorId status',
+      })
       .lean();
   }
 
@@ -51,5 +69,145 @@ export class QuotationRepository {
     });
   }
 
-  async findCurrentQuotation(workOrderId: string) {}
+  async softDelete(id: string, user: AuthUser) {
+    return this.quotationEntity.findByIdAndUpdate(
+      id,
+      {
+        isDeleted: true,
+        updatedBy: user.publicId,
+      },
+      {
+        new: true,
+      },
+    );
+  }
+
+  async updateStatus(id: string, status: string, user: AuthUser) {
+    return this.quotationEntity.findByIdAndUpdate(
+      id,
+      {
+        status,
+        updatedBy: user.publicId,
+      },
+      {
+        new: true,
+      },
+    );
+  }
+
+  async findAllWithPaginated(
+    pagination: { page: number; limit: number; skip: number },
+    query: getQuotationWithPaginationDto,
+    sortBy: SortCriterial,
+  ) {
+    const { page, limit, skip } = pagination;
+    const filter: FilterQuery<QuotationEntity> = {};
+
+    const [data, total] = await Promise.all([
+      this.quotationEntity
+        .find(filter)
+        .sort(sortBy)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.quotationEntity.countDocuments(),
+    ]);
+
+    return {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      data,
+    };
+  }
+
+  async rejectQuotation(
+    id: string,
+    reason: string,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
+    return this.quotationEntity.findByIdAndUpdate(
+      id,
+      {
+        status: EQuotationStatus.REJECTED,
+        customerRemark: reason,
+        updatedBy: user.publicId,
+      },
+      {
+        new: true,
+        session,
+      },
+    );
+  }
+
+  async expireQuotation(session?: ClientSession) {
+    return this.quotationEntity.updateMany(
+      {
+        status: EQuotationStatus.PENDING_APPROVAL,
+        validUntil: {
+          $lt: new Date(),
+        },
+        isDeleted: false,
+      },
+      {
+        $set: {
+          status: EQuotationStatus.EXPIRED,
+        },
+      },
+      {
+        session,
+      },
+    );
+  }
+
+  async markOldVersion(
+    quotationId: string,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
+    return this.quotationEntity.findByIdAndUpdate(
+      new Types.ObjectId(quotationId),
+      {
+        isLatest: false,
+        updatedBy: new Types.ObjectId(user.id),
+      },
+      {
+        new: true,
+        session,
+      },
+    );
+  }
+
+  async approveQuotation(
+    id: string,
+    payload: ApproveQuotationDto,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
+    return  this.quotationEntity.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          status: EQuotationStatus.APPROVED,
+          updatedBy: user.publicId,
+        },
+        $push: {
+          approvalHistory: {
+            decision: ECustomerDecision.APPROVED,
+            customerName: payload.customerName,
+            method: payload.method,
+            approvedBy: user.publicId,
+            approvedAt: new Date(),
+            note: payload.note,
+          },
+        },
+      },
+      {
+        new: true,
+        session,
+      },
+    ).lean();
+  }
 }

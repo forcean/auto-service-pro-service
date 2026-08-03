@@ -6,6 +6,8 @@ import {
   ECustomerDecision,
   EQuotationStatus,
 } from 'src/routes/quotation/enums/quotation.enum';
+import { ProductsEntity } from '../products/products.schema';
+import { UsersEntity } from '../users/users.schema';
 
 export type QuotationDocument = HydratedDocument<QuotationEntity>;
 @Schema({ _id: false })
@@ -18,7 +20,7 @@ export class QuotationItem {
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'ProductsEntity',
+    ref: ProductsEntity.name,
   })
   productId?: Types.ObjectId;
 
@@ -75,7 +77,7 @@ export class ApprovalHistory {
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'User',
+    ref: UsersEntity.name,
   })
   approvedBy!: Types.ObjectId;
 
@@ -102,7 +104,7 @@ export class QuotationEntity {
 
   @Prop({
     type: Types.ObjectId,
-    ref: 'WorkOrder',
+    ref: 'WorkOrderEntity',
     required: true,
     index: true,
   })
@@ -204,6 +206,9 @@ export class QuotationEntity {
     default: false,
   })
   isDeleted!: boolean;
+
+  createdAt!: Date;
+  updatedAt!: Date;
 }
 
 export const QuotationSchema = SchemaFactory.createForClass(QuotationEntity);

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -22,7 +23,11 @@ import { BusinessException } from 'src/common/exceptions/business.exception';
 import { ParseSortPipe } from 'src/common/pipes/parse-sort.pipe';
 import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import { QuotationService } from './services/quotation.service';
-import { CreateQuotationDto } from './dtos/quotation.dto';
+import {
+  ApproveQuotationDto,
+  CreateQuotationDto,
+  RejectQuotationDto,
+} from './dtos/quotation.dto';
 
 @Controller('quotation')
 export class QuotationController {
@@ -43,5 +48,78 @@ export class QuotationController {
     }
 
     return this.quotationService.createQuotation(data, authUser);
+  }
+  @Patch(':id/approve')
+  @UseGuards(PermissionsGuard)
+  @Permissions('approve:quotation')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Approve quotation successful')
+  async approveQuotation(
+    @Param('id') id: string,
+    @Body() dto: ApproveQuotationDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.quotationService.approveQuotation(id, dto, authUser);
+  }
+
+  @Patch(':id/reject')
+  @UseGuards(PermissionsGuard)
+  @Permissions('approve:quotation')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Reject quotation successful')
+  async rejectQuotation(
+    @Param('id') id: string,
+    @Body() body: RejectQuotationDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.quotationService.rejectQuotation(id, body.reason, authUser);
+  }
+
+  @Post(':id/revision')
+  @UseGuards(PermissionsGuard)
+  @Permissions('create:quotation')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Create quotation revision successful')
+  async createRevision(@Param('id') id: string, @Req() { authUser }: Request) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.quotationService.createRevision(id, authUser);
+  }
+
+  @Patch('expire')
+  @UseGuards(PermissionsGuard)
+  @Permissions('system:quotation')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Expire quotation successful')
+  async expireQuotation() {
+    return this.quotationService.expireQuotation();
+  }
+
+  @Post(':id/delete')
+  @UseGuards(PermissionsGuard)
+  @Permissions('delete:quotation')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Delete quotation successful')
+  async deleteQuotation(@Param('id') id: string, @Req() { authUser }: Request) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.quotationService.deleteQuotation(id, authUser);
   }
 }
