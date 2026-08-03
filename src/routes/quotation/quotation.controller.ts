@@ -26,6 +26,7 @@ import { QuotationService } from './services/quotation.service';
 import {
   ApproveQuotationDto,
   CreateQuotationDto,
+  getQuotationWithPaginationDto,
   RejectQuotationDto,
 } from './dtos/quotation.dto';
 
@@ -121,5 +122,40 @@ export class QuotationController {
     }
 
     return this.quotationService.deleteQuotation(id, authUser);
+  }
+
+  @Get()
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:quotations')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('get list quotation successful')
+  async getListWorkOrder(
+    @Query() query: getQuotationWithPaginationDto,
+    @Query('sort', ParseSortPipe) sortBy: SortCriterial,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.quotationService.getQuotationWithPagination(query, sortBy);
+  }
+
+  @Get('/:quotationId')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:quotations')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get work order successful')
+  async getWorkOrderByNo(
+    @Req() { authUser }: Request,
+    @Param('quotationId') quotationId: string,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.quotationService.getQuotationById(quotationId);
   }
 }
