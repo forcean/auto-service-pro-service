@@ -98,7 +98,7 @@ export class CreateQuotationDto {
   items!: CreateQuotationItemDto[];
 }
 
-export class UpdateQuotationDto extends PartialType(CreateQuotationDto) {}
+export class UpdateQuotationDto extends CreateQuotationDto {}
 
 export class getQuotationWithPaginationDto extends PaginationQuery {
   @IsString({ message: 'sort must be a string' })

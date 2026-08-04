@@ -1,10 +1,4 @@
-import { Types } from 'mongoose';
 import { EQuotationItemType } from '../dtos/quotation.dto';
-import {
-  EApprovalMethod,
-  ECustomerDecision,
-  EQuotationStatus,
-} from '../enums/quotation.enum';
 
 export interface IQuotationItem {
   itemType: EQuotationItemType;

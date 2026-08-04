@@ -8,6 +8,7 @@ import {
   ApproveQuotationDto,
   CreateQuotationDto,
   getQuotationWithPaginationDto,
+  UpdateQuotationDto,
 } from 'src/routes/quotation/dtos/quotation.dto';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import {
@@ -49,7 +50,7 @@ export class QuotationRepository {
     return quotation;
   }
 
-  async getQuotationById(id: string) {
+  async getQuotationById(id: string){
     return this.quotationEntity
       .findOne({
         _id: new Types.ObjectId(id),
@@ -186,28 +187,65 @@ export class QuotationRepository {
     user: AuthUser,
     session?: ClientSession,
   ) {
-    return  this.quotationEntity.findByIdAndUpdate(
+    return this.quotationEntity
+      .findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            status: EQuotationStatus.APPROVED,
+            updatedBy: user.publicId,
+          },
+          $push: {
+            approvalHistory: {
+              decision: ECustomerDecision.APPROVED,
+              customerName: payload.customerName,
+              method: payload.method,
+              approvedBy: user.publicId,
+              approvedAt: new Date(),
+              note: payload.note,
+            },
+          },
+        },
+        {
+          new: true,
+          session,
+        },
+      )
+      .lean();
+  }
+
+  async updateQuotation(
+  id: string,
+  payload: Partial<ICreateQuotation>,
+  user: AuthUser,
+  session?: ClientSession,
+) {
+  return await this.quotationEntity
+    .findByIdAndUpdate(
       id,
       {
         $set: {
-          status: EQuotationStatus.APPROVED,
+          workOrderId: new Types.ObjectId(payload.workOrderId),
+          validUntil: payload.validUntil,
+          includeVat: payload.includeVat,
+          taxPercent: payload.taxPercent,
+          partTotal: payload.partTotal,
+          laborTotal: payload.laborTotal,
+          serviceTotal: payload.serviceTotal,
+          discountAmount: payload.discountAmount,
+          vatAmount: payload.vatAmount,
+          grandTotal: payload.grandTotal,
+          customerRemark: payload.customerRemark,
+          internalRemark: payload.internalRemark,
+          items: payload.items,
           updatedBy: user.publicId,
-        },
-        $push: {
-          approvalHistory: {
-            decision: ECustomerDecision.APPROVED,
-            customerName: payload.customerName,
-            method: payload.method,
-            approvedBy: user.publicId,
-            approvedAt: new Date(),
-            note: payload.note,
-          },
         },
       },
       {
         new: true,
         session,
       },
-    ).lean();
-  }
+    )
+    .lean();
+}
 }

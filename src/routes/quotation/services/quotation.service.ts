@@ -12,6 +12,7 @@ import {
   CreateQuotationItemDto,
   EQuotationItemType,
   getQuotationWithPaginationDto,
+  UpdateQuotationDto,
 } from '../dtos/quotation.dto';
 import { ProductsService } from 'src/routes/products/products.service';
 import { IQuotationRecord } from '../interfaces/quotation-record.interface';
@@ -29,16 +30,12 @@ export class QuotationService {
   constructor(
     @InjectConnection('autoservice')
     private readonly connection: Connection,
-
     @Inject(QuotationRepository)
     private readonly quotationRepository: QuotationRepository,
-
     @Inject(WorkOrderService)
     private readonly workOrderService: WorkOrderService,
-
     @Inject(DocumentNoService)
     private readonly documentNoService: DocumentNoService,
-
     @Inject(ProductsService)
     private readonly productsService: ProductsService,
   ) {}
@@ -108,7 +105,9 @@ export class QuotationService {
     }
   }
 
-  private async prepareQuotation(payload: CreateQuotationDto) {
+  private async prepareQuotation(
+    payload: CreateQuotationDto | UpdateQuotationDto,
+  ) {
     const items = await this.buildQuotationItems(payload.items);
 
     let partTotal = 0;
@@ -159,7 +158,7 @@ export class QuotationService {
   }
 
   private async buildQuotationItems(
-    payloadItems: CreateQuotationItemDto[],
+    payloadItems: Array<CreateQuotationItemDto>,
   ): Promise<IQuotationItem[]> {
     const items: IQuotationItem[] = [];
 
@@ -298,7 +297,6 @@ export class QuotationService {
   ) {
     try {
       const { page, limit, skip } = getPagination(query);
-
       const result = await this.quotationRepository.findAllWithPaginated(
         { page, limit, skip },
         query,
@@ -319,7 +317,6 @@ export class QuotationService {
 
     try {
       session.startTransaction();
-
       const quotation = await this.getQuotationById(quotationId);
 
       if (quotation.status !== EQuotationStatus.PENDING_APPROVAL) {
@@ -353,7 +350,6 @@ export class QuotationService {
 
     try {
       session.startTransaction();
-
       const oldQuotation = await this.getQuotationById(quotationId);
 
       if (!oldQuotation.isLatest) {
@@ -366,9 +362,7 @@ export class QuotationService {
       const quotationNo = await this.documentNoService.generate(
         EDocumentType.QUOTATION,
       );
-
       await this.quotationRepository.markOldVersion(quotationId, user, session);
-
       const quotation = await this.quotationRepository.createQuotation(
         {
           quotationNo,
@@ -391,9 +385,7 @@ export class QuotationService {
         user,
         session,
       );
-
       await session.commitTransaction();
-
       return quotation;
     } catch (error) {
       await session.abortTransaction();
@@ -434,6 +426,67 @@ export class QuotationService {
       return result;
     } catch (error) {
       await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async updateQuotation(
+    quotationId: string,
+    payload: UpdateQuotationDto,
+    user: AuthUser,
+  ) {
+    const session = await this.connection.startSession();
+    try {
+      session.startTransaction();
+      const quotation =
+        await this.quotationRepository.getQuotationById(quotationId);
+
+      if (!quotation) {
+        throw new BusinessException('4040', 'Quotation not found');
+      }
+
+      if (
+        quotation.status !== EQuotationStatus.DRAFT &&
+        quotation.status !== EQuotationStatus.PENDING_APPROVAL
+      ) {
+        throw new BusinessException('4001', 'Quotation cannot be updated');
+      }
+
+      await this.workOrderService.getWorkOrderById(payload.workOrderId);
+
+      const quotationData = await this.prepareQuotation(payload);
+      const result = await this.quotationRepository.updateQuotation(
+        quotationId,
+        {
+          workOrderId: payload.workOrderId,
+          validUntil: payload.validUntil,
+          includeVat: quotationData.includeVat,
+          taxPercent: quotationData.taxPercent,
+          partTotal: quotationData.partTotal,
+          laborTotal: quotationData.laborTotal,
+          serviceTotal: quotationData.serviceTotal,
+          discountAmount: quotationData.quotationDiscount,
+          vatAmount: quotationData.vatAmount,
+          grandTotal: quotationData.grandTotal,
+          customerRemark: payload.customerRemark,
+          internalRemark: payload.internalRemark,
+          items: quotationData.items,
+        },
+        user,
+        session,
+      );
+
+      if (!result) {
+        throw new BusinessException('5003', 'Failed to update quotation');
+      }
+      await session.commitTransaction();
+      return QuotationMapper.toRecord(result);
+    } catch (error) {
+      if (session.inTransaction()) {
+        await session.abortTransaction();
+      }
       throw error;
     } finally {
       await session.endSession();

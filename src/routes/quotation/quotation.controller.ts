@@ -28,6 +28,7 @@ import {
   CreateQuotationDto,
   getQuotationWithPaginationDto,
   RejectQuotationDto,
+  UpdateQuotationDto,
 } from './dtos/quotation.dto';
 
 @Controller('quotation')
@@ -157,5 +158,23 @@ export class QuotationController {
     }
 
     return this.quotationService.getQuotationById(quotationId);
+  }
+
+  @Patch(':id')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:quotation')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Update quotation successful')
+  async updateQuotation(
+    @Param('id') id: string,
+    @Body() dto: UpdateQuotationDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.quotationService.updateQuotation(id, dto, authUser);
   }
 }
