@@ -57,6 +57,8 @@ import { CounterRepository } from './counters/counter.repository';
 import { CounterEntity, CounterSchema } from './counters/counter.schema';
 import { QuotationRepository } from './quotation/quotation.repository';
 import { QuotationEntity, QuotationSchema } from './quotation/quotation.schema';
+import { WorkOrderTaskRepository } from './work-order-task/work-order-task.repository';
+import { WorkOrderTaskEntity, WorkOrderTaskSchema } from './work-order-task/work-order-task.schema';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -100,6 +102,7 @@ import { QuotationEntity, QuotationSchema } from './quotation/quotation.schema';
         { name: WorkOrderEntity.name, schema: WorkOrderSchema },
         { name: CounterEntity.name, schema: CounterSchema },
         { name: QuotationEntity.name, schema: QuotationSchema },
+        { name: WorkOrderTaskEntity.name, schema: WorkOrderTaskSchema },
       ],
       'autoservice',
     ),
@@ -122,7 +125,8 @@ import { QuotationEntity, QuotationSchema } from './quotation/quotation.schema';
     CustomersVehicleRepository,
     WorkOrderRepository,
     CounterRepository,
-    QuotationRepository
+    QuotationRepository,
+    WorkOrderTaskRepository
   ],
   exports: [
     UsersRepository,
@@ -142,7 +146,8 @@ import { QuotationEntity, QuotationSchema } from './quotation/quotation.schema';
     CustomersVehicleRepository,
     WorkOrderRepository,
     CounterRepository,
-    QuotationRepository
+    QuotationRepository,
+    WorkOrderTaskRepository
   ],
 })
 export class RepositoryModule {}

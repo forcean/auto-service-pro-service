@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CounterRepository } from 'src/repository/counters/counter.repository';
-import { EDocumentType } from '../enums/document-type.enum';
+import { EDocumentType, ESequenceType } from '../enums/document-type.enum';
 import { DOCUMENT_PREFIX } from '../constants/document-prefix.constant';
 
 @Injectable()
@@ -16,5 +16,13 @@ export class DocumentNoService {
     const prefix = DOCUMENT_PREFIX[type];
 
     return `${prefix}${year}${seq.toString().padStart(6, '0')}`;
+  }
+
+  async generateTaskNo(workOrderNo: string): Promise<string> {
+    const seq = await this.counterRepository.getNextSequence(
+      `${ESequenceType.WORK_ORDER_TASK}_${workOrderNo}`,
+    );
+
+    return `${workOrderNo}-T${seq.toString().padStart(3, '0')}`;
   }
 }

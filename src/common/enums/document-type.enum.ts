@@ -5,3 +5,7 @@ export enum EDocumentType {
   PAYMENT = 'PAYMENT',
   PURCHASE_ORDER = 'PURCHASE_ORDER',
 }
+
+export enum ESequenceType {
+  WORK_ORDER_TASK = 'WORK_ORDER_TASK',
+}
