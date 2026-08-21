@@ -59,6 +59,8 @@ import { QuotationRepository } from './quotation/quotation.repository';
 import { QuotationEntity, QuotationSchema } from './quotation/quotation.schema';
 import { WorkOrderTaskRepository } from './work-order-task/work-order-task.repository';
 import { WorkOrderTaskEntity, WorkOrderTaskSchema } from './work-order-task/work-order-task.schema';
+import { PartIssueEntity, PartIssueSchema } from './part-issue/part-issue.schema';
+import { PartIssueRepository } from './part-issue/part-issue.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -103,6 +105,7 @@ import { WorkOrderTaskEntity, WorkOrderTaskSchema } from './work-order-task/work
         { name: CounterEntity.name, schema: CounterSchema },
         { name: QuotationEntity.name, schema: QuotationSchema },
         { name: WorkOrderTaskEntity.name, schema: WorkOrderTaskSchema },
+        { name: PartIssueEntity.name, schema: PartIssueSchema },
       ],
       'autoservice',
     ),
@@ -126,7 +129,8 @@ import { WorkOrderTaskEntity, WorkOrderTaskSchema } from './work-order-task/work
     WorkOrderRepository,
     CounterRepository,
     QuotationRepository,
-    WorkOrderTaskRepository
+    WorkOrderTaskRepository,
+    PartIssueRepository
   ],
   exports: [
     UsersRepository,
@@ -147,7 +151,8 @@ import { WorkOrderTaskEntity, WorkOrderTaskSchema } from './work-order-task/work
     WorkOrderRepository,
     CounterRepository,
     QuotationRepository,
-    WorkOrderTaskRepository
+    WorkOrderTaskRepository,
+    PartIssueRepository
   ],
 })
 export class RepositoryModule {}

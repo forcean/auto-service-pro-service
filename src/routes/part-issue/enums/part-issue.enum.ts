@@ -1,0 +1,14 @@
+export enum EPartIssueStatus {
+  REQUESTED = 'REQUESTED',
+  PARTIAL = 'PARTIAL',
+  ISSUED = 'ISSUED',
+  CANCELLED = 'CANCELLED',
+  RESERVED = 'RESERVED',
+}
+
+export enum EPartIssueReason {
+  NORMAL = 'NORMAL',
+  ADDITIONAL = 'ADDITIONAL',
+  DAMAGED = 'DAMAGED',
+  REPLACEMENT = 'REPLACEMENT',
+}

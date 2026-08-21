@@ -4,6 +4,8 @@ export enum EDocumentType {
   INVOICE = 'INVOICE',
   PAYMENT = 'PAYMENT',
   PURCHASE_ORDER = 'PURCHASE_ORDER',
+    PART_ISSUE = 'PART_ISSUE',
+
 }
 
 export enum ESequenceType {

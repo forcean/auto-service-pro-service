@@ -15,5 +15,6 @@ import { WorkOrderModule } from '../work-order/work-order.module';
     TaskService,
     DocumentNoService,
   ],
+  exports:[TaskService]
 })
 export class TaskModule {}

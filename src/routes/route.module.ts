@@ -10,6 +10,7 @@ import { VehiclesModule } from './vehicles-management/vehicles.module';
 import { WorkOrderModule } from './work-order/work-order.module';
 import { QuotationModule } from './quotation/quotation.module';
 import { TaskModule } from './task/task.module';
+import { PartIssueModule } from './part-issue/part-issue.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TaskModule } from './task/task.module';
     WorkOrderModule,
     QuotationModule,
     TaskModule,
+    PartIssueModule
   ],
   providers: [],
   controllers: [],
