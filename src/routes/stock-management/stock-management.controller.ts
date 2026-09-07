@@ -94,21 +94,21 @@ export class StockManagementController {
   }
 
   // POST /stocks/:productId/issue เบิกสินค้าออก/ขาย
-  @Post('stocks/:productId/issue')
-  // @Permissions('delete:product')
-  @ResponseResultCode('2000')
-  @ResponseMessage('Issue stock successful')
-  async issueStock(
-    @Param('productId') productId: string,
-    @Body() dto: IssueStockDto,
-    @Req() { authUser }: Request,
-  ) {
-    if (!authUser) {
-      throw new BusinessException('4013', 'No auth user found');
-    }
+  // @Post('stocks/:productId/issue')
+  // // @Permissions('delete:product')
+  // @ResponseResultCode('2000')
+  // @ResponseMessage('Issue stock successful')
+  // async issueStock(
+  //   @Param('productId') productId: string,
+  //   @Body() dto: IssueStockDto,
+  //   @Req() { authUser }: Request,
+  // ) {
+  //   if (!authUser) {
+  //     throw new BusinessException('4013', 'No auth user found');
+  //   }
 
-    return this.stockManagementService.issueStock(productId, dto, authUser);
-  }
+  //   return this.stockManagementService.issueStock(productId, dto, authUser);
+  // }
 
   // POST /stocks/:productId/reserve จองสินค้า
   @Post('stocks/:productId/reserve')

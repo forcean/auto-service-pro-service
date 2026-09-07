@@ -8,5 +8,6 @@ import { StockManagementModule } from "../stock-management/stock-management.modu
   imports: [RepositoryModule,StockManagementModule],
   controllers: [ProductsController],
   providers: [ProductsService],
+  exports:[ProductsService]
 })
 export class ProductsModule { }

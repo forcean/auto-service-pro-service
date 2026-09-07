@@ -25,4 +25,5 @@ export enum EStockReferenceType {
   INITIAL_STOCK = 'INITIAL_STOCK', // ตั้งต้นสินค้า
   MANUAL = 'MANUAL', // แก้ไขด้วยคน
   SYSTEM = 'SYSTEM', // ระบบอัตโนมัติ
+  PART_ISSUE = 'PART_ISSUE', // ระบบอัตโนมัติ
 }

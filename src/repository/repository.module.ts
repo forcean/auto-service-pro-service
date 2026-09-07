@@ -51,6 +51,16 @@ import {
 } from './stock-movement/stock-movement.schema';
 import { StockMovementRepository } from './stock-movement/stock-movement.repository';
 import { StocksRepository } from './stock/stock.repository';
+import { WorkOrderEntity, WorkOrderSchema } from './work-order/work-order.schema';
+import { WorkOrderRepository } from './work-order/work-order.repository';
+import { CounterRepository } from './counters/counter.repository';
+import { CounterEntity, CounterSchema } from './counters/counter.schema';
+import { QuotationRepository } from './quotation/quotation.repository';
+import { QuotationEntity, QuotationSchema } from './quotation/quotation.schema';
+import { WorkOrderTaskRepository } from './work-order-task/work-order-task.repository';
+import { WorkOrderTaskEntity, WorkOrderTaskSchema } from './work-order-task/work-order-task.schema';
+import { PartIssueEntity, PartIssueSchema } from './part-issue/part-issue.schema';
+import { PartIssueRepository } from './part-issue/part-issue.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -91,6 +101,11 @@ import { StocksRepository } from './stock/stock.repository';
         { name: StockEntity.name, schema: StockSchema },
         { name: StockMovementEntity.name, schema: StockMovementSchema },
         { name: CustomersVehicleEntity.name, schema: CustomersVehicleSchema },
+        { name: WorkOrderEntity.name, schema: WorkOrderSchema },
+        { name: CounterEntity.name, schema: CounterSchema },
+        { name: QuotationEntity.name, schema: QuotationSchema },
+        { name: WorkOrderTaskEntity.name, schema: WorkOrderTaskSchema },
+        { name: PartIssueEntity.name, schema: PartIssueSchema },
       ],
       'autoservice',
     ),
@@ -111,6 +126,11 @@ import { StocksRepository } from './stock/stock.repository';
     StocksRepository,
     StockMovementRepository,
     CustomersVehicleRepository,
+    WorkOrderRepository,
+    CounterRepository,
+    QuotationRepository,
+    WorkOrderTaskRepository,
+    PartIssueRepository
   ],
   exports: [
     UsersRepository,
@@ -128,6 +148,11 @@ import { StocksRepository } from './stock/stock.repository';
     StocksRepository,
     StockMovementRepository,
     CustomersVehicleRepository,
+    WorkOrderRepository,
+    CounterRepository,
+    QuotationRepository,
+    WorkOrderTaskRepository,
+    PartIssueRepository
   ],
 })
 export class RepositoryModule {}

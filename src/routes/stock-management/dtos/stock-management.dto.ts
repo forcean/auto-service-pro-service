@@ -55,7 +55,6 @@ export class UpdateStockDto {
 }
 
 export class ReceiveStockDto {
-
   @IsInt()
   @Min(1)
   quantity!: number;
@@ -95,6 +94,18 @@ export class ReserveStockDto {
   @IsInt()
   @Min(1)
   quantity!: number;
+
+  @IsOptional()
+  @IsString()
+  referenceType?: string;
+
+  @IsOptional()
+  @IsString()
+  referenceId?: string;
+
+  @IsOptional()
+  @IsString()
+  remark?: string;
 }
 
 export class ReleaseReservationDto {
@@ -154,7 +165,7 @@ export class AdjustStockDto {
 export class CreateStockMovementDto {
   productId!: string;
   sku!: string;
-  movementType!: EStockMovementType
+  movementType!: EStockMovementType;
   quantity!: number;
   beforeQty!: number;
   afterQty!: number;
@@ -173,13 +184,13 @@ export class getMovementListDto {
   @IsOptional()
   @IsString()
   sku?: string;
-  
+
   @IsString()
   @IsOptional()
   @IsEnum(EStockMovementType)
   movementType?: string;
 
- @IsString()
+  @IsString()
   @IsOptional()
   @IsEnum(EStockReferenceType)
   referenceType?: string;

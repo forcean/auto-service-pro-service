@@ -21,6 +21,7 @@ import { IProductDetailResponse } from './interfaces/products.interface';
 import { StockManagementService } from '../stock-management/stock-management.service';
 import { CreateStockDto } from '../stock-management/dtos/stock-management.dto';
 import { Types } from 'mongoose';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Injectable()
 export class ProductsService {
@@ -157,7 +158,9 @@ export class ProductsService {
         throw new BusinessException('4012', 'Failed to delete product');
       }
     } catch (error) {
-      console.error(`Error deleting product: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error(
+        `Error deleting product: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       throw error;
     }
   }
@@ -315,26 +318,22 @@ export class ProductsService {
     }
   }
 
-  async getListProducts(dto: getProductListDto, pagination: PaginationQuery) {
-    const { page, limit, skip } = getPagination(pagination);
-    const getProducts = await this.productsRepository.getListProducts(dto, {
-      page,
-      limit,
-      skip,
-    });
-    return {
-      page: getProducts.page,
-      limit: getProducts.limit,
-      total: getProducts.total,
-      totalPages: getProducts.totalPages,
-      products: getProducts.data,
-    };
-  }
-  catch(error) {
-    console.error(
-      `Error getting list products: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
-    throw error;
+  async getListProducts(query: getProductListDto, sortBy: SortCriterial) {
+    try {
+      const { page, limit, skip } = getPagination(query);
+      const result = await this.productsRepository.getListProducts(
+        { page, limit, skip },
+        query,
+        sortBy,
+      );
+      console.log(result)
+      return result;
+    } catch (error) {
+      console.error(
+        `Error getting customer vehicle: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      throw error;
+    }
   }
 
   async getProductDetail(sku: string): Promise<IProductDetailResponse> {

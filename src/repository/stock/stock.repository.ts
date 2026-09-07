@@ -57,14 +57,14 @@ export class StocksRepository {
 
   async getByProductId(
     productId: string,
+    session?: ClientSession,
   ): Promise<IStockManagementResponse | null> {
     const stock = await this.stockModel
       .findOne({
         productId: new Types.ObjectId(productId),
-        isDeleted: {
-          $ne: true,
-        },
+        isDeleted: { $ne: true },
       })
+      .session(session ?? null)
       .lean()
       .exec();
 
@@ -318,6 +318,35 @@ export class StocksRepository {
           deletedDt: 1,
         },
       },
+    );
+
+    return result.modifiedCount > 0;
+  }
+
+  async consumeReservedStock(
+    productId: string,
+    quantity: number,
+    authUser: AuthUser,
+    session?: ClientSession,
+  ): Promise<boolean> {
+    const result = await this.stockModel.updateOne(
+      {
+        productId: new Types.ObjectId(productId),
+        quantity: { $gte: quantity },
+        reserved: { $gte: quantity },
+        isDeleted: { $ne: true },
+      },
+      {
+        $inc: {
+          quantity: -quantity,
+          reserved: -quantity,
+        },
+        $set: {
+          updatedBy: authUser.publicId,
+          updatedDt: new Date(),
+        },
+      },
+      { session },
     );
 
     return result.modifiedCount > 0;

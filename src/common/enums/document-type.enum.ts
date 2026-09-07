@@ -1,0 +1,13 @@
+export enum EDocumentType {
+  WORK_ORDER = 'WORK_ORDER',
+  QUOTATION = 'QUOTATION',
+  INVOICE = 'INVOICE',
+  PAYMENT = 'PAYMENT',
+  PURCHASE_ORDER = 'PURCHASE_ORDER',
+    PART_ISSUE = 'PART_ISSUE',
+
+}
+
+export enum ESequenceType {
+  WORK_ORDER_TASK = 'WORK_ORDER_TASK',
+}
