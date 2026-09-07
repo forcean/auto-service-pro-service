@@ -3,6 +3,7 @@ import { HydratedDocument, Types } from 'mongoose';
 import { EFuelLevel, EWorkOrderStatus } from 'src/routes/work-order/enums/work-order.enum';
 import { VehiclesEntity } from '../vehicles/vehicles.schema';
 import { UsersEntity } from '../users/users.schema';
+import { CustomersVehicleEntity } from '../customers-vehicle/customers-vehicle.schema';
 
 export type WorkOrderDocument = HydratedDocument<WorkOrderEntity>;
 
@@ -45,7 +46,7 @@ export class WorkOrderEntity {
 
   @Prop({
     type: Types.ObjectId,
-    ref: VehiclesEntity.name,
+    ref: CustomersVehicleEntity.name,
     required: true,
     index: true,
   })

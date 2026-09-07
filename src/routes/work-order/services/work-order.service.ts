@@ -89,7 +89,7 @@ export class WorkOrderService {
     session?: ClientSession,
   ) {
     try {
-      await this.getWorkOrderById(id);
+      await this.getWorkOrderByNo(id);
       const workOrder = await this.workOrderRepository.updateWorkOrder(
         id,
         payload,

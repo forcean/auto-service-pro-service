@@ -34,10 +34,10 @@ export class WorkOrderController {
   constructor(private readonly workOrderService: WorkOrderService) {}
 
   @Post()
-  @UseGuards(PermissionsGuard)
-  @Permissions('create:work-order')
+  // @UseGuards(PermissionsGuard)
+  // @Permissions('create:work-order')
   @UseInterceptors(ResponseInterceptor)
-  @ResponseResultCode('2000')
+  @ResponseResultCode('2001')
   @ResponseMessage('Create work order successful')
   async createWorkOrder(
     @Body() data: CreateWorkOrderDto,
@@ -51,8 +51,8 @@ export class WorkOrderController {
   }
 
   @Patch('/:workOrderId/')
-  @UseGuards(PermissionsGuard)
-  @Permissions('update:work-order')
+  // @UseGuards(PermissionsGuard)
+  // @Permissions('update:work-order')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Update work order successful')

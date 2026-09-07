@@ -1,5 +1,6 @@
 import { IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
 import { Type } from "class-transformer"
+import { PaginationQuery } from "src/common/dto/pagination.dto";
 export class EngineDto {
   @IsString()
   @IsNotEmpty()
@@ -237,7 +238,7 @@ export class updateProductDto {
   status?: string;
 }
 
-export class getProductListDto {
+export class getProductListDto extends PaginationQuery {
   @IsOptional()
   @IsString()
   name?: string;

@@ -50,7 +50,7 @@ export class QuotationRepository {
     return quotation;
   }
 
-  async getQuotationById(id: string){
+  async getQuotationById(id: string) {
     return this.quotationEntity
       .findOne({
         _id: new Types.ObjectId(id),
@@ -102,6 +102,7 @@ export class QuotationRepository {
     sortBy: SortCriterial,
   ) {
     const { page, limit, skip } = pagination;
+
     const filter: FilterQuery<QuotationEntity> = {};
 
     const [data, total] = await Promise.all([
@@ -110,16 +111,34 @@ export class QuotationRepository {
         .sort(sortBy)
         .skip(skip)
         .limit(limit)
+        .populate({
+          path: 'workOrderId',
+          select: 'workOrderNo',
+        })
         .lean(),
-      this.quotationEntity.countDocuments(),
+
+      this.quotationEntity.countDocuments(filter),
     ]);
+
+    const formattedData = data.map((quotation) => {
+      const workOrder = quotation.workOrderId as {
+        _id: unknown;
+        workOrderNo?: string;
+      };
+
+      return {
+        ...quotation,
+        workOrderId: workOrder?._id?.toString(),
+        workOrderNo: workOrder?.workOrderNo,
+      };
+    });
 
     return {
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
-      data,
+      data: formattedData,
     };
   }
 
@@ -215,37 +234,37 @@ export class QuotationRepository {
   }
 
   async updateQuotation(
-  id: string,
-  payload: Partial<ICreateQuotation>,
-  user: AuthUser,
-  session?: ClientSession,
-) {
-  return await this.quotationEntity
-    .findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          workOrderId: new Types.ObjectId(payload.workOrderId),
-          validUntil: payload.validUntil,
-          includeVat: payload.includeVat,
-          taxPercent: payload.taxPercent,
-          partTotal: payload.partTotal,
-          laborTotal: payload.laborTotal,
-          serviceTotal: payload.serviceTotal,
-          discountAmount: payload.discountAmount,
-          vatAmount: payload.vatAmount,
-          grandTotal: payload.grandTotal,
-          customerRemark: payload.customerRemark,
-          internalRemark: payload.internalRemark,
-          items: payload.items,
-          updatedBy: user.publicId,
+    id: string,
+    payload: Partial<ICreateQuotation>,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
+    return await this.quotationEntity
+      .findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            workOrderId: new Types.ObjectId(payload.workOrderId),
+            validUntil: payload.validUntil,
+            includeVat: payload.includeVat,
+            taxPercent: payload.taxPercent,
+            partTotal: payload.partTotal,
+            laborTotal: payload.laborTotal,
+            serviceTotal: payload.serviceTotal,
+            discountAmount: payload.discountAmount,
+            vatAmount: payload.vatAmount,
+            grandTotal: payload.grandTotal,
+            customerRemark: payload.customerRemark,
+            internalRemark: payload.internalRemark,
+            items: payload.items,
+            updatedBy: user.publicId,
+          },
         },
-      },
-      {
-        new: true,
-        session,
-      },
-    )
-    .lean();
-}
+        {
+          new: true,
+          session,
+        },
+      )
+      .lean();
+  }
 }

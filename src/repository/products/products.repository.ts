@@ -13,6 +13,7 @@ import {
   IProduct,
 } from 'src/routes/products/interfaces/products.interface';
 import { mapMongoId } from 'src/common/helper/mongo.helper';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Injectable()
 export class ProductsRepository {
@@ -26,7 +27,10 @@ export class ProductsRepository {
   }
 
   async getProductBySku(sku: string): Promise<IProduct | null> {
-    const product = await this.productsEntity.findOne({ sku:sku }).lean().exec();
+    const product = await this.productsEntity
+      .findOne({ sku: sku })
+      .lean()
+      .exec();
 
     if (!product) {
       return null;
@@ -84,34 +88,45 @@ export class ProductsRepository {
   }
 
   async getListProducts(
-    param: getProductListDto,
     pagination: { page: number; limit: number; skip: number },
+    query: getProductListDto,
+    sortBy: SortCriterial,
   ) {
-    const filter = {
-      ...(param.name && {
-        name: { $regex: param.name, $options: 'i' },
-      }),
-      ...(param.sku && { sku: { $regex: param.sku, $options: 'i' } }),
-      ...(param.categoryId && { categoryId: param.categoryId }),
-      ...(param.brandId && { brandId: param.brandId }),
-      ...(param.status && { status: param.status }),
-      ...(param.isStocked !== undefined && { isStocked: param.isStocked }),
-    };
+    const { page, limit, skip } = pagination;
+
+    const filter: FilterQuery<ProductsEntity> = {};
+
+    // ดึงค่า keyword ออกมาจาก sku หรือ name ตัวใดตัวหนึ่ง
+    const keyword = query.sku || query.name;
+
+    if (keyword) {
+      const cleanKeyword = keyword.trim();
+      const searchRegex = { $regex: cleanKeyword, $options: 'i' };
+
+      // ใช้ $or เพื่อหาทั้งจาก sku OR name OR code
+      filter.$or = [
+        { sku: searchRegex },
+        { name: searchRegex },
+        { code: searchRegex }, // แถม search จาก code ด้วยหากใน DB เก็บช่องนี้
+      ];
+    }
+
     const [data, total] = await Promise.all([
       this.productsEntity
         .find(filter)
-        .skip(pagination.skip)
-        .limit(pagination.limit)
+        .sort(sortBy)
+        .skip(skip)
+        .limit(limit)
         .lean(),
-      this.productsEntity.countDocuments(filter),
+      this.productsEntity.countDocuments(filter), // ต้องส่ง filter เข้าไปคำนวณจำนวนด้วย
     ]);
 
     return {
-      page: pagination.page,
-      limit: pagination.limit,
+      page,
+      limit,
       total,
-      totalPages: Math.ceil(total / pagination.limit),
-      data,
+      totalPages: Math.ceil(total / limit),
+      products: data,
     };
   }
 

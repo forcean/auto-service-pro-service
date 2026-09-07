@@ -30,6 +30,7 @@ export class WorkOrderRepository {
       [
         {
           ...payload,
+          vehicleId: new Types.ObjectId(payload.vehicleId),
           workOrderNo,
           createdBy: user.id,
         },
@@ -53,10 +54,20 @@ export class WorkOrderRepository {
   }
 
   async getByWorkOrderNo(workOrderNo: string) {
-    return this.model.findOne({
-      workOrderNo,
-      isDeleted: false,
-    });
+    return (
+      this.model
+        .findOne({
+          workOrderNo,
+          isDeleted: false,
+        })
+        .populate({
+          path: 'vehicleId',
+          // select: '_id licensePlate province vin vehicle',
+        })
+        // .populate('customerId')
+        // .populate('advisorId')
+        .lean()
+    );
   }
 
   async exists(workOrderNo: string) {
@@ -72,8 +83,7 @@ export class WorkOrderRepository {
     user: AuthUser,
     session?: ClientSession,
   ) {
-    return this.model.findByIdAndUpdate(
-      id,
+    return this.model.updateOne(
       {
         ...payload,
         updatedBy: user.id,
@@ -173,11 +183,15 @@ export class WorkOrderRepository {
     const [data, total] = await Promise.all([
       this.model
         .find(filter)
+        .populate({
+          path: 'vehicleId',
+          select: '_id licensePlate province vin vehicle',
+        })
         .sort(sortBy ?? { checkInDate: 'desc' })
         .skip(skip)
         .limit(limit)
         .lean(),
-      this.model.countDocuments(),
+      this.model.countDocuments(filter),
     ]);
 
     return {
@@ -185,7 +199,10 @@ export class WorkOrderRepository {
       limit,
       total,
       totalPages: Math.ceil(total / limit),
-      data,
+      data: data.map(({ vehicleId, ...item }) => ({
+        ...item,
+        vehicle: vehicleId,
+      })),
     };
   }
 }

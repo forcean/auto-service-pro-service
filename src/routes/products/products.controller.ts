@@ -29,6 +29,8 @@ import type { Request } from 'express';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { getUserWithPaginationDto } from '../user-management/dtos/user-manage.dto';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
+import { ParseSortPipe } from 'src/common/pipes/parse-sort.pipe';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Controller('products')
 export class ProductsController {
@@ -47,7 +49,7 @@ export class ProductsController {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-    
+
     await this.productsService.createProduct(createProductDto, authUser);
   }
 
@@ -64,7 +66,7 @@ export class ProductsController {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-    await this.productsService.deleteProduct(skuId,authUser);
+    await this.productsService.deleteProduct(skuId, authUser);
     // return {
     //   message: 'Delete product successful',
     // };
@@ -168,14 +170,15 @@ export class ProductsController {
   @ResponseMessage('Get list products successful')
   async getProducts(
     @Query() dto: getProductListDto,
+    @Query('sort', ParseSortPipe) sortBy: SortCriterial,
     @Req() { authUser }: Request,
-    @Query() pagination: PaginationQuery,
+    // @Query() pagination: PaginationQuery,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return await this.productsService.getListProducts(dto, pagination);
+    return await this.productsService.getListProducts(dto, sortBy);
   }
 
   @Get(':sku/detail')
