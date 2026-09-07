@@ -48,6 +48,7 @@ export class TaskService {
           priority: payload.priority,
           status: payload.status ?? ETaskStatus.WAITING,
           estimateMinute: payload.estimateMinute,
+          actualMinute: payload.actualMinute,
           plannedStartDate: payload.plannedStartDate
             ? new Date(payload.plannedStartDate)
             : undefined,
@@ -150,6 +151,10 @@ export class TaskService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getTasksByWorkOrderNo(workOrderNo: string) {
+    return this.taskRepository.getByWorkOrderNo(workOrderNo);
   }
 
   async getTasksWithPagination(

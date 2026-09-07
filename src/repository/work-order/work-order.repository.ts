@@ -95,14 +95,19 @@ export class WorkOrderRepository {
     );
   }
 
-  async updateStatus(id: string, status: EWorkOrderStatus, user: AuthUser) {
+  async updateStatus(
+    id: string,
+    status: EWorkOrderStatus,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
     return this.model.findByIdAndUpdate(
       id,
       {
         status,
         updatedBy: user.id,
       },
-      { new: true },
+      { new: true, session },
     );
   }
 
@@ -122,6 +127,19 @@ export class WorkOrderRepository {
         new: true,
         session,
       },
+    );
+  }
+
+  async updateInvoice(
+    workOrderId: string,
+    invoiceId: string,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
+    return this.model.findByIdAndUpdate(
+      workOrderId,
+      { invoiceId: new Types.ObjectId(invoiceId), updatedBy: user.id },
+      { new: true, session },
     );
   }
 

@@ -8,6 +8,7 @@ export interface ICreateTaskRequest {
   priority?: ETaskPriority;
   status?: ETaskStatus;
   estimateMinute?: number;
+  actualMinute?: number;
   plannedStartDate?: Date;
   plannedFinishDate?: Date;
   mechanics: IMechanicsItems[];
@@ -25,6 +26,7 @@ export interface IUpdateTaskRequest {
   priority?: ETaskPriority;
   status?: ETaskStatus;
   estimateMinute?: number;
+  actualMinute?: number;
   plannedStartDate?: Date;
   plannedFinishDate?: Date;
   startAt?: Date;

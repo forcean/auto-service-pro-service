@@ -5,6 +5,7 @@ export const DOCUMENT_PREFIX: Record<EDocumentType, string> = {
   [EDocumentType.QUOTATION]: 'QT',
   [EDocumentType.INVOICE]: 'IV',
   [EDocumentType.PAYMENT]: 'PM',
+  [EDocumentType.REFUND]: 'RF',
   [EDocumentType.PURCHASE_ORDER]: 'PO',
   [EDocumentType.PART_ISSUE]: 'PI',
 };

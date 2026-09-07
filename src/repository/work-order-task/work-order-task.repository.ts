@@ -70,11 +70,13 @@ export class WorkOrderTaskRepository {
     });
   }
 
-  async getByWorkOrderNo(workOrderNo: string) {
-    return this.model.find({
-      workOrderNo,
-      isDeleted: false,
-    });
+  async getByWorkOrderNo(workOrderNo: string, session?: ClientSession) {
+    return this.model
+      .find({
+        workOrderNo,
+        isDeleted: false,
+      })
+      .session(session ?? null);
   }
 
   async exists(taskNo: string) {

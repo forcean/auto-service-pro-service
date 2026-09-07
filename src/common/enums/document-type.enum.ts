@@ -3,9 +3,9 @@ export enum EDocumentType {
   QUOTATION = 'QUOTATION',
   INVOICE = 'INVOICE',
   PAYMENT = 'PAYMENT',
+  REFUND = 'REFUND',
   PURCHASE_ORDER = 'PURCHASE_ORDER',
-    PART_ISSUE = 'PART_ISSUE',
-
+  PART_ISSUE = 'PART_ISSUE',
 }
 
 export enum ESequenceType {
