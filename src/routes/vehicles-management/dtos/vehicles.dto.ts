@@ -88,6 +88,22 @@ export class customerVehicleDto {
   })
   phoneNumber!: string;
 
+  @IsOptional()
+  @IsString({ message: 'billingName must be a string' })
+  billingName?: string;
+
+  @IsOptional()
+  @IsString({ message: 'taxId must be a string' })
+  taxId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'billingAddress must be a string' })
+  billingAddress?: string;
+
+  @IsOptional()
+  @IsString({ message: 'branchNo must be a string' })
+  branchNo?: string;
+
   @IsString({ message: 'licensePlate must be a string' })
   @IsNotEmpty({ message: 'licensePlate is required' })
   licensePlate!: string;
@@ -137,6 +153,22 @@ export class updateCustomerVehicleDto {
     message: 'phoneNumber must start with 0 and contain exactly 10 digits',
   })
   phoneNumber?: string;
+
+  @IsOptional()
+  @IsString({ message: 'billingName must be a string' })
+  billingName?: string;
+
+  @IsOptional()
+  @IsString({ message: 'taxId must be a string' })
+  taxId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'billingAddress must be a string' })
+  billingAddress?: string;
+
+  @IsOptional()
+  @IsString({ message: 'branchNo must be a string' })
+  branchNo?: string;
 
   @IsOptional()
   @IsString({ message: 'licensePlate must be a string' })

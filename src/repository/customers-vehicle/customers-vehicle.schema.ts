@@ -52,6 +52,18 @@ export class CustomersVehicleEntity {
   @Prop({ required: true, type: String })
   phoneNumber!: string;
 
+  @Prop({ type: String })
+  billingName?: string;
+
+  @Prop({ type: String })
+  taxId?: string;
+
+  @Prop({ type: String })
+  billingAddress?: string;
+
+  @Prop({ type: String })
+  branchNo?: string;
+
   @Prop({ required: true, type: String })
   licensePlate!: string;
 

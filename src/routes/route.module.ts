@@ -11,6 +11,7 @@ import { WorkOrderModule } from './work-order/work-order.module';
 import { QuotationModule } from './quotation/quotation.module';
 import { TaskModule } from './task/task.module';
 import { PartIssueModule } from './part-issue/part-issue.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { PartIssueModule } from './part-issue/part-issue.module';
     WorkOrderModule,
     QuotationModule,
     TaskModule,
-    PartIssueModule
+    PartIssueModule,
+    BillingModule,
   ],
   providers: [],
   controllers: [],

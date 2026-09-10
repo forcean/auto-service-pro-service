@@ -43,7 +43,10 @@ import {
 } from './vehicle-models/vehicle-models.schema';
 import { VehicleModelsRepository } from './vehicle-models/vehicle-models.repository';
 import { CustomersVehicleRepository } from './customers-vehicle/customers-vehicle.repository';
-import { CustomersVehicleEntity, CustomersVehicleSchema } from './customers-vehicle/customers-vehicle.schema';
+import {
+  CustomersVehicleEntity,
+  CustomersVehicleSchema,
+} from './customers-vehicle/customers-vehicle.schema';
 import { StockEntity, StockSchema } from './stock/stock.schema';
 import {
   StockMovementEntity,
@@ -51,16 +54,32 @@ import {
 } from './stock-movement/stock-movement.schema';
 import { StockMovementRepository } from './stock-movement/stock-movement.repository';
 import { StocksRepository } from './stock/stock.repository';
-import { WorkOrderEntity, WorkOrderSchema } from './work-order/work-order.schema';
+import {
+  WorkOrderEntity,
+  WorkOrderSchema,
+} from './work-order/work-order.schema';
 import { WorkOrderRepository } from './work-order/work-order.repository';
 import { CounterRepository } from './counters/counter.repository';
 import { CounterEntity, CounterSchema } from './counters/counter.schema';
 import { QuotationRepository } from './quotation/quotation.repository';
 import { QuotationEntity, QuotationSchema } from './quotation/quotation.schema';
 import { WorkOrderTaskRepository } from './work-order-task/work-order-task.repository';
-import { WorkOrderTaskEntity, WorkOrderTaskSchema } from './work-order-task/work-order-task.schema';
-import { PartIssueEntity, PartIssueSchema } from './part-issue/part-issue.schema';
+import {
+  WorkOrderTaskEntity,
+  WorkOrderTaskSchema,
+} from './work-order-task/work-order-task.schema';
+import {
+  PartIssueEntity,
+  PartIssueSchema,
+} from './part-issue/part-issue.schema';
 import { PartIssueRepository } from './part-issue/part-issue.repository';
+import { InvoiceEntity, InvoiceSchema } from './invoice/invoice.schema';
+import { InvoiceRepository } from './invoice/invoice.repository';
+import {
+  ServiceHistoryEntity,
+  ServiceHistorySchema,
+} from './service-history/service-history.schema';
+import { ServiceHistoryRepository } from './service-history/service-history.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -106,6 +125,8 @@ import { PartIssueRepository } from './part-issue/part-issue.repository';
         { name: QuotationEntity.name, schema: QuotationSchema },
         { name: WorkOrderTaskEntity.name, schema: WorkOrderTaskSchema },
         { name: PartIssueEntity.name, schema: PartIssueSchema },
+        { name: InvoiceEntity.name, schema: InvoiceSchema },
+        { name: ServiceHistoryEntity.name, schema: ServiceHistorySchema },
       ],
       'autoservice',
     ),
@@ -130,7 +151,9 @@ import { PartIssueRepository } from './part-issue/part-issue.repository';
     CounterRepository,
     QuotationRepository,
     WorkOrderTaskRepository,
-    PartIssueRepository
+    PartIssueRepository,
+    InvoiceRepository,
+    ServiceHistoryRepository,
   ],
   exports: [
     UsersRepository,
@@ -152,7 +175,9 @@ import { PartIssueRepository } from './part-issue/part-issue.repository';
     CounterRepository,
     QuotationRepository,
     WorkOrderTaskRepository,
-    PartIssueRepository
+    PartIssueRepository,
+    InvoiceRepository,
+    ServiceHistoryRepository,
   ],
 })
 export class RepositoryModule {}

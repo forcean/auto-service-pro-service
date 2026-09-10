@@ -57,6 +57,11 @@ export class CreateWorkOrderTaskDto {
   @Min(0)
   estimateMinute?: number;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  actualMinute?: number;
+
   // Planned schedule
   @IsOptional()
   @IsDateString()
@@ -94,6 +99,11 @@ export class UpdateWorkOrderTaskDto {
   @IsNumber()
   @Min(0)
   estimateMinute?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  actualMinute?: number;
 
   @IsOptional()
   @IsDateString()

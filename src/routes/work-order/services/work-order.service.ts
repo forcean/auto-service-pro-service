@@ -229,7 +229,32 @@ export class WorkOrderService {
     }
   }
 
-  async closeWorkOrder(workOrderId: string, user: AuthUser) {
+  async updateInvoice(
+    workOrderId: string,
+    invoiceId: string,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
+    await this.getWorkOrderById(workOrderId);
+    const workOrder = await this.workOrderRepository.updateInvoice(
+      workOrderId,
+      invoiceId,
+      user,
+      session,
+    );
+    if (!workOrder)
+      throw new BusinessException(
+        '5006',
+        'Failed to link invoice to work order',
+      );
+    return workOrder;
+  }
+
+  async closeWorkOrder(
+    workOrderId: string,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
     try {
       const workOrder = await this.getWorkOrderById(workOrderId);
       if (!workOrder) {
@@ -243,6 +268,7 @@ export class WorkOrderService {
         workOrderId,
         EWorkOrderStatus.COMPLETED,
         user,
+        session,
       );
     } catch (error) {
       throw error;
