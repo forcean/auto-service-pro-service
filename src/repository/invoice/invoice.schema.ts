@@ -82,6 +82,57 @@ export class RefundRecord {
   refundedAt!: Date;
 }
 
+@Schema({ _id: false })
+export class BillingPartySnapshot {
+  @Prop()
+  name?: string;
+
+  @Prop()
+  phone?: string;
+
+  @Prop()
+  taxId?: string;
+
+  @Prop()
+  address?: string;
+
+  @Prop()
+  branchNo?: string;
+}
+
+@Schema({ _id: false })
+export class VehicleSnapshot {
+  @Prop()
+  licensePlate?: string;
+
+  @Prop()
+  province?: string;
+
+  @Prop()
+  brand?: string;
+
+  @Prop()
+  model?: string;
+}
+
+@Schema({ _id: false })
+export class InvoiceAuditEvent {
+  @Prop({ required: true })
+  action!: 'ISSUED' | 'PAYMENT_RECEIVED' | 'VOIDED' | 'REFUNDED';
+
+  @Prop()
+  referenceNo?: string;
+
+  @Prop()
+  note?: string;
+
+  @Prop({ type: Types.ObjectId, ref: UsersEntity.name })
+  performedBy?: Types.ObjectId;
+
+  @Prop({ default: Date.now })
+  occurredAt!: Date;
+}
+
 @Schema({ timestamps: true, collection: 'invoices' })
 export class InvoiceEntity {
   @Prop({ required: true, unique: true, index: true }) invoiceNo!: string;
@@ -103,6 +154,12 @@ export class InvoiceEntity {
 
   @Prop({ required: true, index: true })
   workOrderNo!: string;
+
+  @Prop({ type: BillingPartySnapshot, _id: false })
+  billingParty?: BillingPartySnapshot;
+
+  @Prop({ type: VehicleSnapshot, _id: false })
+  vehicleSnapshot?: VehicleSnapshot;
 
   @Prop({ enum: EInvoiceStatus, default: EInvoiceStatus.ISSUED, index: true })
   status!: EInvoiceStatus;
@@ -137,6 +194,9 @@ export class InvoiceEntity {
 
   @Prop({ default: 0 })
   refundedAmount!: number;
+
+  @Prop({ type: [InvoiceAuditEvent], default: [] })
+  auditEvents!: InvoiceAuditEvent[];
 
   @Prop({ type: Types.ObjectId, ref: UsersEntity.name, required: true })
   createdBy!: Types.ObjectId;

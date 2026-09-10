@@ -5,6 +5,7 @@ import { BusinessException } from 'src/common/exceptions/business.exception';
 import { DocumentNoService } from 'src/common/services/document-no.service';
 import { EDocumentType } from 'src/common/enums/document-type.enum';
 import { InvoiceRepository } from 'src/repository/invoice/invoice.repository';
+import { WorkOrderRepository } from 'src/repository/work-order/work-order.repository';
 import { PartIssueRepository } from 'src/repository/part-issue/part-issue.repository';
 import { ServiceHistoryRepository } from 'src/repository/service-history/service-history.repository';
 import { AuthUser } from 'src/types/user.type';
@@ -15,8 +16,16 @@ import { ETaskStatus } from '../task/enums/task.enum';
 import { EQuotationStatus } from '../quotation/enums/quotation.enum';
 import { EQuotationItemType } from '../quotation/dtos/quotation.dto';
 import { EInvoiceItemType, EInvoiceStatus } from './enums/billing.enum';
-import { CreatePaymentDto, CreateRefundDto } from './dtos/billing.dto';
+import {
+  CreatePaymentDto,
+  CreateRefundDto,
+  InvoiceListQueryDto,
+  PaymentListQueryDto,
+  VoidInvoiceDto,
+} from './dtos/billing.dto';
 import { calculateLaborFactor, calculateLineAmount } from './billing.utils';
+import { getPagination } from 'src/common/utils/pagination.util';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Injectable()
 export class BillingService {
@@ -24,6 +33,8 @@ export class BillingService {
     @InjectConnection('autoservice') private readonly connection: Connection,
     @Inject(InvoiceRepository)
     private readonly invoiceRepository: InvoiceRepository,
+    @Inject(WorkOrderRepository)
+    private readonly workOrderRepository: WorkOrderRepository,
     @Inject(PartIssueRepository)
     private readonly partIssueRepository: PartIssueRepository,
     @Inject(ServiceHistoryRepository)
@@ -199,6 +210,7 @@ export class BillingService {
         const invoiceNo = await this.documentNoService.generate(
           EDocumentType.INVOICE,
         );
+        const vehicle: any = workOrder.vehicleId;
         result = await this.invoiceRepository.create(
           {
             invoiceNo,
@@ -213,6 +225,32 @@ export class BillingService {
             vatAmount,
             grandTotal: subtotal - discountAmount + vatAmount,
             status: EInvoiceStatus.ISSUED,
+            billingParty: {
+              name:
+                vehicle?.billingName ||
+                [vehicle?.firstname, vehicle?.lastname]
+                  .filter(Boolean)
+                  .join(' ') ||
+                undefined,
+              phone: vehicle?.phoneNumber,
+              taxId: vehicle?.taxId,
+              address: vehicle?.billingAddress,
+              branchNo: vehicle?.branchNo,
+            },
+            vehicleSnapshot: {
+              licensePlate: vehicle?.licensePlate,
+              province: vehicle?.province,
+              brand: vehicle?.vehicle?.brand,
+              model: vehicle?.vehicle?.model,
+            },
+            auditEvents: [
+              {
+                action: 'ISSUED',
+                referenceNo: invoiceNo,
+                performedBy: user.publicId,
+                occurredAt: new Date(),
+              },
+            ],
           },
           user,
           session,
@@ -238,11 +276,59 @@ export class BillingService {
     return invoice;
   }
 
-  async listInvoices() {
-    return this.invoiceRepository.findAll();
+  async listInvoices(query: InvoiceListQueryDto, sortBy?: SortCriterial | null) {
+    return this.invoiceRepository.findAllPaginated(
+      getPagination(query),
+      query,
+      sortBy,
+    );
   }
 
-  async voidInvoice(invoiceId: string, user: AuthUser) {
+  async getSummary() {
+    return this.invoiceRepository.getSummary();
+  }
+
+  async getReadyToInvoiceWorkOrders() {
+    const workOrders: any[] = await this.workOrderRepository.findBillingCandidates();
+    return Promise.all(
+      workOrders.map(async (workOrder) => {
+        const blockers: string[] = [];
+        if (await this.invoiceRepository.findByWorkOrderId(workOrder._id.toString())) {
+          blockers.push('INVOICE_ALREADY_EXISTS');
+        }
+        const tasks: any[] = await this.taskService.getTasksByWorkOrderNo(
+          workOrder.workOrderNo,
+        );
+        if (!tasks.length) blockers.push('NO_TASKS');
+        else if (tasks.some((task) => task.status !== ETaskStatus.FINISHED))
+          blockers.push('TASKS_NOT_FINISHED');
+
+        if (!workOrder.currentQuotationId) {
+          blockers.push('NO_QUOTATION');
+        } else {
+          try {
+            const quotation: any = await this.quotationService.getQuotationById(
+              workOrder.currentQuotationId.toString(),
+            );
+            if (quotation.status !== EQuotationStatus.APPROVED)
+              blockers.push('QUOTATION_NOT_APPROVED');
+            else if (!(await this.hasMatchingIssuedParts(workOrder, quotation)))
+              blockers.push('PART_ISSUES_DO_NOT_MATCH_QUOTATION');
+          } catch {
+            blockers.push('QUOTATION_NOT_FOUND');
+          }
+        }
+        return {
+          ...workOrder,
+          vehicle: workOrder.vehicleId,
+          canCreateInvoice: blockers.length === 0,
+          blockers,
+        };
+      }),
+    );
+  }
+
+  async voidInvoice(invoiceId: string, dto: VoidInvoiceDto, user: AuthUser) {
     const invoice: any = await this.getInvoice(invoiceId);
     if (Number(invoice.paidAmount ?? 0) > 0) {
       throw new BusinessException(
@@ -250,7 +336,11 @@ export class BillingService {
         'Invoice with payment cannot be voided; use refund flow',
       );
     }
-    const result = await this.invoiceRepository.voidInvoice(invoiceId, user);
+    const result = await this.invoiceRepository.voidInvoice(
+      invoiceId,
+      dto.reason,
+      user,
+    );
     if (!result)
       throw new BusinessException(
         '4001',
@@ -307,17 +397,8 @@ export class BillingService {
     const invoice: any = await this.getInvoice(invoiceId);
     if (Number(invoice.paidAmount ?? 0) <= 0)
       throw new BusinessException('4001', 'Receipt is available after payment');
-    return {
-      receiptNo: invoice.payments?.[invoice.payments.length - 1]?.paymentNo,
-      invoiceNo: invoice.invoiceNo,
-      workOrderNo: invoice.workOrderNo,
-      paidAmount: invoice.paidAmount,
-      refundedAmount: invoice.refundedAmount ?? 0,
-      netPaidAmount:
-        Number(invoice.paidAmount ?? 0) - Number(invoice.refundedAmount ?? 0),
-      payments: invoice.payments,
-      issuedAt: invoice.updatedAt,
-    };
+    const paymentNo = invoice.payments?.[invoice.payments.length - 1]?.paymentNo;
+    return this.getPaymentReceipt(paymentNo);
   }
 
   async getPrintableReceipt(invoiceId: string) {
@@ -334,7 +415,7 @@ export class BillingService {
             '"': '&quot;',
           })[char] as string,
       );
-    return `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${escapeHtml(receipt.receiptNo)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#222}h1{text-align:center}.meta{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-bottom:12px}table{width:100%;border-collapse:collapse;margin-top:24px}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:right}td:first-child,th:first-child{text-align:left}.total{font-size:1.2em;font-weight:bold}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Print</button><h1>Receipt</h1><div class="meta"><span>Receipt: ${escapeHtml(receipt.receiptNo)}</span><span>Invoice: ${escapeHtml(receipt.invoiceNo)}</span></div><p>Work Order: ${escapeHtml(receipt.workOrderNo)}</p><table><tr><th>Payment</th><th>Method</th><th>Amount</th></tr>${(receipt.payments ?? []).map((payment: any) => `<tr><td>${escapeHtml(payment.paymentNo)}</td><td>${escapeHtml(payment.method)}</td><td>${Number(payment.amount).toFixed(2)}</td></tr>`).join('')}<tr class="total"><td colspan="2">Net paid</td><td>${Number(receipt.netPaidAmount).toFixed(2)}</td></tr></table></body></html>`;
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${escapeHtml(receipt.receiptNo)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#222}h1{text-align:center}.meta{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-bottom:12px}table{width:100%;border-collapse:collapse;margin-top:24px}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:right}td:first-child,th:first-child{text-align:left}.total{font-size:1.2em;font-weight:bold}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Print</button><h1>Receipt</h1><div class="meta"><span>Receipt: ${escapeHtml(receipt.receiptNo)}</span><span>Invoice: ${escapeHtml(receipt.invoiceNo)}</span></div><p>Work Order: ${escapeHtml(receipt.workOrderNo)}</p><p>Customer: ${escapeHtml(receipt.billingParty?.name)}</p><table><tr><th>Payment</th><th>Method</th><th>Reference</th><th>Amount</th></tr><tr><td>${escapeHtml(receipt.payment.paymentNo)}</td><td>${escapeHtml(receipt.payment.method)}</td><td>${escapeHtml(receipt.payment.reference)}</td><td>${Number(receipt.payment.amount).toFixed(2)}</td></tr><tr class="total"><td colspan="3">Received</td><td>${Number(receipt.payment.amount).toFixed(2)}</td></tr></table></body></html>`;
   }
 
   async getPrintableInvoice(invoiceId: string) {
@@ -362,6 +443,42 @@ export class BillingService {
     if (!history)
       throw new BusinessException('4040', 'Service history not found');
     return history;
+  }
+
+  async getAuditEvents(invoiceId: string) {
+    const invoice: any = await this.getInvoice(invoiceId);
+    return [...(invoice.auditEvents ?? [])].sort(
+      (a: any, b: any) =>
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
+    );
+  }
+
+  async listPayments(query: PaymentListQueryDto) {
+    return this.invoiceRepository.findPaymentsPaginated(getPagination(query), query);
+  }
+
+  async getPaymentReceipt(paymentNo: string) {
+    const invoice: any = await this.invoiceRepository.findPaymentByNo(paymentNo);
+    if (!invoice) throw new BusinessException('4040', 'Payment not found');
+    const payment = invoice.payments?.find(
+      (item: any) => item.paymentNo === paymentNo,
+    );
+    if (!payment) throw new BusinessException('4040', 'Payment not found');
+    return {
+      receiptNo: payment.paymentNo,
+      invoiceId: invoice._id,
+      invoiceNo: invoice.invoiceNo,
+      workOrderNo: invoice.workOrderNo,
+      billingParty: invoice.billingParty,
+      vehicleSnapshot: invoice.vehicleSnapshot,
+      payment,
+      issuedAt: payment.paidAt,
+    };
+  }
+
+  async getPrintablePaymentReceipt(paymentNo: string) {
+    const receipt = await this.getPaymentReceipt(paymentNo);
+    return this.getPrintableReceiptByData(receipt);
   }
 
   async receivePayment(
@@ -443,5 +560,45 @@ export class BillingService {
     } finally {
       await session.endSession();
     }
+  }
+
+  private async hasMatchingIssuedParts(workOrder: any, quotation: any) {
+    const issues: any[] = await this.partIssueRepository.getPartIssueByWorkOrderNo(
+      workOrder.workOrderNo,
+    );
+    const issuedParts = new Map<string, number>();
+    for (const issue of issues) {
+      if (issue.status === 'CANCELLED') continue;
+      for (const item of issue.items ?? []) {
+        if (item.issuedQty <= 0) continue;
+        const key = item.productId.toString();
+        issuedParts.set(key, (issuedParts.get(key) ?? 0) + item.issuedQty);
+      }
+    }
+    for (const quoteItem of quotation.items ?? []) {
+      if (quoteItem.itemType !== EQuotationItemType.PART) continue;
+      const key = quoteItem.productId?.toString() ?? '';
+      const issued = issuedParts.get(key);
+      if (issued === undefined) continue;
+      if (issued > quoteItem.quantity) return false;
+      issuedParts.delete(key);
+    }
+    return issuedParts.size === 0;
+  }
+
+  private async getPrintableReceiptByData(receipt: any) {
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '').replace(
+        /[&<>'"]/g,
+        (char) =>
+          ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;',
+          })[char] as string,
+      );
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${escapeHtml(receipt.receiptNo)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#222}h1{text-align:center}.meta{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-bottom:12px}table{width:100%;border-collapse:collapse;margin-top:24px}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:right}td:first-child,th:first-child{text-align:left}.total{font-size:1.2em;font-weight:bold}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Print</button><h1>Receipt</h1><div class="meta"><span>Receipt: ${escapeHtml(receipt.receiptNo)}</span><span>Invoice: ${escapeHtml(receipt.invoiceNo)}</span></div><p>Work Order: ${escapeHtml(receipt.workOrderNo)}</p><p>Customer: ${escapeHtml(receipt.billingParty?.name)}</p><table><tr><th>Method</th><th>Reference</th><th>Amount</th></tr><tr><td>${escapeHtml(receipt.payment.method)}</td><td>${escapeHtml(receipt.payment.reference)}</td><td>${Number(receipt.payment.amount).toFixed(2)}</td></tr></table></body></html>`;
   }
 }

@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -20,7 +21,14 @@ import {
 } from 'src/common/response/response.decorator';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { BillingService } from './billing.service';
-import { CreatePaymentDto, CreateRefundDto } from './dtos/billing.dto';
+import {
+  CreatePaymentDto,
+  CreateRefundDto,
+  InvoiceListQueryDto,
+  VoidInvoiceDto,
+} from './dtos/billing.dto';
+import { ParseSortPipe } from 'src/common/pipes/parse-sort.pipe';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Controller('billing/invoices')
 @UseGuards(PermissionsGuard)
@@ -42,8 +50,27 @@ export class BillingController {
   @Permissions('view:invoices')
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
-  list() {
-    return this.billingService.listInvoices();
+  list(
+    @Query() query: InvoiceListQueryDto,
+    @Query('sort', ParseSortPipe) sortBy: SortCriterial,
+  ) {
+    return this.billingService.listInvoices(query, sortBy);
+  }
+
+  @Get('summary')
+  @Permissions('view:invoices')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  summary() {
+    return this.billingService.getSummary();
+  }
+
+  @Get('ready-work-orders')
+  @Permissions('view:invoices')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  readyWorkOrders() {
+    return this.billingService.getReadyToInvoiceWorkOrders();
   }
 
   @Get(':id')
@@ -74,10 +101,14 @@ export class BillingController {
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Void invoice successful')
-  void(@Param('id') id: string, @Req() req: Request) {
+  void(
+    @Param('id') id: string,
+    @Body() dto: VoidInvoiceDto,
+    @Req() req: Request,
+  ) {
     if (!req.authUser)
       throw new BusinessException('4013', 'No auth user found');
-    return this.billingService.voidInvoice(id, req.authUser);
+    return this.billingService.voidInvoice(id, dto, req.authUser);
   }
 
   @Post(':id/refunds')
@@ -107,6 +138,14 @@ export class BillingController {
     response
       .type('html')
       .send(await this.billingService.getPrintableReceipt(id));
+  }
+
+  @Get(':id/audit-events')
+  @Permissions('view:invoices')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  getAuditEvents(@Param('id') id: string) {
+    return this.billingService.getAuditEvents(id);
   }
 
   @Get(':id/print')

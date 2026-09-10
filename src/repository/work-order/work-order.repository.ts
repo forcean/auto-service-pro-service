@@ -223,4 +223,19 @@ export class WorkOrderRepository {
       })),
     };
   }
+
+  async findBillingCandidates() {
+    return this.model
+      .find({
+        isDeleted: false,
+        status: {
+          $in: [
+            EWorkOrderStatus.COMPLETED,
+            EWorkOrderStatus.READY_DELIVERY,
+          ],
+        },
+      })
+      .populate({ path: 'vehicleId' })
+      .lean();
+  }
 }

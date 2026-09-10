@@ -6,11 +6,12 @@ import { QuotationModule } from '../quotation/quotation.module';
 import { TaskModule } from '../task/task.module';
 import { BillingService } from './billing.service';
 import { BillingController } from './billing.controller';
+import { BillingPaymentController } from './billing-payment.controller';
 
 @Module({
   imports: [RepositoryModule, WorkOrderModule, QuotationModule, TaskModule],
   providers: [BillingService, DocumentNoService],
-  controllers: [BillingController],
+  controllers: [BillingController, BillingPaymentController],
   exports: [BillingService],
 })
 export class BillingModule {}
