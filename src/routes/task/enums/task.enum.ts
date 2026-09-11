@@ -14,3 +14,9 @@ export enum ETaskPriority {
   HIGH = 'HIGH',
   URGENT = 'URGENT',
 }
+
+export enum EAdditionalProblemStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}

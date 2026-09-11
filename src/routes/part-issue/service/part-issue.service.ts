@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientSession } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 
@@ -26,7 +25,6 @@ import {
 
 import {
   IIssuePartIssueItemRequest,
-  IPartIssueItemRequest,
 } from '../interfaces/part-issue.interface';
 
 @Injectable()
@@ -128,7 +126,6 @@ export class PartIssueService {
         }
 
         this.validateCanReserve(issue.status);
-
         const updatedItems = issue.items.map((item) => ({
           productId: item.productId.toString(),
           sku: item.sku,
@@ -230,9 +227,7 @@ export class PartIssueService {
         }
 
         this.validateCanIssue(issue.status);
-
         this.validateIssueItems(issue.items, payload.items);
-
         const updatedItems = issue.items.map((issueItem) => {
           const issuedItem = payload.items.find(
             (item) => item.productId === issueItem.productId.toString(),
@@ -243,11 +238,9 @@ export class PartIssueService {
               productId: issueItem.productId.toString(),
               sku: issueItem.sku,
               productName: issueItem.productName,
-
               requestedQty: issueItem.requestedQty,
               reservedQty: issueItem.reservedQty,
               issuedQty: issueItem.issuedQty,
-
               reason: issueItem.reason,
               isAdditionalCharge: issueItem.isAdditionalCharge,
               unitPrice: issueItem.unitPrice,
@@ -259,17 +252,12 @@ export class PartIssueService {
             productId: issueItem.productId.toString(),
             sku: issueItem.sku,
             productName: issueItem.productName,
-
             requestedQty: issueItem.requestedQty,
-
             reservedQty: issueItem.reservedQty - issuedItem.issuedQty,
-
             issuedQty: issueItem.issuedQty + issuedItem.issuedQty,
-
             reason: issueItem.reason,
             isAdditionalCharge: issueItem.isAdditionalCharge,
             unitPrice: issueItem.unitPrice,
-
             remark: issuedItem.remark ?? issueItem.remark,
           };
         });
@@ -284,11 +272,8 @@ export class PartIssueService {
             item.productId,
             {
               quantity: item.issuedQty,
-
               referenceType: EStockReferenceType.PART_ISSUE,
-
               referenceId: issue.issueNo,
-
               remark:
                 item.remark ??
                 payload.remark ??
@@ -304,11 +289,8 @@ export class PartIssueService {
         const allIssued = updatedItems.every(
           (item) => item.issuedQty >= item.requestedQty,
         );
-
         const hasIssued = updatedItems.some((item) => item.issuedQty > 0);
-
         const hasReserved = updatedItems.some((item) => item.reservedQty > 0);
-
         let status: EPartIssueStatus;
 
         if (allIssued) {
@@ -409,11 +391,8 @@ export class PartIssueService {
             item.productId.toString(),
             {
               quantity: item.reservedQty,
-
               referenceType: EStockReferenceType.PART_ISSUE,
-
               referenceId: issue.issueNo,
-
               remark:
                 payload.remark ??
                 'Release reservation because part issue was cancelled',

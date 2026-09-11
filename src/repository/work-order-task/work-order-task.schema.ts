@@ -1,6 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { ETaskPriority, ETaskStatus } from 'src/routes/task/enums/task.enum';
+import {
+  EAdditionalProblemStatus,
+  ETaskPriority,
+  ETaskStatus,
+} from 'src/routes/task/enums/task.enum';
 import { WorkOrderEntity } from '../work-order/work-order.schema';
 import { UsersEntity } from '../users/users.schema';
 
@@ -19,6 +23,29 @@ export class MechanicItem {
   mechanicName!: string;
 }
 export const MechanicItemSchema = SchemaFactory.createForClass(MechanicItem);
+
+@Schema({ timestamps: true })
+export class AdditionalProblem {
+  @Prop({ required: true, trim: true })
+  description!: string;
+
+  @Prop({ required: true })
+  createdBy!: string;
+
+  @Prop({
+    enum: EAdditionalProblemStatus,
+    default: EAdditionalProblemStatus.PENDING,
+  })
+  status!: EAdditionalProblemStatus;
+
+  @Prop()
+  approvedBy?: string;
+
+  @Prop()
+  approvedAt?: Date;
+}
+export const AdditionalProblemSchema =
+  SchemaFactory.createForClass(AdditionalProblem);
 
 @Schema({
   collection: 'work_order_tasks',
@@ -83,6 +110,18 @@ export class WorkOrderTaskEntity {
     max: 100,
   })
   progress!: number;
+
+  @Prop({
+    default: false,
+    index: true,
+  })
+  isRework!: boolean;
+
+  @Prop({
+    type: [AdditionalProblemSchema],
+    default: [],
+  })
+  additionalProblems!: AdditionalProblem[];
 
   @Prop()
   plannedStartDate?: Date;

@@ -63,7 +63,7 @@ export class QuotationRepository {
       .lean();
   }
 
-  async getByQuotationNo(quotationNo: string) {
+  async getByQuotationNo(quotationNo: string): Promise<QuotationDocument | null> {
     return this.quotationEntity.findOne({
       quotationNo,
       isDeleted: false,
