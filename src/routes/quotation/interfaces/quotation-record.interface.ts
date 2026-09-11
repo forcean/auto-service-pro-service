@@ -1,8 +1,8 @@
 import { Types } from 'mongoose';
-import { EQuotationItemType } from '../dtos/quotation.dto';
 import {
   EApprovalMethod,
   ECustomerDecision,
+  EQuotationItemType,
   EQuotationStatus,
 } from '../enums/quotation.enum';
 

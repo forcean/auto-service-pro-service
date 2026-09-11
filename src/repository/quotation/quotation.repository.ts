@@ -63,11 +63,16 @@ export class QuotationRepository {
       .lean();
   }
 
-  async getByQuotationNo(quotationNo: string) {
-    return this.quotationEntity.findOne({
-      quotationNo,
-      isDeleted: false,
-    });
+  async getByQuotationNo(quotationNo: string): Promise<QuotationDocument | null> {
+    return this.quotationEntity
+      .findOne({
+        quotationNo,
+        isDeleted: false,
+      })
+      .populate({
+        path: 'workOrderId',
+        select: 'workOrderNo vehicleId customerId advisorId status',
+      });
   }
 
   async softDelete(id: string, user: AuthUser) {

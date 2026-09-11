@@ -3,15 +3,20 @@ import { AuthUser } from 'src/types/user.type';
 import { WorkOrderService } from '../work-order/services/work-order.service';
 import {
   CreateWorkOrderTaskDto,
+  ApproveAdditionalProblemDto,
   getWorkOrderTasksWithPaginationDto,
+  ReportAdditionalProblemDto,
   UpdateWorkOrderTaskDto,
 } from './dtos/task.dto';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { DocumentNoService } from 'src/common/services/document-no.service';
 import { WorkOrderTaskRepository } from 'src/repository/work-order-task/work-order-task.repository';
+import { QuotationRepository } from 'src/repository/quotation/quotation.repository';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import { getPagination } from 'src/common/utils/pagination.util';
 import { ETaskStatus } from './enums/task.enum';
+import { EAdditionalProblemStatus } from './enums/task.enum';
+import { EQuotationStatus } from '../quotation/enums/quotation.enum';
 import { EWorkOrderStatus } from '../work-order/enums/work-order.enum';
 
 @Injectable()
@@ -19,6 +24,8 @@ export class TaskService {
   constructor(
     @Inject(WorkOrderTaskRepository)
     private readonly taskRepository: WorkOrderTaskRepository,
+    @Inject(QuotationRepository)
+    private readonly quotationRepository: QuotationRepository,
     @Inject(WorkOrderService)
     private readonly workOrderService: WorkOrderService,
     @Inject(DocumentNoService)
@@ -38,6 +45,12 @@ export class TaskService {
       const taskNo = await this.documentNoService.generateTaskNo(
         payload.workOrderNo,
       );
+
+      let isRework = false;
+
+      if (payload.isRework !== undefined) {
+        isRework = payload.isRework;
+      }
 
       const task = await this.taskRepository.createTask(
         {
@@ -62,6 +75,7 @@ export class TaskService {
               mechanicName: item.mechanicName,
             })) ?? [],
           remark: payload.remark,
+          isRework,
         },
         user,
       );
@@ -70,6 +84,11 @@ export class TaskService {
         throw new BusinessException('5001', 'Failed to create task');
       }
 
+      await this.workOrderService.updateStatus(
+        payload.workOrderNo,
+        EWorkOrderStatus.IN_PROGRESS,
+        user,
+      );
       return task;
     } catch (error) {
       throw error;
@@ -211,18 +230,121 @@ export class TaskService {
 
   async reportAdditionalProblem(
     taskNo: string,
-    problem: string,
+    problem: ReportAdditionalProblemDto,
     user: AuthUser,
   ) {
     try {
-      return this.taskRepository.addProblem(taskNo, {
-        description: problem,
+      const task = await this.getTaskByNo(taskNo);
+
+      if (task.status === ETaskStatus.FINISHED) {
+        throw new BusinessException('4001', 'Completed task cannot report problem');
+      }
+
+      const result = await this.taskRepository.addProblem(taskNo, {
+        description: problem.description,
         createdBy: user.publicId,
-        createdAt: new Date(),
       });
+
+      await this.workOrderService.updateStatus(
+        task.workOrderNo,
+        EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL,
+        user,
+      );
+
+      return result;
     } catch (error) {
       throw error;
     }
+  }
+
+  async approveAdditionalProblem(
+    taskNo: string,
+    problemId: string,
+    payload: ApproveAdditionalProblemDto,
+    user: AuthUser,
+  ) {
+    const task = await this.getTaskByNo(taskNo);
+    const quotation = await this.quotationRepository.getQuotationById(
+      payload.quotationId,
+    );
+
+    if (!quotation) {
+      throw new BusinessException('4040', 'Quotation not found');
+    }
+
+    if (quotation.status !== EQuotationStatus.APPROVED) {
+      throw new BusinessException(
+        '4006',
+        'Additional repair quotation must be approved first',
+      );
+    }
+
+    const workOrder = await this.workOrderService.getWorkOrderByNo(
+      task.workOrderNo,
+    );
+    const quotationWorkOrder = quotation.workOrderId as any;
+    let quotationWorkOrderId: string;
+
+    if (quotationWorkOrder._id) {
+      quotationWorkOrderId = quotationWorkOrder._id.toString();
+    } else {
+      quotationWorkOrderId = quotationWorkOrder.toString();
+    }
+
+    if (quotationWorkOrderId !== workOrder._id.toString()) {
+      throw new BusinessException(
+        '4007',
+        'Quotation does not belong to this Work Order',
+      );
+    }
+
+    const problem = task.additionalProblems?.find((item: any) => {
+      return item._id.toString() === problemId;
+    });
+
+    if (!problem) {
+      throw new BusinessException('4042', 'Additional problem not found');
+    }
+
+    if (problem.status !== EAdditionalProblemStatus.PENDING) {
+      throw new BusinessException('4005', 'Additional problem already reviewed');
+    }
+
+    const approvedTask = await this.taskRepository.approveProblem(
+      taskNo,
+      problemId,
+      user,
+    );
+
+    if (!approvedTask) {
+      throw new BusinessException('5006', 'Failed to approve additional problem');
+    }
+
+    const taskNoForRework = await this.documentNoService.generateTaskNo(
+      task.workOrderNo,
+    );
+    const reworkTask = await this.taskRepository.createTask(
+      {
+        workOrderNo: task.workOrderNo,
+        taskNo: taskNoForRework,
+        title: payload.title || `แก้ไขปัญหาเพิ่มเติม: ${problem.description}`,
+        description: problem.description,
+        estimateMinute: payload.estimateMinute,
+        status: ETaskStatus.WAITING,
+        mechanics: [],
+        remark: 'Created from approved additional problem',
+        isRework: true,
+      },
+      user,
+    );
+
+    await this.workOrderService.updateStatus(
+      task.workOrderNo,
+      EWorkOrderStatus.IN_PROGRESS,
+      user,
+    );
+
+    return reworkTask;
   }
 
   private validateStatus(current: ETaskStatus, next: ETaskStatus) {
@@ -285,7 +407,7 @@ export class TaskService {
 
     await this.workOrderService.updateStatus(
       workOrderNo,
-      EWorkOrderStatus.QC,
+      EWorkOrderStatus.WAITING_QC,
       user,
     );
   }

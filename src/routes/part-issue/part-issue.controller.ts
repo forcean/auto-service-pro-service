@@ -34,19 +34,20 @@ export class PartIssueController {
    *
    * ยังไม่ Reserve
    * ยังไม่ตัด Stock
+   * ใช้กรณีที่ต้องการขอเบิกอะไหล่จาก Store ก่อนที่จะทำการจ่ายจริง
    */
   @Post()
-  // @Permissions('create:issue')
+  @Permissions('create:issue')
   @ResponseResultCode('2000')
   @ResponseMessage('Create issue successful')
   async createIssue(
-    @Body() payload: CreatePartIssueDto,
+    @Body() dto: CreatePartIssueDto,
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-    return this.partIssueService.createIssue(payload, authUser);
+    return this.partIssueService.createIssue(dto, authUser);
   }
 
   /**
@@ -57,7 +58,7 @@ export class PartIssueController {
    * ดูรายละเอียด Part Issue
    */
   @Get(':issueNo')
-  // @Permissions('view:issue')
+  @Permissions('view:issue')
   @ResponseResultCode('2000')
   @ResponseMessage('Get issue successful')
   async getIssueByNo(
@@ -79,6 +80,7 @@ export class PartIssueController {
    *
    * quantity ใน Stock ยังไม่ลด
    * reserved ใน Stock เพิ่มขึ้น
+   * ใช้กรณีที่ต้องการจองอะไหล่ไว้ก่อนที่จะทำการจ่ายจริง เพื่อให้แน่ใจว่าอะไหล่ยังอยุ่ใน stock
    */
   @Post(':issueNo/reserve')
   // @Permissions('update:issue')
@@ -104,20 +106,22 @@ export class PartIssueController {
    * quantity ↓
    * reserved ↓
    * issuedQty ↑
+   * ใช้กรณีที่ต้องการจ่ายอะไหล่จริง ๆ ออกจาก Store
+   * ถ้า Part Issue ยังไม่ได้ Reserve จะทำการ Reserve ให้ก่อน
    */
   @Post(':issueNo/issue')
-  @Permissions('cancel:issue')
+  @Permissions('issue:issue')
   @ResponseResultCode('2000')
-  @ResponseMessage('Cancel issue successful')
+  @ResponseMessage('Issue issue successful')
   async issue(
     @Param('issueNo') issueNo: string,
-    @Body() payload: IssuePartIssueDto,
+    @Body() dto: IssuePartIssueDto,
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
-    return this.partIssueService.issue(issueNo, payload, authUser);
+    return this.partIssueService.issue(issueNo, dto, authUser);
   }
 
   /**
@@ -136,13 +140,13 @@ export class PartIssueController {
   @ResponseMessage('Cancel issue successful')
   async cancel(
     @Param('issueNo') issueNo: string,
-    @Body() payload: CancelPartIssueDto,
+    @Body() dto: CancelPartIssueDto,
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return this.partIssueService.cancel(issueNo, payload, authUser);
+    return this.partIssueService.cancel(issueNo, dto, authUser);
   }
 }

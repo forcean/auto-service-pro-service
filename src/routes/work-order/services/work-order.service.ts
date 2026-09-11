@@ -1,21 +1,20 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { WorkOrderRepository } from 'src/repository/work-order/work-order.repository';
 import { AuthUser } from 'src/types/user.type';
 import {
   CreateWorkOrderDto,
-  getWorkOrdersWithPaginationDto,
+  GetWorkOrdersWithPaginationDto,
   UpdateWorkOrderDto,
 } from '../dtos/work-order.dto';
-import { EUserRole } from 'src/common/dto/roles.enum';
 import { BusinessException } from 'src/common/exceptions/business.exception';
-import { Session } from 'inspector/promises';
 import { ClientSession } from 'mongoose';
 import { DocumentNoService } from 'src/common/services/document-no.service';
 import { EDocumentType } from 'src/common/enums/document-type.enum';
 import { EWorkOrderStatus } from '../enums/work-order.enum';
-import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import { getPagination } from 'src/common/utils/pagination.util';
+import { WorkOrderTaskRepository } from 'src/repository/work-order-task/work-order-task.repository';
+import { calculateWorkOrderProgress } from '../utils/work-order-progress.util';
 
 @Injectable()
 export class WorkOrderService {
@@ -24,8 +23,11 @@ export class WorkOrderService {
     private readonly workOrderRepository: WorkOrderRepository,
     @Inject(DocumentNoService)
     private readonly documentNoService: DocumentNoService,
+    @Inject(WorkOrderTaskRepository)
+    private readonly taskRepository: WorkOrderTaskRepository,
   ) {}
 
+  // insert new work order
   async createWorkOrder(
     payload: CreateWorkOrderDto,
     user: AuthUser,
@@ -61,12 +63,13 @@ export class WorkOrderService {
         throw new BusinessException('4040', 'Work order not found');
       }
 
-      return workOrder;
+      return this.withProgress(workOrder);
     } catch (error) {
       throw error;
     }
   }
 
+  // call work order with work order number
   async getWorkOrderByNo(workOrderNo: string) {
     try {
       const workOrder =
@@ -76,22 +79,23 @@ export class WorkOrderService {
         throw new BusinessException('4040', 'Work order not found');
       }
 
-      return workOrder;
+      return this.withProgress(workOrder);
     } catch (error) {
       throw error;
     }
   }
 
+  //  update data for work order
   async updateWorkOrder(
-    id: string,
+    workOrderNo: string,
     payload: UpdateWorkOrderDto,
     user: AuthUser,
     session?: ClientSession,
   ) {
     try {
-      await this.getWorkOrderByNo(id);
+      await this.getWorkOrderByNo(workOrderNo);
       const workOrder = await this.workOrderRepository.updateWorkOrder(
-        id,
+        workOrderNo,
         payload,
         user,
         session,
@@ -107,7 +111,11 @@ export class WorkOrderService {
     }
   }
 
-  async updateStatus(id: string, status: EWorkOrderStatus, user: AuthUser) {
+  async updateStatus(
+    workOrderNo: string,
+    status: EWorkOrderStatus,
+    user: AuthUser,
+  ) {
     try {
       if (status === EWorkOrderStatus.COMPLETED) {
         throw new BusinessException(
@@ -115,9 +123,10 @@ export class WorkOrderService {
           'Completed work order cannot be updated',
         );
       }
-      await this.getWorkOrderById(id);
+      const foundWorkOrder = await this.getWorkOrderByNo(workOrderNo);
+      this.validateStatusTransition(foundWorkOrder.status, status);
       const workOrder = await this.workOrderRepository.updateStatus(
-        id,
+        foundWorkOrder._id.toString(),
         status,
         user,
       );
@@ -135,11 +144,13 @@ export class WorkOrderService {
     }
   }
 
-  async deleteWorkOrder(id: string, user: AuthUser) {
+  async deleteWorkOrder(workOrderNo: string, user: AuthUser) {
     try {
-      await this.getWorkOrderById(id);
-
-      const workOrder = await this.workOrderRepository.softDelete(id, user);
+      await this.getWorkOrderByNo(workOrderNo);
+      const workOrder = await this.workOrderRepository.softDelete(
+        workOrderNo,
+        user,
+      );
 
       if (!workOrder) {
         throw new BusinessException('5004', 'Failed to delete work order');
@@ -154,7 +165,7 @@ export class WorkOrderService {
   }
 
   async getWorkOrdersWithPagination(
-    query: getWorkOrdersWithPaginationDto,
+    query: GetWorkOrdersWithPaginationDto,
     sortBy: SortCriterial,
   ) {
     try {
@@ -166,7 +177,10 @@ export class WorkOrderService {
         sortBy,
       );
 
-      return result;
+      const data = await Promise.all(
+        result.data.map((workOrder) => this.withProgress(workOrder)),
+      );
+      return { ...result, data };
     } catch (error) {
       console.error(
         `Error getting customer vehicle: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -175,13 +189,101 @@ export class WorkOrderService {
     }
   }
 
+  private async withProgress<T extends { workOrderNo: string }>(workOrder: T) {
+    const tasks = await this.taskRepository.getByWorkOrderNo(
+      workOrder.workOrderNo,
+    );
+    const taskProgress = calculateWorkOrderProgress(tasks);
+
+    return {
+      ...workOrder,
+      progress: taskProgress.progress,
+      taskSummary: {
+        totalTasks: taskProgress.totalTasks,
+        completedTasks: taskProgress.completedTasks,
+        cancelledTasks: taskProgress.cancelledTasks,
+      },
+    };
+  }
+
+  private validateStatusTransition(
+    currentStatus: EWorkOrderStatus,
+    nextStatus: EWorkOrderStatus,
+  ) {
+    const allowedTransitions: Record<
+      EWorkOrderStatus,
+      EWorkOrderStatus[]
+    > = {
+      [EWorkOrderStatus.OPEN]: [
+        EWorkOrderStatus.INSPECTING,
+        EWorkOrderStatus.WAITING_QUOTATION,
+        EWorkOrderStatus.WAITING_APPROVAL,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.INSPECTING]: [
+        EWorkOrderStatus.WAITING_QUOTATION,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_QUOTATION]: [
+        EWorkOrderStatus.WAITING_APPROVAL,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_APPROVAL]: [
+        EWorkOrderStatus.WAITING_ASSIGNMENT,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_ASSIGNMENT]: [
+        EWorkOrderStatus.IN_PROGRESS,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.IN_PROGRESS]: [
+        EWorkOrderStatus.WAITING_QC,
+        EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL,
+        EWorkOrderStatus.HOLD,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL]: [
+        EWorkOrderStatus.IN_PROGRESS,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_QC]: [
+        EWorkOrderStatus.QC_APPROVED,
+        EWorkOrderStatus.REWORK,
+        EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL,
+      ],
+      [EWorkOrderStatus.REWORK]: [
+        EWorkOrderStatus.IN_PROGRESS,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.QC_APPROVED]: [
+        EWorkOrderStatus.READY_DELIVERY,
+      ],
+      [EWorkOrderStatus.READY_DELIVERY]: [],
+      [EWorkOrderStatus.COMPLETED]: [],
+      [EWorkOrderStatus.CANCELLED]: [],
+      [EWorkOrderStatus.HOLD]: [
+        EWorkOrderStatus.IN_PROGRESS,
+        EWorkOrderStatus.CANCELLED,
+      ],
+    };
+
+    const allowedStatuses = allowedTransitions[currentStatus];
+
+    if (!allowedStatuses.includes(nextStatus)) {
+      throw new BusinessException(
+        '4004',
+        `Cannot change work order status from ${currentStatus} to ${nextStatus}`,
+      );
+    }
+  }
+
   async assignQuotation(
-    workOrderId: string,
+    workOrderNo: string,
     quotationId: string,
     user: AuthUser,
   ) {
     try {
-      const workOrder = await this.getWorkOrderById(workOrderId);
+      const workOrder = await this.getWorkOrderByNo(workOrderNo);
       if (!workOrder) {
         throw new BusinessException('4040', 'not found');
       }
@@ -191,7 +293,7 @@ export class WorkOrderService {
       }
 
       return this.workOrderRepository.updateCurrentQuotation(
-        workOrderId,
+        workOrder._id.toString(),
         quotationId,
         user,
       );
@@ -235,28 +337,28 @@ export class WorkOrderService {
     user: AuthUser,
     session?: ClientSession,
   ) {
-    await this.getWorkOrderById(workOrderId);
-    const workOrder = await this.workOrderRepository.updateInvoice(
-      workOrderId,
-      invoiceId,
-      user,
-      session,
-    );
-    if (!workOrder)
-      throw new BusinessException(
-        '5006',
-        'Failed to link invoice to work order',
+    try {
+      const workOrder = await this.workOrderRepository.updateInvoice(
+        workOrderId,
+        invoiceId,
+        user,
+        session,
       );
-    return workOrder;
+
+      if (!workOrder) {
+        throw new BusinessException('5006', 'Failed to update work order invoice');
+      }
+
+      return workOrder;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async closeWorkOrder(
-    workOrderId: string,
-    user: AuthUser,
-    session?: ClientSession,
-  ) {
+  async closeWorkOrder(workOrderNo: string, user: AuthUser, session?: ClientSession) {
     try {
-      const workOrder = await this.getWorkOrderById(workOrderId);
+      ``;
+      const workOrder = await this.getWorkOrderByNo(workOrderNo);
       if (!workOrder) {
         throw new BusinessException('4040', 'not found');
       }
@@ -265,7 +367,7 @@ export class WorkOrderService {
       }
 
       return this.workOrderRepository.updateStatus(
-        workOrderId,
+        workOrder._id.toString(),
         EWorkOrderStatus.COMPLETED,
         user,
         session,
@@ -275,9 +377,9 @@ export class WorkOrderService {
     }
   }
 
-  async cancelWorkOrder(workOrderId: string, user: AuthUser) {
+  async cancelWorkOrder(workOrderNo: string, user: AuthUser) {
     try {
-      const workOrder = await this.getWorkOrderById(workOrderId);
+      const workOrder = await this.getWorkOrderByNo(workOrderNo);
       if (!workOrder) {
         throw new BusinessException('4040', 'not found');
       }
@@ -289,7 +391,7 @@ export class WorkOrderService {
       }
 
       return this.workOrderRepository.updateStatus(
-        workOrderId,
+        workOrder._id.toString(),
         EWorkOrderStatus.CANCELLED,
         user,
       );

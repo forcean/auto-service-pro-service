@@ -20,3 +20,9 @@ export enum ECustomerDecision {
   PARTIAL = 'PARTIAL',
   REJECTED = 'REJECTED',
 }
+
+export enum EQuotationItemType {
+  PART = 'PART',
+  LABOR = 'LABOR',
+  SERVICE = 'SERVICE',
+}
