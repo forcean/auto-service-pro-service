@@ -7,7 +7,7 @@ import { WorkOrderEntity, WorkOrderDocument } from './work-order.schema';
 import { EWorkOrderStatus } from 'src/routes/work-order/enums/work-order.enum';
 import {
   CreateWorkOrderDto,
-  getWorkOrdersWithPaginationDto,
+  GetWorkOrdersWithPaginationDto,
   UpdateWorkOrderDto,
 } from 'src/routes/work-order/dtos/work-order.dto';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
@@ -120,8 +120,9 @@ export class WorkOrderRepository {
     return this.model.findByIdAndUpdate(
       workOrderId,
       {
-        currentQuotationId: quotationId,
-        updatedBy: user.id,
+        currentQuotationId: new Types.ObjectId(quotationId),
+        updatedBy: user.publicId,
+        status: EWorkOrderStatus.WAITING_APPROVAL,
       },
       {
         new: true,
@@ -148,7 +149,7 @@ export class WorkOrderRepository {
       id,
       {
         isDeleted: true,
-        updatedBy: user.id,
+        updatedBy: user.publicId,
       },
       {
         new: true,
@@ -171,7 +172,7 @@ export class WorkOrderRepository {
 
   async findAllWithPaginated(
     pagination: { page: number; limit: number; skip: number },
-    query: getWorkOrdersWithPaginationDto,
+    query: GetWorkOrdersWithPaginationDto,
     sortBy: SortCriterial,
   ) {
     const { page, limit, skip } = pagination;

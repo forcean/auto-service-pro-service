@@ -5,15 +5,16 @@ import {
   IsEnum,
   IsMongoId,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EFuelLevel, EWorkOrderStatus } from '../enums/work-order.enum';
 import { PartialType } from '@nestjs/mapped-types';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
-
 
 export class ComplaintDto {
   @IsString()
@@ -40,9 +41,6 @@ export class CreateWorkOrderDto {
   @IsMongoId()
   vehicleId!: string;
 
-  @IsMongoId()
-  customerId!: string;
-
   @IsNumber()
   mileage!: number;
 
@@ -59,6 +57,9 @@ export class CreateWorkOrderDto {
   @IsBoolean()
   inspectionRequired?: boolean;
 
+  @ValidateIf((o) => o.inspectionRequired === true, {
+    message: 'inspections is required when inspectionRequired is true',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -86,26 +87,19 @@ export class CreateWorkOrderDto {
   expectedFinishDate?: string;
 
   @IsOptional()
-  @IsMongoId()
-  advisorId?: string;
+  @IsString()
+  advisor?: string;
 }
 
-export class UpdateWorkOrderDto extends PartialType(
-  CreateWorkOrderDto,
-) {}
+export class UpdateWorkOrderDto extends PartialType(CreateWorkOrderDto) {}
 
 export class UpdateWorkOrderStatusDto {
   @IsEnum(EWorkOrderStatus)
   status!: EWorkOrderStatus;
 }
 
-export class getWorkOrdersWithPaginationDto extends PaginationQuery {
+export class GetWorkOrdersWithPaginationDto extends PaginationQuery {
   @IsString({ message: 'sort must be a string' })
   @IsOptional()
   sort?: string;
-
-//   @IsString({ message: 'sort must be a string' })
-//   @IsOptional()
-//   sort?: string;
-
 }

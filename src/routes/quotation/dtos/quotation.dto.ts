@@ -16,14 +16,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
-import { EApprovalMethod } from '../enums/quotation.enum';
-
-export enum EQuotationItemType {
-  PART = 'PART',
-  LABOR = 'LABOR',
-  SERVICE = 'SERVICE',
-}
-
+import { EApprovalMethod, EQuotationItemType } from '../enums/quotation.enum';
 export class CreateQuotationItemDto {
   @IsEnum(EQuotationItemType)
   itemType!: EQuotationItemType;
@@ -98,6 +91,7 @@ export class CreateQuotationDto {
   items!: CreateQuotationItemDto[];
 }
 
+//  update data for quotation
 export class UpdateQuotationDto extends CreateQuotationDto {}
 
 export class getQuotationWithPaginationDto extends PaginationQuery {

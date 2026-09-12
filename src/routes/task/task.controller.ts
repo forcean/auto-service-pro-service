@@ -20,7 +20,9 @@ import {
 import { ResponseInterceptor } from 'src/common/response/response.interceptor';
 import {
   CreateWorkOrderTaskDto,
+  ApproveAdditionalProblemDto,
   getWorkOrderTasksWithPaginationDto,
+  ReportAdditionalProblemDto,
   UpdateTaskStatusDto,
   UpdateWorkOrderTaskDto,
 } from './dtos/task.dto';
@@ -40,14 +42,14 @@ export class TaskController {
   @ResponseResultCode('2000')
   @ResponseMessage('Create work order successful')
   async createWorkOrder(
-    @Body() data: CreateWorkOrderTaskDto,
+    @Body() dto: CreateWorkOrderTaskDto,
     @Req() { authUser }: Request,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return this.taskService.createTask(data, authUser);
+    return this.taskService.createTask(dto, authUser);
   }
 
   // GET    /tasks
@@ -106,6 +108,48 @@ export class TaskController {
     return this.taskService.updateStatus(taskNo, dto.status, authUser);
   }
 
+  @Post('/:taskNo/additional-problem')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:task')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Report additional problem successful')
+  async reportAdditionalProblem(
+    @Param('taskNo') taskNo: string,
+    @Body() dto: ReportAdditionalProblemDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.taskService.reportAdditionalProblem(taskNo, dto, authUser);
+  }
+
+  @Post('/:taskNo/additional-problem/:problemId/approve')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:task')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Approve additional problem successful')
+  async approveAdditionalProblem(
+    @Param('taskNo') taskNo: string,
+    @Param('problemId') problemId: string,
+    @Body() dto: ApproveAdditionalProblemDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.taskService.approveAdditionalProblem(
+      taskNo,
+      problemId,
+      dto,
+      authUser,
+    );
+  }
+
   // PATCH  /tasks/:taskNo          <-- แก้ข้อมูลทั้งหมด
   @Patch('/:taskNo/')
   @UseGuards(PermissionsGuard)
@@ -114,7 +158,7 @@ export class TaskController {
   @ResponseResultCode('2000')
   @ResponseMessage('Update task successful')
   async updateTask(
-    @Body() data: UpdateWorkOrderTaskDto,
+    @Body() dto: UpdateWorkOrderTaskDto,
     @Req() { authUser }: Request,
     @Param('taskNo') taskNo: string,
   ) {
@@ -122,7 +166,7 @@ export class TaskController {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return this.taskService.updateTask(taskNo, data, authUser);
+    return this.taskService.updateTask(taskNo, dto, authUser);
   }
 
   // DELETE /tasks/:taskNo

@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { EQuotationItemType } from 'src/routes/quotation/dtos/quotation.dto';
 import {
   EApprovalMethod,
   ECustomerDecision,
+  EQuotationItemType,
   EQuotationStatus,
 } from 'src/routes/quotation/enums/quotation.enum';
 import { ProductsEntity } from '../products/products.schema';

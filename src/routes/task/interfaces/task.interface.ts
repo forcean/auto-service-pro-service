@@ -1,4 +1,17 @@
-import { ETaskPriority, ETaskStatus } from '../enums/task.enum';
+import {
+  EAdditionalProblemStatus,
+  ETaskPriority,
+  ETaskStatus,
+} from '../enums/task.enum';
+
+export interface IAdditionalProblem {
+  _id: string;
+  description: string;
+  createdBy: string;
+  status: EAdditionalProblemStatus;
+  approvedBy?: string;
+  approvedAt?: Date;
+}
 
 export interface ICreateTaskRequest {
   workOrderNo: string;
@@ -13,6 +26,7 @@ export interface ICreateTaskRequest {
   plannedFinishDate?: Date;
   mechanics: IMechanicsItems[];
   remark?: string;
+  isRework?: boolean;
 }
 
 export interface IMechanicsItems {

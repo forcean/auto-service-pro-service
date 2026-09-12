@@ -35,6 +35,12 @@ export interface IWorkOrderRecord {
   createdBy: string;
   updatedDt?: Date;
   updatedBy?: string;
+  progress?: number;
+  taskSummary?: {
+    totalTasks: number;
+    completedTasks: number;
+    cancelledTasks: number;
+  };
 }
 
 // รอ refactor

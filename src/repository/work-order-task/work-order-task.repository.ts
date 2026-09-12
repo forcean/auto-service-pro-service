@@ -6,7 +6,7 @@ import { AuthUser } from 'src/types/user.type';
 import { EWorkOrderStatus } from 'src/routes/work-order/enums/work-order.enum';
 import {
   CreateWorkOrderDto,
-  getWorkOrdersWithPaginationDto,
+  GetWorkOrdersWithPaginationDto,
   UpdateWorkOrderDto,
 } from 'src/routes/work-order/dtos/work-order.dto';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
@@ -20,6 +20,7 @@ import {
   UpdateWorkOrderTaskDto,
 } from 'src/routes/task/dtos/task.dto';
 import { ETaskStatus } from 'src/routes/task/enums/task.enum';
+import { EAdditionalProblemStatus } from 'src/routes/task/enums/task.enum';
 import {
   ICreateTaskRequest,
   IUpdateTaskRequest,
@@ -70,13 +71,14 @@ export class WorkOrderTaskRepository {
     });
   }
 
-  async getByWorkOrderNo(workOrderNo: string, session?: ClientSession) {
+  async getByWorkOrderNo(workOrderNo: string) {
     return this.model
       .find({
         workOrderNo,
         isDeleted: false,
       })
-      .session(session ?? null);
+      .select('status progress estimateMinute')
+      .lean();
   }
 
   async exists(taskNo: string) {
@@ -124,6 +126,29 @@ export class WorkOrderTaskRepository {
       {
         new: true,
       },
+    );
+  }
+
+  async approveProblem(
+    taskNo: string,
+    problemId: string,
+    user: AuthUser,
+  ) {
+    return this.model.findOneAndUpdate(
+      {
+        taskNo,
+        isDeleted: false,
+        'additionalProblems._id': new Types.ObjectId(problemId),
+        'additionalProblems.status': EAdditionalProblemStatus.PENDING,
+      },
+      {
+        $set: {
+          'additionalProblems.$.status': EAdditionalProblemStatus.APPROVED,
+          'additionalProblems.$.approvedBy': user.publicId,
+          'additionalProblems.$.approvedAt': new Date(),
+        },
+      },
+      { new: true },
     );
   }
 

@@ -10,20 +10,19 @@ import {
   ApproveQuotationDto,
   CreateQuotationDto,
   CreateQuotationItemDto,
-  EQuotationItemType,
   getQuotationWithPaginationDto,
   UpdateQuotationDto,
 } from '../dtos/quotation.dto';
 import { ProductsService } from 'src/routes/products/products.service';
 import { IQuotationRecord } from '../interfaces/quotation-record.interface';
-import { error } from 'console';
 import { InjectConnection } from '@nestjs/mongoose';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import { getPagination } from 'src/common/utils/pagination.util';
-import { EQuotationStatus } from '../enums/quotation.enum';
+import { EQuotationItemType, EQuotationStatus } from '../enums/quotation.enum';
 import { QuotationMapper } from '../mapper/quotation.mapper';
 import { IQuotationItem } from '../interfaces/quotation.interface';
 import { mapMongoId } from 'src/common/helper/mongo.helper';
+import { EWorkOrderStatus } from 'src/routes/work-order/enums/work-order.enum';
 
 @Injectable()
 export class QuotationService {
@@ -223,10 +222,10 @@ export class QuotationService {
     };
   }
 
-  async deleteQuotation(quotationId: string, user: AuthUser) {
+  async deleteQuotation(quotationNo: string, user: AuthUser) {
     try {
       const quotation = await this.quotationRepository.softDelete(
-        quotationId,
+        quotationNo,
         user,
       );
       if (!quotation) {
@@ -240,7 +239,7 @@ export class QuotationService {
     }
   }
 
-  async getQuotationByNo(quotationNo: string) {
+  async getQuotationByNo(quotationNo: string): Promise<IQuotationRecord> {
     try {
       const quotation =
         await this.quotationRepository.getByQuotationNo(quotationNo);
@@ -248,6 +247,7 @@ export class QuotationService {
       if (!quotation) {
         throw new BusinessException('4040', 'Quotation not found');
       }
+      return QuotationMapper.toRecord(quotation);
     } catch (error) {
       throw error;
     }
@@ -309,7 +309,7 @@ export class QuotationService {
   }
 
   async approveQuotation(
-    quotationId: string,
+    quotationNo: string,
     payload: ApproveQuotationDto,
     user: AuthUser,
   ) {
@@ -317,14 +317,14 @@ export class QuotationService {
 
     try {
       session.startTransaction();
-      const quotation = await this.getQuotationById(quotationId);
+      const quotation = await this.getQuotationByNo(quotationNo);
 
       if (quotation.status !== EQuotationStatus.PENDING_APPROVAL) {
         throw new BusinessException('4001', 'Quotation cannot be approved');
       }
 
       const result = await this.quotationRepository.approveQuotation(
-        quotationId,
+        quotation.id,
         payload,
         user,
         session,
@@ -333,6 +333,12 @@ export class QuotationService {
       if (!result) {
         throw new BusinessException('5003', 'Failed to approve quotation');
       }
+
+      await this.workOrderService.updateStatus(
+        quotation.workOrder.id,
+        EWorkOrderStatus.WAITING_ASSIGNMENT,
+        user,
+      );
 
       await session.commitTransaction();
 
@@ -345,12 +351,14 @@ export class QuotationService {
     }
   }
 
-  async createRevision(quotationId: string, user: AuthUser) {
+  // กรณีที่ต้องการสร้าง Revision ของ Quotation เดิม โดยจะทำการ Mark Quotation เดิมเป็น Old Version และสร้าง Quotation ใหม่ที่เป็น Latest Version
+  // จะใช้ กรณีที่ลูกค้า Reject Quotation และต้องการให้สร้าง Quotation ใหม่จาก Quotation เดิม
+  async createRevision(quotationNo: string, user: AuthUser) {
     const session = await this.connection.startSession();
 
     try {
       session.startTransaction();
-      const oldQuotation = await this.getQuotationById(quotationId);
+      const oldQuotation = await this.getQuotationByNo(quotationNo);
 
       if (!oldQuotation.isLatest) {
         throw new BusinessException(
@@ -359,13 +367,13 @@ export class QuotationService {
         );
       }
 
-      const quotationNo = await this.documentNoService.generate(
+      const newQuotationNo = await this.documentNoService.generate(
         EDocumentType.QUOTATION,
       );
-      await this.quotationRepository.markOldVersion(quotationId, user, session);
+      await this.quotationRepository.markOldVersion(quotationNo, user, session);
       const quotation = await this.quotationRepository.createQuotation(
         {
-          quotationNo,
+          quotationNo: newQuotationNo,
           workOrderId: oldQuotation.workOrder.id,
           version: oldQuotation.version + 1,
           isLatest: true,
@@ -433,7 +441,7 @@ export class QuotationService {
   }
 
   async updateQuotation(
-    quotationId: string,
+    quotationNo: string,
     payload: UpdateQuotationDto,
     user: AuthUser,
   ) {
@@ -441,7 +449,7 @@ export class QuotationService {
     try {
       session.startTransaction();
       const quotation =
-        await this.quotationRepository.getQuotationById(quotationId);
+        await this.quotationRepository.getByQuotationNo(quotationNo);
 
       if (!quotation) {
         throw new BusinessException('4040', 'Quotation not found');
@@ -458,7 +466,7 @@ export class QuotationService {
 
       const quotationData = await this.prepareQuotation(payload);
       const result = await this.quotationRepository.updateQuotation(
-        quotationId,
+        quotationNo,
         {
           workOrderId: payload.workOrderId,
           validUntil: payload.validUntil,

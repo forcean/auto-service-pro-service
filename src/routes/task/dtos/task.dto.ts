@@ -1,6 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsMongoId,
@@ -80,6 +81,10 @@ export class CreateWorkOrderTaskDto {
   @IsOptional()
   @IsString()
   remark?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isRework?: boolean;
 }
 
 export class UpdateWorkOrderTaskDto {
@@ -137,6 +142,26 @@ export class UpdateTaskStatusDto {
   @IsOptional()
   @IsString()
   remark?: string;
+}
+
+export class ReportAdditionalProblemDto {
+  @IsString()
+  @IsNotEmpty()
+  description!: string;
+}
+
+export class ApproveAdditionalProblemDto {
+  @IsMongoId()
+  quotationId!: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  estimateMinute?: number;
 }
 
 export class getWorkOrderTasksWithPaginationDto extends PaginationQuery {
