@@ -53,14 +53,6 @@ export class WorkOrderEntity {
   vehicleId!: Types.ObjectId;
 
   @Prop({
-    // type: Types.ObjectId,
-    // ref: 'Customer',
-    required: true,
-    index: true,
-  })
-  customerId!: Types.ObjectId;
-
-  @Prop({
     enum: EWorkOrderStatus,
     default: EWorkOrderStatus.OPEN,
     index: true,
@@ -158,6 +150,5 @@ export const WorkOrderSchema = SchemaFactory.createForClass(WorkOrderEntity);
 
 WorkOrderSchema.index({ workOrderNo: 1 });
 WorkOrderSchema.index({ vehicleId: 1 });
-WorkOrderSchema.index({ customerId: 1 });
 WorkOrderSchema.index({ status: 1 });
 WorkOrderSchema.index({ createdAt: -1 });

@@ -48,7 +48,6 @@ export class WorkOrderRepository {
         isDeleted: false,
       })
       .populate('vehicleId')
-      .populate('customerId')
       .populate('advisorId')
       .lean<IWorkOrderRecord>();
   }
@@ -62,10 +61,7 @@ export class WorkOrderRepository {
         })
         .populate({
           path: 'vehicleId',
-          // select: '_id licensePlate province vin vehicle',
         })
-        // .populate('customerId')
-        // .populate('advisorId')
         .lean()
     );
   }
@@ -208,7 +204,8 @@ export class WorkOrderRepository {
         .find(filter)
         .populate({
           path: 'vehicleId',
-          select: '_id licensePlate province vin vehicle',
+          select:
+            '_id licensePlate province vin vehicle firstname lastname phoneNumber billingName taxId billingAddress branchNo',
         })
         .sort(sortBy ?? { checkInDate: 'desc' })
         .skip(skip)

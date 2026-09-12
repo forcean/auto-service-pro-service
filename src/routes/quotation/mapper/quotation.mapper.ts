@@ -14,7 +14,6 @@ export class QuotationMapper {
         id: workOrder._id.toString(),
         workOrderNo: workOrder.workOrderNo,
         vehicleId: workOrder.vehicleId?.toString(),
-        customerId: workOrder.customerId?.toString(),
         advisorId: workOrder.advisorId?.toString(),
         status: workOrder.status,
       },

@@ -59,7 +59,7 @@ export class QuotationRepository {
       })
       .populate({
         path: 'workOrderId',
-        select: 'workOrderNo vehicleId customerId advisorId status',
+        select: 'workOrderNo vehicleId advisorId status',
       })
       .lean();
   }
@@ -72,7 +72,7 @@ export class QuotationRepository {
       })
       .populate({
         path: 'workOrderId',
-        select: 'workOrderNo vehicleId customerId advisorId status',
+        select: 'workOrderNo vehicleId advisorId status',
       });
   }
 
