@@ -1,4 +1,4 @@
-import { EQuotationItemType } from '../enums/quotation.enum';
+import { EQuotationItemType, EQuotationStatus } from '../enums/quotation.enum';
 
 export interface IQuotationItem {
   itemType: EQuotationItemType;
@@ -29,4 +29,5 @@ export interface ICreateQuotation {
   customerRemark?: string;
   internalRemark?: string;
   items: IQuotationItem[];
+  status?: EQuotationStatus;
 }

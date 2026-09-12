@@ -14,7 +14,7 @@ import { WorkOrderService } from '../work-order/services/work-order.service';
 import { TaskService } from '../task/task.service';
 import { ETaskStatus } from '../task/enums/task.enum';
 import { EQuotationStatus } from '../quotation/enums/quotation.enum';
-import { EQuotationItemType } from '../quotation/dtos/quotation.dto';
+import { EQuotationItemType } from '../quotation/enums/quotation.enum';
 import { EInvoiceItemType, EInvoiceStatus } from './enums/billing.enum';
 import {
   CreatePaymentDto,
@@ -137,7 +137,12 @@ export class BillingService {
             const actual = issuedParts.get(
               quoteItem.productId?.toString() ?? '',
             );
-            if (!actual) continue;
+            if (!actual) {
+              throw new BusinessException(
+                '4001',
+                `Part has not been issued for ${quoteItem.sku}`,
+              );
+            }
             if (actual.quantity > quoteItem.quantity) {
               throw new BusinessException(
                 '4001',
@@ -531,12 +536,13 @@ export class BillingService {
           const workOrder: any = await this.workOrderService.getWorkOrderById(
             invoice.workOrderId.toString(),
           );
-          if (workOrder.status !== 'COMPLETED')
+          if (workOrder.status !== 'COMPLETED') {
             await this.workOrderService.closeWorkOrder(
-              invoice.workOrderId.toString(),
+              invoice.workOrderNo,
               user,
               session,
             );
+          }
           await this.serviceHistoryRepository.create(
             {
               workOrderId: invoice.workOrderId,
@@ -579,7 +585,7 @@ export class BillingService {
       if (quoteItem.itemType !== EQuotationItemType.PART) continue;
       const key = quoteItem.productId?.toString() ?? '';
       const issued = issuedParts.get(key);
-      if (issued === undefined) continue;
+      if (issued === undefined) return false;
       if (issued > quoteItem.quantity) return false;
       issuedParts.delete(key);
     }
