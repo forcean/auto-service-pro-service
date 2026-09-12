@@ -122,7 +122,6 @@ export class WorkOrderRepository {
       {
         currentQuotationId: new Types.ObjectId(quotationId),
         updatedBy: user.publicId,
-        status: EWorkOrderStatus.WAITING_APPROVAL,
       },
       {
         new: true,
