@@ -494,6 +494,13 @@ export class QuotationService {
       }
       const quotationData = await this.prepareQuotation(revisionPayload);
 
+      if (oldQuotation.status !== EQuotationStatus.REJECTED) {
+        throw new BusinessException(
+          '4001',
+          'Only rejected quotations can create revision',
+        );
+      }
+
       const newQuotationNo = await this.documentNoService.generate(
         EDocumentType.QUOTATION,
       );
@@ -537,7 +544,7 @@ export class QuotationService {
         session,
       );
       await session.commitTransaction();
-      return quotation;
+      return mapMongoId(quotation.toObject());
     } catch (error) {
       await session.abortTransaction();
       throw error;
