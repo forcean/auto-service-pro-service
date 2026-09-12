@@ -43,6 +43,15 @@ export class AdditionalProblem {
 
   @Prop()
   approvedAt?: Date;
+
+  @Prop()
+  rejectedBy?: string;
+
+  @Prop()
+  rejectedAt?: Date;
+
+  @Prop()
+  rejectedReason?: string;
 }
 export const AdditionalProblemSchema =
   SchemaFactory.createForClass(AdditionalProblem);

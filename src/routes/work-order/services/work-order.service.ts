@@ -14,6 +14,7 @@ import { EWorkOrderStatus } from '../enums/work-order.enum';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import { getPagination } from 'src/common/utils/pagination.util';
 import { WorkOrderTaskRepository } from 'src/repository/work-order-task/work-order-task.repository';
+import { InvoiceRepository } from 'src/repository/invoice/invoice.repository';
 import { calculateWorkOrderProgress } from '../utils/work-order-progress.util';
 
 @Injectable()
@@ -25,6 +26,8 @@ export class WorkOrderService {
     private readonly documentNoService: DocumentNoService,
     @Inject(WorkOrderTaskRepository)
     private readonly taskRepository: WorkOrderTaskRepository,
+    @Inject(InvoiceRepository)
+    private readonly invoiceRepository: InvoiceRepository,
   ) {}
 
   // insert new work order
@@ -230,6 +233,7 @@ export class WorkOrderService {
       ],
       [EWorkOrderStatus.WAITING_APPROVAL]: [
         EWorkOrderStatus.WAITING_ASSIGNMENT,
+        EWorkOrderStatus.IN_PROGRESS,
         EWorkOrderStatus.CANCELLED,
       ],
       [EWorkOrderStatus.WAITING_ASSIGNMENT]: [
@@ -364,6 +368,25 @@ export class WorkOrderService {
       }
       if (workOrder.status === EWorkOrderStatus.COMPLETED) {
         throw new BusinessException('4002', 'Work order already completed');
+      }
+
+      if (workOrder.status !== EWorkOrderStatus.READY_DELIVERY) {
+        throw new BusinessException(
+          '4008',
+          'Work order must be ready for delivery before closing',
+        );
+      }
+
+      const invoice = await this.invoiceRepository.findByWorkOrderId(
+        workOrder._id.toString(),
+        session,
+      );
+
+      if (!invoice || invoice.status !== 'PAID') {
+        throw new BusinessException(
+          '4009',
+          'Paid invoice is required before closing work order',
+        );
       }
 
       return this.workOrderRepository.updateStatus(

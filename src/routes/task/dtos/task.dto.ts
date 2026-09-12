@@ -164,6 +164,12 @@ export class ApproveAdditionalProblemDto {
   estimateMinute?: number;
 }
 
+export class RejectAdditionalProblemDto {
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
 export class getWorkOrderTasksWithPaginationDto extends PaginationQuery {
   @IsString({ message: 'sort must be a string' })
   @IsOptional()

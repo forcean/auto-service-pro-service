@@ -23,6 +23,7 @@ import {
   ApproveAdditionalProblemDto,
   getWorkOrderTasksWithPaginationDto,
   ReportAdditionalProblemDto,
+  RejectAdditionalProblemDto,
   UpdateTaskStatusDto,
   UpdateWorkOrderTaskDto,
 } from './dtos/task.dto';
@@ -143,6 +144,30 @@ export class TaskController {
     }
 
     return this.taskService.approveAdditionalProblem(
+      taskNo,
+      problemId,
+      dto,
+      authUser,
+    );
+  }
+
+  @Post('/:taskNo/additional-problem/:problemId/reject')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:task')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Reject additional problem successful')
+  async rejectAdditionalProblem(
+    @Param('taskNo') taskNo: string,
+    @Param('problemId') problemId: string,
+    @Body() dto: RejectAdditionalProblemDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.taskService.rejectAdditionalProblem(
       taskNo,
       problemId,
       dto,

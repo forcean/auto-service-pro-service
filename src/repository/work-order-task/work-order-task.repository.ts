@@ -152,6 +152,31 @@ export class WorkOrderTaskRepository {
     );
   }
 
+  async rejectProblem(
+    taskNo: string,
+    problemId: string,
+    reason: string,
+    user: AuthUser,
+  ) {
+    return this.model.findOneAndUpdate(
+      {
+        taskNo,
+        isDeleted: false,
+        'additionalProblems._id': new Types.ObjectId(problemId),
+        'additionalProblems.status': EAdditionalProblemStatus.PENDING,
+      },
+      {
+        $set: {
+          'additionalProblems.$.status': EAdditionalProblemStatus.REJECTED,
+          'additionalProblems.$.rejectedBy': user.publicId,
+          'additionalProblems.$.rejectedAt': new Date(),
+          'additionalProblems.$.rejectedReason': reason,
+        },
+      },
+      { new: true },
+    );
+  }
+
   async softDelete(taskNo: string, user: AuthUser) {
     return this.model.findOneAndUpdate(
       {
