@@ -78,12 +78,16 @@ export class WorkOrderRepository {
   }
 
   async updateWorkOrder(
-    id: string,
+    workOrderNo: string,
     payload: UpdateWorkOrderDto,
     user: AuthUser,
     session?: ClientSession,
   ) {
-    return this.model.updateOne(
+    return this.model.findOneAndUpdate(
+      {
+        workOrderNo,
+        isDeleted: false,
+      },
       {
         ...payload,
         updatedBy: user.id,

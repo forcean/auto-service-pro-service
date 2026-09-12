@@ -1,4 +1,4 @@
-import { EQuotationItemType } from '../dtos/quotation.dto';
+import { EQuotationItemType } from '../enums/quotation.enum';
 
 export interface IQuotationItem {
   itemType: EQuotationItemType;

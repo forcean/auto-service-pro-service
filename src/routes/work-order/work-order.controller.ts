@@ -107,6 +107,23 @@ export class WorkOrderController {
     return this.workOrderService.deleteWorkOrder(workOrderNo, authUser);
   }
 
+  @Post('/:workOrderNo/close')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:work-order')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Close work order successful')
+  async closeWorkOrder(
+    @Req() { authUser }: Request,
+    @Param('workOrderNo') workOrderNo: string,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.workOrderService.closeWorkOrder(workOrderNo, authUser);
+  }
+
   @Get()
   @UseGuards(PermissionsGuard)
   @Permissions('view:work-orders')

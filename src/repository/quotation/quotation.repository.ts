@@ -64,10 +64,15 @@ export class QuotationRepository {
   }
 
   async getByQuotationNo(quotationNo: string): Promise<QuotationDocument | null> {
-    return this.quotationEntity.findOne({
-      quotationNo,
-      isDeleted: false,
-    });
+    return this.quotationEntity
+      .findOne({
+        quotationNo,
+        isDeleted: false,
+      })
+      .populate({
+        path: 'workOrderId',
+        select: 'workOrderNo vehicleId customerId advisorId status',
+      });
   }
 
   async softDelete(id: string, user: AuthUser) {

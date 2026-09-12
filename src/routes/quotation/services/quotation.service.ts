@@ -335,7 +335,7 @@ export class QuotationService {
       }
 
       await this.workOrderService.updateStatus(
-        quotation.workOrder.id,
+        quotation.workOrder.workOrderNo,
         EWorkOrderStatus.WAITING_ASSIGNMENT,
         user,
       );

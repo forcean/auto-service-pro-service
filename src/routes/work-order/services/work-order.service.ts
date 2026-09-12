@@ -124,6 +124,7 @@ export class WorkOrderService {
         );
       }
       const foundWorkOrder = await this.getWorkOrderByNo(workOrderNo);
+      this.validateStatusTransition(foundWorkOrder.status, status);
       const workOrder = await this.workOrderRepository.updateStatus(
         foundWorkOrder._id.toString(),
         status,
@@ -205,6 +206,77 @@ export class WorkOrderService {
     };
   }
 
+  private validateStatusTransition(
+    currentStatus: EWorkOrderStatus,
+    nextStatus: EWorkOrderStatus,
+  ) {
+    const allowedTransitions: Record<
+      EWorkOrderStatus,
+      EWorkOrderStatus[]
+    > = {
+      [EWorkOrderStatus.OPEN]: [
+        EWorkOrderStatus.INSPECTING,
+        EWorkOrderStatus.WAITING_QUOTATION,
+        EWorkOrderStatus.WAITING_APPROVAL,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.INSPECTING]: [
+        EWorkOrderStatus.WAITING_QUOTATION,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_QUOTATION]: [
+        EWorkOrderStatus.WAITING_APPROVAL,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_APPROVAL]: [
+        EWorkOrderStatus.WAITING_ASSIGNMENT,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_ASSIGNMENT]: [
+        EWorkOrderStatus.IN_PROGRESS,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.IN_PROGRESS]: [
+        EWorkOrderStatus.WAITING_QC,
+        EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL,
+        EWorkOrderStatus.HOLD,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL]: [
+        EWorkOrderStatus.IN_PROGRESS,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.WAITING_QC]: [
+        EWorkOrderStatus.QC_APPROVED,
+        EWorkOrderStatus.REWORK,
+        EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL,
+      ],
+      [EWorkOrderStatus.REWORK]: [
+        EWorkOrderStatus.IN_PROGRESS,
+        EWorkOrderStatus.CANCELLED,
+      ],
+      [EWorkOrderStatus.QC_APPROVED]: [
+        EWorkOrderStatus.READY_DELIVERY,
+      ],
+      [EWorkOrderStatus.READY_DELIVERY]: [],
+      [EWorkOrderStatus.COMPLETED]: [],
+      [EWorkOrderStatus.CANCELLED]: [],
+      [EWorkOrderStatus.HOLD]: [
+        EWorkOrderStatus.IN_PROGRESS,
+        EWorkOrderStatus.CANCELLED,
+      ],
+    };
+
+    const allowedStatuses = allowedTransitions[currentStatus];
+
+    if (!allowedStatuses.includes(nextStatus)) {
+      throw new BusinessException(
+        '4004',
+        `Cannot change work order status from ${currentStatus} to ${nextStatus}`,
+      );
+    }
+  }
+
   async assignQuotation(
     workOrderNo: string,
     quotationId: string,
@@ -221,7 +293,7 @@ export class WorkOrderService {
       }
 
       return this.workOrderRepository.updateCurrentQuotation(
-        workOrderNo,
+        workOrder._id.toString(),
         quotationId,
         user,
       );
@@ -251,6 +323,30 @@ export class WorkOrderService {
           '5005',
           'Failed to update current quotation',
         );
+      }
+
+      return workOrder;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateInvoice(
+    workOrderId: string,
+    invoiceId: string,
+    user: AuthUser,
+    session?: ClientSession,
+  ) {
+    try {
+      const workOrder = await this.workOrderRepository.updateInvoice(
+        workOrderId,
+        invoiceId,
+        user,
+        session,
+      );
+
+      if (!workOrder) {
+        throw new BusinessException('5006', 'Failed to update work order invoice');
       }
 
       return workOrder;
