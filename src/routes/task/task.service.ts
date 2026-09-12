@@ -6,6 +6,7 @@ import {
   ApproveAdditionalProblemDto,
   getWorkOrderTasksWithPaginationDto,
   ReportAdditionalProblemDto,
+  RejectAdditionalProblemDto,
   UpdateWorkOrderTaskDto,
 } from './dtos/task.dto';
 import { BusinessException } from 'src/common/exceptions/business.exception';
@@ -347,6 +348,54 @@ export class TaskService {
     return reworkTask;
   }
 
+  async rejectAdditionalProblem(
+    taskNo: string,
+    problemId: string,
+    payload: RejectAdditionalProblemDto,
+    user: AuthUser,
+  ) {
+    const task = await this.getTaskByNo(taskNo);
+    const problem = task.additionalProblems?.find((item: any) => {
+      return item._id.toString() === problemId;
+    });
+
+    if (!problem) {
+      throw new BusinessException('4042', 'Additional problem not found');
+    }
+
+    if (problem.status !== EAdditionalProblemStatus.PENDING) {
+      throw new BusinessException('4005', 'Additional problem already reviewed');
+    }
+
+    const result = await this.taskRepository.rejectProblem(
+      taskNo,
+      problemId,
+      payload.reason,
+      user,
+    );
+
+    if (!result) {
+      throw new BusinessException('5007', 'Failed to reject additional problem');
+    }
+
+    const workOrder = await this.workOrderService.getWorkOrderByNo(
+      task.workOrderNo,
+    );
+
+    if (
+      workOrder.status === EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL ||
+      workOrder.status === EWorkOrderStatus.WAITING_APPROVAL
+    ) {
+      await this.workOrderService.updateStatus(
+        task.workOrderNo,
+        EWorkOrderStatus.IN_PROGRESS,
+        user,
+      );
+    }
+
+    return result;
+  }
+
   private validateStatus(current: ETaskStatus, next: ETaskStatus) {
     const statusFlow: Record<ETaskStatus, ETaskStatus[]> = {
       [ETaskStatus.WAITING]: [ETaskStatus.ASSIGNED, ETaskStatus.CANCELLED],
@@ -397,7 +446,15 @@ export class TaskService {
     if (!tasks.length) {
       return;
     }
-    const allFinished = tasks.every(
+    const activeTasks = tasks.filter(
+      (task) => task.status !== ETaskStatus.CANCELLED,
+    );
+
+    if (!activeTasks.length) {
+      return;
+    }
+
+    const allFinished = activeTasks.every(
       (task) => task.status === ETaskStatus.FINISHED,
     );
 

@@ -10,6 +10,7 @@ import {
   ApproveQuotationDto,
   CreateQuotationDto,
   CreateQuotationItemDto,
+  CreateQuotationRevisionDto,
   getQuotationWithPaginationDto,
   UpdateQuotationDto,
 } from '../dtos/quotation.dto';
@@ -68,6 +69,7 @@ export class QuotationService {
           customerRemark: payload.customerRemark,
           internalRemark: payload.internalRemark,
           items: quotationData.items,
+          status: EQuotationStatus.PENDING_APPROVAL,
         },
         user,
         session,
@@ -353,7 +355,11 @@ export class QuotationService {
 
   // กรณีที่ต้องการสร้าง Revision ของ Quotation เดิม โดยจะทำการ Mark Quotation เดิมเป็น Old Version และสร้าง Quotation ใหม่ที่เป็น Latest Version
   // จะใช้ กรณีที่ลูกค้า Reject Quotation และต้องการให้สร้าง Quotation ใหม่จาก Quotation เดิม
-  async createRevision(quotationNo: string, user: AuthUser) {
+  async createRevision(
+    quotationNo: string,
+    payload: CreateQuotationRevisionDto,
+    user: AuthUser,
+  ) {
     const session = await this.connection.startSession();
 
     try {
@@ -367,29 +373,115 @@ export class QuotationService {
         );
       }
 
+      if (
+        oldQuotation.status === EQuotationStatus.CANCELLED ||
+        oldQuotation.status === EQuotationStatus.EXPIRED
+      ) {
+        throw new BusinessException(
+          '4001',
+          'Cancelled or expired quotation cannot create revision',
+        );
+      }
+
+      let revisionItems: CreateQuotationItemDto[] = oldQuotation.items.map(
+        (item) => ({
+          itemType: item.itemType,
+          productId: item.productId,
+          sku: item.sku,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discountAmount: item.discountAmount,
+          remark: item.remark,
+        }),
+      );
+
+      if (payload.items !== undefined) {
+        revisionItems = payload.items;
+      }
+
+      if (payload.additionalItems !== undefined) {
+        revisionItems = [...revisionItems, ...payload.additionalItems];
+      }
+
+      let includeVat = oldQuotation.includeVat;
+      if (payload.includeVat !== undefined) {
+        includeVat = payload.includeVat;
+      }
+
+      let taxPercent = oldQuotation.taxPercent;
+      if (payload.taxPercent !== undefined) {
+        taxPercent = payload.taxPercent;
+      }
+
+      let discountAmount = oldQuotation.discountAmount;
+      if (payload.discountAmount !== undefined) {
+        discountAmount = payload.discountAmount;
+      }
+
+      const revisionPayload: CreateQuotationDto = {
+        workOrderId: oldQuotation.workOrder.id,
+        validUntil: oldQuotation.validUntil,
+        includeVat,
+        taxPercent,
+        discountAmount,
+        customerRemark: oldQuotation.customerRemark,
+        internalRemark: oldQuotation.internalRemark,
+        items: revisionItems,
+      };
+
+      if (payload.validUntil !== undefined) {
+        revisionPayload.validUntil = payload.validUntil;
+      }
+
+      if (payload.customerRemark !== undefined) {
+        revisionPayload.customerRemark = payload.customerRemark;
+      }
+
+      if (payload.internalRemark !== undefined) {
+        revisionPayload.internalRemark = payload.internalRemark;
+      }
+      const quotationData = await this.prepareQuotation(revisionPayload);
+
       const newQuotationNo = await this.documentNoService.generate(
         EDocumentType.QUOTATION,
       );
-      await this.quotationRepository.markOldVersion(quotationNo, user, session);
+      await this.quotationRepository.markOldVersion(
+        oldQuotation.id,
+        user,
+        session,
+      );
       const quotation = await this.quotationRepository.createQuotation(
         {
           quotationNo: newQuotationNo,
           workOrderId: oldQuotation.workOrder.id,
           version: oldQuotation.version + 1,
           isLatest: true,
-          partTotal: oldQuotation.partTotal,
-          laborTotal: oldQuotation.laborTotal,
-          serviceTotal: oldQuotation.serviceTotal,
-          grandTotal: oldQuotation.grandTotal,
-          includeVat: oldQuotation.includeVat,
-          taxPercent: oldQuotation.taxPercent,
-          discountAmount: oldQuotation.discountAmount,
-          vatAmount: oldQuotation.vatAmount,
-          validUntil: oldQuotation.validUntil,
-          customerRemark: oldQuotation.customerRemark,
-          internalRemark: oldQuotation.internalRemark,
-          items: oldQuotation.items,
+          partTotal: quotationData.partTotal,
+          laborTotal: quotationData.laborTotal,
+          serviceTotal: quotationData.serviceTotal,
+          grandTotal: quotationData.grandTotal,
+          includeVat: quotationData.includeVat,
+          taxPercent: quotationData.taxPercent,
+          discountAmount: quotationData.quotationDiscount,
+          vatAmount: quotationData.vatAmount,
+          validUntil: revisionPayload.validUntil,
+          customerRemark: revisionPayload.customerRemark,
+          internalRemark: revisionPayload.internalRemark,
+          items: quotationData.items,
+          status: EQuotationStatus.PENDING_APPROVAL,
         },
+        user,
+        session,
+      );
+
+      if (!quotation) {
+        throw new BusinessException('5001', 'Failed to create quotation revision');
+      }
+
+      await this.workOrderService.updateCurrentQuotation(
+        oldQuotation.workOrder.id,
+        quotation._id.toString(),
         user,
         session,
       );
@@ -407,19 +499,19 @@ export class QuotationService {
     return await this.quotationRepository.expireQuotation();
   }
 
-  async rejectQuotation(quotationId: string, reason: string, user: AuthUser) {
+  async rejectQuotation(quotationNo: string, reason: string, user: AuthUser) {
     const session = await this.connection.startSession();
 
     try {
       session.startTransaction();
-      const quotation = await this.getQuotationById(quotationId);
+      const quotation = await this.getQuotationByNo(quotationNo);
 
       if (quotation.status !== EQuotationStatus.PENDING_APPROVAL) {
         throw new BusinessException('4001', 'Quotation cannot be rejected');
       }
 
       const result = await this.quotationRepository.rejectQuotation(
-        quotationId,
+        quotation.id,
         reason,
         user,
         session,

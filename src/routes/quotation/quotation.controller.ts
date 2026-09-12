@@ -26,6 +26,7 @@ import { QuotationService } from './services/quotation.service';
 import {
   ApproveQuotationDto,
   CreateQuotationDto,
+  CreateQuotationRevisionDto,
   getQuotationWithPaginationDto,
   RejectQuotationDto,
   UpdateQuotationDto,
@@ -96,12 +97,16 @@ export class QuotationController {
   @UseInterceptors(ResponseInterceptor)
   @ResponseResultCode('2000')
   @ResponseMessage('Create quotation revision successful')
-  async createRevision(@Param('quotationNo') quotationNo: string, @Req() { authUser }: Request) {
+  async createRevision(
+    @Param('quotationNo') quotationNo: string,
+    @Body() dto: CreateQuotationRevisionDto,
+    @Req() { authUser }: Request,
+  ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return this.quotationService.createRevision(quotationNo, authUser);
+    return this.quotationService.createRevision(quotationNo, dto, authUser);
   }
 
   @Patch('expire')

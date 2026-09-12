@@ -94,6 +94,14 @@ export class CreateQuotationDto {
 //  update data for quotation
 export class UpdateQuotationDto extends CreateQuotationDto {}
 
+export class CreateQuotationRevisionDto extends PartialType(CreateQuotationDto) {
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateQuotationItemDto)
+  additionalItems?: CreateQuotationItemDto[];
+}
+
 export class getQuotationWithPaginationDto extends PaginationQuery {
   @IsString({ message: 'sort must be a string' })
   @IsOptional()

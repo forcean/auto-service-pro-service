@@ -34,6 +34,7 @@ export class QuotationRepository {
       [
         {
           ...payload,
+          status: payload.status,
           workOrderId: new Types.ObjectId(payload.workOrderId),
           items: payload.items.map((item) => ({
             ...item,
