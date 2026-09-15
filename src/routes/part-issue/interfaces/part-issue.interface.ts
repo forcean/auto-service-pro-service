@@ -20,6 +20,8 @@ export interface ICreatePartIssueRequest {
   issueNo: string;
   workOrderNo: string;
   taskNo: string;
+  quotationId: string;
+  quotationNo: string;
   items: IPartIssueItemRequest[];
   requestedBy?: string;
   requestedByName?: string;

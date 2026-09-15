@@ -97,6 +97,9 @@ export class CreatePartIssueDto {
   })
   taskNo!: string;
 
+  @IsMongoId()
+  quotationId!: string;
+
   @IsArray()
   @IsNotEmpty()
   @ValidateNested({ each: true })

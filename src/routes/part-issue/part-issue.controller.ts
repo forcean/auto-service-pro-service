@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 
 import { AuthUser } from 'src/types/user.type';
 import {
@@ -40,25 +29,6 @@ export class PartIssueController {
   constructor(private readonly partIssueService: PartIssueService) {}
 
   /**
-   * รายการเอกสารเบิกอะไหล่
-   */
-  @Get()
-  @Permissions('view:issue')
-  @ResponseResultCode('2000')
-  @ResponseMessage('Get part issues successful')
-  async getIssues(
-    @Query() query: GetPartIssueWithPaginationDto,
-    @Query('sort', ParseSortPipe) sortBy: SortCriterial,
-    @Req() { authUser }: Request,
-  ) {
-    if (!authUser) {
-      throw new BusinessException('4013', 'No auth user found');
-    }
-
-    return this.partIssueService.getIssuesWithPagination(query, sortBy);
-  }
-
-  /**
    * ============================================================
    * CREATE
    * ============================================================
@@ -81,6 +51,31 @@ export class PartIssueController {
       throw new BusinessException('4013', 'No auth user found');
     }
     return this.partIssueService.createIssue(dto, authUser);
+  }
+
+  @Get()
+  @Permissions('view:issue')
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get part issue list successful')
+  async getIssues(
+    @Query() query: GetPartIssueWithPaginationDto,
+    @Query('sort', ParseSortPipe) sortBy: SortCriterial,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) throw new BusinessException('4013', 'No auth user found');
+    return this.partIssueService.getIssuesWithPagination(query, sortBy);
+  }
+
+  @Get('quotation/:quotationId/availability')
+  @Permissions('view:issue')
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get quotation part availability successful')
+  async getQuotationPartAvailability(
+    @Param('quotationId') quotationId: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) throw new BusinessException('4013', 'No auth user found');
+    return this.partIssueService.getQuotationPartAvailability(quotationId);
   }
 
   /**
@@ -116,7 +111,7 @@ export class PartIssueController {
    * ใช้กรณีที่ต้องการจองอะไหล่ไว้ก่อนที่จะทำการจ่ายจริง เพื่อให้แน่ใจว่าอะไหล่ยังอยุ่ใน stock
    */
   @Post(':issueNo/reserve')
-  // @Permissions('update:issue')
+  @Permissions('issue:issue')
   @ResponseResultCode('2000')
   @ResponseMessage('Reserve issue successful')
   async reserve(

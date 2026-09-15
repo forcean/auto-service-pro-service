@@ -13,16 +13,21 @@ import { StockManagementService } from 'src/routes/stock-management/stock-manage
 import { EDocumentType } from 'src/common/enums/document-type.enum';
 import { EStockReferenceType } from 'src/routes/stock-management/enums/stock.enum';
 
-import { EPartIssueStatus } from '../enums/part-issue.enum';
+import { EPartIssueReason, EPartIssueStatus } from '../enums/part-issue.enum';
 
 import { PartIssueRepository } from 'src/repository/part-issue/part-issue.repository';
+import { QuotationRepository } from 'src/repository/quotation/quotation.repository';
+import { EQuotationItemType, EQuotationStatus } from 'src/routes/quotation/enums/quotation.enum';
 
 import {
   CreatePartIssueDto,
   GetPartIssueWithPaginationDto,
   IssuePartIssueDto,
   CancelPartIssueDto,
+  GetPartIssueWithPaginationDto,
 } from '../dtos/part-issue.dto';
+import { getPagination } from 'src/common/utils/pagination.util';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 import {
   IIssuePartIssueItemRequest,
@@ -38,6 +43,9 @@ export class PartIssueService {
 
     @Inject(PartIssueRepository)
     private readonly partIssueRepository: PartIssueRepository,
+
+    @Inject(QuotationRepository)
+    private readonly quotationRepository: QuotationRepository,
 
     @Inject(StockManagementService)
     private readonly stockManagementService: StockManagementService,
@@ -80,7 +88,7 @@ export class PartIssueService {
    * ยังไม่ตัด Stock
    */
   async createIssue(payload: CreatePartIssueDto, user: AuthUser) {
-    await this.validateCreateIssue(payload);
+    const quotation = await this.validateCreateIssue(payload);
     const issueNo = await this.documentNoService.generate(
       EDocumentType.PART_ISSUE,
     );
@@ -89,6 +97,8 @@ export class PartIssueService {
         issueNo,
         workOrderNo: payload.workOrderNo,
         taskNo: payload.taskNo,
+        quotationId: payload.quotationId,
+        quotationNo: quotation.quotationNo,
         items: payload.items.map((item) => ({
           productId: item.productId,
           sku: item.sku,
@@ -358,6 +368,69 @@ export class PartIssueService {
     return issue;
   }
 
+  async getIssuesWithPagination(
+    query: GetPartIssueWithPaginationDto,
+    sortBy: SortCriterial,
+  ) {
+    const { page, limit, skip } = getPagination(query);
+    return this.partIssueRepository.findAllWithPaginated(
+      { page, limit, skip },
+      query,
+      sortBy,
+    );
+  }
+
+  async getQuotationPartAvailability(quotationId: string) {
+    const quotation = await this.quotationRepository.getQuotationById(quotationId);
+    if (!quotation) throw new BusinessException('4042', 'Quotation not found');
+    if (quotation.status !== EQuotationStatus.APPROVED) {
+      throw new BusinessException('4006', 'Quotation must be approved before requesting parts');
+    }
+
+    const issues = await this.partIssueRepository.getPartIssueByQuotationId(quotationId);
+    const usage = new Map<string, { requestedQty: number; reservedQty: number; issuedQty: number }>();
+    for (const issue of issues.filter((item) => item.status !== EPartIssueStatus.CANCELLED)) {
+      for (const item of issue.items) {
+        // A complimentary additional part is deliberately outside the quoted
+        // quantity.  It must not reduce the remaining quantity of a quoted
+        // item that happens to be the same product.
+        if (
+          item.reason === EPartIssueReason.ADDITIONAL &&
+          !item.isAdditionalCharge
+        ) {
+          continue;
+        }
+
+        const productId = item.productId.toString();
+        const totals = usage.get(productId) ?? { requestedQty: 0, reservedQty: 0, issuedQty: 0 };
+        totals.requestedQty += item.requestedQty;
+        totals.reservedQty += item.reservedQty;
+        totals.issuedQty += item.issuedQty;
+        usage.set(productId, totals);
+      }
+    }
+
+    const items = (quotation.items as any[])
+      .filter((item) => item.itemType === EQuotationItemType.PART && item.productId)
+      .map((item) => {
+        const productId = item.productId.toString();
+        const totals = usage.get(productId) ?? { requestedQty: 0, reservedQty: 0, issuedQty: 0 };
+        return {
+          productId,
+          sku: item.sku,
+          productName: item.description,
+          quotationQty: item.quantity,
+          requestedQty: totals.requestedQty,
+          reservedQty: totals.reservedQty,
+          issuedQty: totals.issuedQty,
+          availableQty: Math.max(0, item.quantity - totals.requestedQty),
+          unitPrice: item.unitPrice,
+        };
+      });
+
+    return { quotationId, quotationNo: quotation.quotationNo, items };
+  }
+
   // ============================================================
   // CANCEL
   // ============================================================
@@ -474,6 +547,36 @@ export class PartIssueService {
       throw new BusinessException('4040', 'Work Order not found');
     }
 
+    const quotation = await this.quotationRepository.getQuotationById(payload.quotationId);
+    if (!quotation) throw new BusinessException('4042', 'Quotation not found');
+    const quotationWorkOrder = quotation.workOrderId as any;
+    if ((quotationWorkOrder?._id ?? quotationWorkOrder).toString() !== workOrder._id.toString()) {
+      throw new BusinessException('4007', 'Quotation does not belong to Work Order');
+    }
+
+    const availability = await this.getQuotationPartAvailability(payload.quotationId);
+    const availableByProduct = new Map(availability.items.map((item) => [item.productId, item]));
+    for (const item of payload.items) {
+      const isComplimentaryAdditional =
+        item.reason === EPartIssueReason.ADDITIONAL &&
+        !item.isAdditionalCharge;
+
+      // Complimentary additional parts are approved internally and are still
+      // traceable to an approved quotation/work order, but are not a billed
+      // quotation line.  Charged additions must be put in a new approved
+      // quotation first, so they continue through the normal availability
+      // validation below.
+      if (isComplimentaryAdditional) {
+        continue;
+      }
+
+      const available = availableByProduct.get(item.productId);
+      if (!available) throw new BusinessException('4008', `Product ${item.sku} is not in quotation`);
+      if (item.requestedQty > available.availableQty) {
+        throw new BusinessException('4009', `Requested quantity exceeds quotation remaining quantity for ${item.sku}`);
+      }
+    }
+
     /**
      * Task
      */
@@ -513,6 +616,8 @@ export class PartIssueService {
         'Duplicate product is not allowed in part issue',
       );
     }
+
+    return quotation;
   }
 
   private validateCanReserve(status: EPartIssueStatus) {

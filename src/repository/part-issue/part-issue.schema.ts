@@ -4,6 +4,7 @@ import { HydratedDocument, Types } from 'mongoose';
 import { WorkOrderEntity } from '../work-order/work-order.schema';
 import { UsersEntity } from '../users/users.schema';
 import { ProductsEntity } from '../products/products.schema';
+import { QuotationEntity } from '../quotation/quotation.schema';
 import {
   EPartIssueReason,
   EPartIssueStatus,
@@ -64,7 +65,17 @@ export class PartIssueItem {
   })
   issuedQty!: number;
 
-  // ...
+  @Prop({ enum: EPartIssueReason, required: true })
+  reason!: EPartIssueReason;
+
+  @Prop({ required: true, default: false })
+  isAdditionalCharge!: boolean;
+
+  @Prop({ required: true, min: 0 })
+  unitPrice!: number;
+
+  @Prop()
+  remark?: string;
 }
 
 export const PartIssueItemSchema = SchemaFactory.createForClass(PartIssueItem);
@@ -94,6 +105,12 @@ export class PartIssueEntity {
     index: true,
   })
   taskNo!: string;
+
+  @Prop({ type: Types.ObjectId, ref: QuotationEntity.name, required: true, index: true })
+  quotationId!: Types.ObjectId;
+
+  @Prop({ required: true, index: true })
+  quotationNo!: string;
 
   @Prop({
     type: [PartIssueItemSchema],
