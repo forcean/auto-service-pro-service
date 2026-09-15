@@ -218,4 +218,16 @@ export class StockManagementController {
 
     return this.stockManagementService.getMovementList(dto, pagination);
   }
+
+  @Get('stock-movements/summary')
+  // @Permissions('view:stock-detail')
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get stock movement summary successful')
+  async getStocksMovementSummary(@Req() { authUser }: Request) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.stockManagementService.getMovementSummary();
+  }
 }

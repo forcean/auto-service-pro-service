@@ -66,6 +66,10 @@ export class StockManagementService {
     return this.movementRepository.getListMovements(dto, paging);
   }
 
+  async getMovementSummary() {
+    return this.movementRepository.getMovementSummary();
+  }
+
   async createStock(
     payload: CreateStockDto,
     user: AuthUser,
