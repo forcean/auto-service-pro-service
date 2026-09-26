@@ -24,6 +24,7 @@ import { BillingService } from './billing.service';
 import {
   CreatePaymentDto,
   CreateRefundDto,
+  CreateWorkOrderPaymentDto,
   InvoiceListQueryDto,
   VoidInvoiceDto,
 } from './dtos/billing.dto';
@@ -71,6 +72,33 @@ export class BillingController {
   @ResponseResultCode('2000')
   readyWorkOrders() {
     return this.billingService.getReadyToInvoiceWorkOrders();
+  }
+
+  @Get('work-orders/:workOrderNo/prepayments')
+  @Permissions('view:invoices')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  getWorkOrderPayments(@Param('workOrderNo') workOrderNo: string) {
+    return this.billingService.getWorkOrderPayments(workOrderNo);
+  }
+
+  @Post('work-orders/:workOrderNo/prepayments')
+  @Permissions('create:payment')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Record work order payment successful')
+  recordWorkOrderPayment(
+    @Param('workOrderNo') workOrderNo: string,
+    @Body() dto: CreateWorkOrderPaymentDto,
+    @Req() req: Request,
+  ) {
+    if (!req.authUser)
+      throw new BusinessException('4013', 'No auth user found');
+    return this.billingService.recordWorkOrderPayment(
+      workOrderNo,
+      dto,
+      req.authUser,
+    );
   }
 
   @Get(':id')

@@ -32,7 +32,7 @@ export class InvoiceRepository {
     session?: ClientSession,
   ) {
     const [invoice] = await this.model.create(
-      [{ ...payload, createdBy: new Types.ObjectId(user.publicId) }],
+      [{ ...payload, createdBy: user.publicId }],
       { session },
     );
     return invoice;
@@ -74,19 +74,19 @@ export class InvoiceRepository {
           $push: {
             payments: {
               ...payment,
-              receivedBy: new Types.ObjectId(user.publicId),
+              receivedBy: user.publicId,
             },
             auditEvents: {
               action: 'PAYMENT_RECEIVED',
               referenceNo: payment.paymentNo,
               note: payment.note,
-              performedBy: new Types.ObjectId(user.publicId),
+              performedBy: user.publicId,
             },
           },
           $set: {
             paidAmount,
             status,
-            updatedBy: new Types.ObjectId(user.publicId),
+            updatedBy: user.publicId,
           },
         },
         { new: true, session },
@@ -180,12 +180,12 @@ export class InvoiceRepository {
             auditEvents: {
               action: 'VOIDED',
               note: reason,
-              performedBy: new Types.ObjectId(user.publicId),
+              performedBy: user.publicId,
             },
           },
           $set: {
             status: EInvoiceStatus.VOID,
-            updatedBy: new Types.ObjectId(user.publicId),
+            updatedBy: user.publicId,
           },
         },
         { new: true },
@@ -214,19 +214,19 @@ export class InvoiceRepository {
           $push: {
             refunds: {
               ...refund,
-              refundedBy: new Types.ObjectId(user.publicId),
+              refundedBy: user.publicId,
             },
             auditEvents: {
               action: 'REFUNDED',
               referenceNo: refund.refundNo,
               note: refund.reason,
-              performedBy: new Types.ObjectId(user.publicId),
+              performedBy: user.publicId,
             },
           },
           $set: {
             refundedAmount,
             status,
-            updatedBy: new Types.ObjectId(user.publicId),
+            updatedBy: user.publicId,
           },
         },
         { new: true, session },

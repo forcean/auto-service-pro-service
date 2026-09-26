@@ -80,6 +80,11 @@ import {
   ServiceHistorySchema,
 } from './service-history/service-history.schema';
 import { ServiceHistoryRepository } from './service-history/service-history.repository';
+import {
+  WorkOrderPaymentEntity,
+  WorkOrderPaymentSchema,
+} from './work-order-payment/work-order-payment.schema';
+import { WorkOrderPaymentRepository } from './work-order-payment/work-order-payment.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -127,6 +132,7 @@ import { ServiceHistoryRepository } from './service-history/service-history.repo
         { name: PartIssueEntity.name, schema: PartIssueSchema },
         { name: InvoiceEntity.name, schema: InvoiceSchema },
         { name: ServiceHistoryEntity.name, schema: ServiceHistorySchema },
+        { name: WorkOrderPaymentEntity.name, schema: WorkOrderPaymentSchema },
       ],
       'autoservice',
     ),
@@ -154,6 +160,7 @@ import { ServiceHistoryRepository } from './service-history/service-history.repo
     PartIssueRepository,
     InvoiceRepository,
     ServiceHistoryRepository,
+    WorkOrderPaymentRepository,
   ],
   exports: [
     UsersRepository,
@@ -178,6 +185,7 @@ import { ServiceHistoryRepository } from './service-history/service-history.repo
     PartIssueRepository,
     InvoiceRepository,
     ServiceHistoryRepository,
+    WorkOrderPaymentRepository,
   ],
 })
 export class RepositoryModule {}
