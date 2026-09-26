@@ -220,7 +220,7 @@ export class QuotationService {
       productId: p.id.toString(),
       sku: p.sku,
       description: p.name,
-      unitPrice: Number(p.prices?.retail ?? 0),
+      unitPrice: Number(p.price?.retail ?? 0),
     };
   }
 

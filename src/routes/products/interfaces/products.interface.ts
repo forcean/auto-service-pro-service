@@ -59,7 +59,7 @@ export interface IProduct {
   categoryPath: string[];
   brandId: string;
   vehicles?: IVehicle[];
-  prices?: IPrice;
+  price?: IPrice;
   spec?: ISpec;
   media?: IMedia[];
   status: EProductStatus;
