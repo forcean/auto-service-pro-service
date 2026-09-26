@@ -106,7 +106,13 @@ export class TaskController {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return this.taskService.updateStatus(taskNo, dto.status, authUser);
+    return this.taskService.updateStatus(
+      taskNo,
+      dto.status,
+      authUser,
+      dto.blockedReason,
+      dto.remark,
+    );
   }
 
   @Post('/:taskNo/additional-problem')

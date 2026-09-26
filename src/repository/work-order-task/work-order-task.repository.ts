@@ -77,7 +77,7 @@ export class WorkOrderTaskRepository {
         workOrderNo,
         isDeleted: false,
       })
-      .select('status progress estimateMinute')
+      .select('status progress estimateMinute taskType isRequired parentTaskNo')
       .lean();
   }
 

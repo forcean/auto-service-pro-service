@@ -2,8 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import {
   EAdditionalProblemStatus,
+  ETaskBlockedReason,
   ETaskPriority,
   ETaskStatus,
+  ETaskType,
 } from 'src/routes/task/enums/task.enum';
 import { WorkOrderEntity } from '../work-order/work-order.schema';
 import { UsersEntity } from '../users/users.schema';
@@ -102,6 +104,30 @@ export class WorkOrderTaskEntity {
     index: true,
   })
   status!: ETaskStatus;
+
+  @Prop({
+    enum: ETaskType,
+    default: ETaskType.EXECUTION,
+    index: true,
+  })
+  taskType!: ETaskType;
+
+  /** Parent GROUP task number, used to group parallel execution tasks. */
+  @Prop({ index: true })
+  parentTaskNo?: string;
+
+  /** Optional execution tasks are visible on the board but do not block QC. */
+  @Prop({ default: true })
+  isRequired!: boolean;
+
+  @Prop({ enum: ETaskBlockedReason })
+  blockedReason?: ETaskBlockedReason;
+
+  @Prop({ type: [String], default: [] })
+  dependsOn!: string[];
+
+  @Prop({ default: 0, index: true })
+  sortOrder!: number;
 
   @Prop({
     default: 0,

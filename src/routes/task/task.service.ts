@@ -15,7 +15,11 @@ import { WorkOrderTaskRepository } from 'src/repository/work-order-task/work-ord
 import { QuotationRepository } from 'src/repository/quotation/quotation.repository';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import { getPagination } from 'src/common/utils/pagination.util';
-import { ETaskStatus } from './enums/task.enum';
+import {
+  ETaskBlockedReason,
+  ETaskStatus,
+  ETaskType,
+} from './enums/task.enum';
 import { EAdditionalProblemStatus } from './enums/task.enum';
 import { EQuotationStatus } from '../quotation/enums/quotation.enum';
 import { EWorkOrderStatus } from '../work-order/enums/work-order.enum';
@@ -53,6 +57,10 @@ export class TaskService {
         isRework = payload.isRework;
       }
 
+      const taskType = payload.taskType ?? (isRework ? ETaskType.REWORK : ETaskType.EXECUTION);
+      await this.validateParentTask(payload.workOrderNo, payload.parentTaskNo);
+      await this.validateDependencies(payload.workOrderNo, payload.dependsOn);
+
       const task = await this.taskRepository.createTask(
         {
           workOrderNo: workOrder.workOrderNo,
@@ -61,6 +69,11 @@ export class TaskService {
           description: payload.description,
           priority: payload.priority,
           status: payload.status ?? ETaskStatus.WAITING,
+          taskType,
+          parentTaskNo: payload.parentTaskNo,
+          isRequired: payload.isRequired ?? true,
+          dependsOn: payload.dependsOn ?? [],
+          sortOrder: payload.sortOrder ?? 0,
           estimateMinute: payload.estimateMinute,
           actualMinute: payload.actualMinute,
           plannedStartDate: payload.plannedStartDate
@@ -85,11 +98,13 @@ export class TaskService {
         throw new BusinessException('5001', 'Failed to create task');
       }
 
-      await this.workOrderService.updateStatus(
-        payload.workOrderNo,
-        EWorkOrderStatus.IN_PROGRESS,
-        user,
-      );
+      if (taskType !== ETaskType.GROUP) {
+        await this.workOrderService.updateStatus(
+          payload.workOrderNo,
+          EWorkOrderStatus.IN_PROGRESS,
+          user,
+        );
+      }
       return task;
     } catch (error) {
       throw error;
@@ -111,6 +126,9 @@ export class TaskService {
       if (task.status === ETaskStatus.CANCELLED) {
         throw new BusinessException('4001', 'Cancelled task cannot update');
       }
+
+      await this.validateParentTask(task.workOrderNo, payload.parentTaskNo, taskNo);
+      await this.validateDependencies(task.workOrderNo, payload.dependsOn, taskNo);
 
       const result = await this.taskRepository.updateTask(
         taskNo,
@@ -199,9 +217,19 @@ export class TaskService {
     }
   }
 
-  async updateStatus(taskNo: string, status: ETaskStatus, user: AuthUser) {
+  async updateStatus(
+    taskNo: string,
+    status: ETaskStatus,
+    user: AuthUser,
+    blockedReason?: ETaskBlockedReason,
+    remark?: string,
+  ) {
     try {
       const task = await this.getTaskByNo(taskNo);
+
+      if (task.taskType === ETaskType.GROUP) {
+        throw new BusinessException('4004', 'Group task status is calculated from its child tasks');
+      }
 
       this.validateStatus(task.status, status);
 
@@ -214,6 +242,8 @@ export class TaskService {
         taskNo,
         {
           status,
+          blockedReason: status === ETaskStatus.PAUSED ? blockedReason : undefined,
+          remark: remark ?? task.remark,
           ...metaData,
         },
         user,
@@ -446,15 +476,13 @@ export class TaskService {
     if (!tasks.length) {
       return;
     }
-    const activeTasks = tasks.filter(
-      (task) => task.status !== ETaskStatus.CANCELLED,
+    const requiredExecutionTasks = tasks.filter(
+      (task) => task.taskType !== ETaskType.GROUP && task.isRequired !== false,
     );
 
-    if (!activeTasks.length) {
-      return;
-    }
+    if (!requiredExecutionTasks.length) return;
 
-    const allFinished = activeTasks.every(
+    const allFinished = requiredExecutionTasks.every(
       (task) => task.status === ETaskStatus.FINISHED,
     );
 
@@ -493,6 +521,42 @@ export class TaskService {
 
       default:
         return {};
+    }
+  }
+
+  private async validateParentTask(
+    workOrderNo: string,
+    parentTaskNo?: string | null,
+    currentTaskNo?: string,
+  ) {
+    if (!parentTaskNo) return;
+    if (parentTaskNo === currentTaskNo) {
+      throw new BusinessException('4001', 'Task cannot be its own parent');
+    }
+
+    const parent = await this.getTaskByNo(parentTaskNo);
+    if (parent.workOrderNo !== workOrderNo || parent.taskType !== ETaskType.GROUP) {
+      throw new BusinessException('4001', 'Parent task must be a group in the same Work Order');
+    }
+  }
+
+  private async validateDependencies(
+    workOrderNo: string,
+    dependsOn?: string[],
+    currentTaskNo?: string,
+  ) {
+    if (!dependsOn?.length) return;
+
+    const uniqueTaskNos = [...new Set(dependsOn)];
+    for (const dependencyTaskNo of uniqueTaskNos) {
+      if (dependencyTaskNo === currentTaskNo) {
+        throw new BusinessException('4001', 'Task cannot depend on itself');
+      }
+
+      const dependency = await this.getTaskByNo(dependencyTaskNo);
+      if (dependency.workOrderNo !== workOrderNo) {
+        throw new BusinessException('4001', 'Task dependencies must belong to the same Work Order');
+      }
     }
   }
 }
