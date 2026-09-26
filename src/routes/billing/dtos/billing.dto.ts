@@ -9,7 +9,11 @@ import {
   Min,
 } from 'class-validator';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
-import { EInvoiceStatus, EPaymentMethod } from '../enums/billing.enum';
+import {
+  EInvoiceStatus,
+  EPaymentMethod,
+  EWorkOrderPaymentType,
+} from '../enums/billing.enum';
 
 export class CreateInvoiceDto {
   @IsMongoId() 
@@ -32,6 +36,11 @@ export class CreatePaymentDto {
   @IsOptional()
   @IsString()
   note?: string;
+}
+
+export class CreateWorkOrderPaymentDto extends CreatePaymentDto {
+  @IsEnum(EWorkOrderPaymentType)
+  type!: EWorkOrderPaymentType;
 }
 
 export class CreateRefundDto {

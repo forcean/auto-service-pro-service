@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { UsersEntity } from '../users/users.schema';
 import { WorkOrderEntity } from '../work-order/work-order.schema';
 import { QuotationEntity } from '../quotation/quotation.schema';
 import {
@@ -57,8 +56,8 @@ export class PaymentRecord {
   @Prop()
   note?: string;
 
-  @Prop({ type: Types.ObjectId, ref: UsersEntity.name, required: true })
-  receivedBy!: Types.ObjectId;
+  @Prop({ required: true })
+  receivedBy!: string;
 
   @Prop({ default: Date.now })
   paidAt!: Date;
@@ -75,8 +74,8 @@ export class RefundRecord {
   @Prop({ required: true })
   reason!: string;
 
-  @Prop({ type: Types.ObjectId, ref: UsersEntity.name, required: true })
-  refundedBy!: Types.ObjectId;
+  @Prop({ required: true })
+  refundedBy!: string;
 
   @Prop({ default: Date.now })
   refundedAt!: Date;
@@ -118,7 +117,7 @@ export class VehicleSnapshot {
 @Schema({ _id: false })
 export class InvoiceAuditEvent {
   @Prop({ required: true })
-  action!: 'ISSUED' | 'PAYMENT_RECEIVED' | 'VOIDED' | 'REFUNDED';
+  action!: 'ISSUED' | 'PREPAYMENT_APPLIED' | 'PAYMENT_RECEIVED' | 'VOIDED' | 'REFUNDED';
 
   @Prop()
   referenceNo?: string;
@@ -126,11 +125,23 @@ export class InvoiceAuditEvent {
   @Prop()
   note?: string;
 
-  @Prop({ type: Types.ObjectId, ref: UsersEntity.name })
-  performedBy?: Types.ObjectId;
+  @Prop()
+  performedBy?: string;
 
   @Prop({ default: Date.now })
   occurredAt!: Date;
+}
+
+@Schema({ _id: false })
+export class AppliedPrepayment {
+  @Prop({ required: true })
+  paymentNo!: string;
+
+  @Prop({ enum: ['DEPOSIT', 'PROGRESS'], required: true })
+  type!: 'DEPOSIT' | 'PROGRESS';
+
+  @Prop({ required: true, min: 0.01 })
+  amount!: number;
 }
 
 @Schema({ timestamps: true, collection: 'invoices' })
@@ -188,6 +199,12 @@ export class InvoiceEntity {
   @Prop({ default: 0 })
   paidAmount!: number;
 
+  @Prop({ default: 0 })
+  prepaymentAppliedAmount!: number;
+
+  @Prop({ type: [AppliedPrepayment], default: [] })
+  appliedPrepayments!: AppliedPrepayment[];
+
   @Prop({ type: [PaymentRecord], default: [] }) payments!: PaymentRecord[];
 
   @Prop({ type: [RefundRecord], default: [] }) refunds!: RefundRecord[];
@@ -198,11 +215,11 @@ export class InvoiceEntity {
   @Prop({ type: [InvoiceAuditEvent], default: [] })
   auditEvents!: InvoiceAuditEvent[];
 
-  @Prop({ type: Types.ObjectId, ref: UsersEntity.name, required: true })
-  createdBy!: Types.ObjectId;
+  @Prop({ required: true })
+  createdBy!: string;
 
-  @Prop({ type: Types.ObjectId, ref: UsersEntity.name })
-  updatedBy?: Types.ObjectId;
+  @Prop()
+  updatedBy?: string;
 
   @Prop({ default: false, index: true })
   isDeleted!: boolean;

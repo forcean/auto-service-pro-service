@@ -20,3 +20,8 @@ export enum EPaymentMethod {
   QR = 'QR',
   OTHER = 'OTHER',
 }
+
+export enum EWorkOrderPaymentType {
+  DEPOSIT = 'DEPOSIT',
+  PROGRESS = 'PROGRESS',
+}
