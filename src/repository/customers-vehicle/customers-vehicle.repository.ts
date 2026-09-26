@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CustomersVehicleEntity } from './customers-vehicle.schema';
-import { FilterQuery, Model } from 'mongoose';
+import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 import {
   customerVehicleDto,
   getVehiclesWithPaginationDto,
@@ -55,6 +55,25 @@ export class CustomersVehicleRepository {
         },
       },
       { new: true },
+    );
+  }
+
+  async updateStatusById(
+    vehicleId: string,
+    status: string,
+    publicId: string,
+    session?: ClientSession,
+  ): Promise<ICustomerVehicleRecord | null> {
+    return this.CustomersVehicleEntity.findByIdAndUpdate(
+      new Types.ObjectId(vehicleId),
+      {
+        $set: {
+          status,
+          updatedBy: publicId,
+          updatedDt: new Date(),
+        },
+      },
+      { new: true, session },
     );
   }
 
