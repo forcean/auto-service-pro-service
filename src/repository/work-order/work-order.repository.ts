@@ -12,12 +12,15 @@ import {
 } from 'src/routes/work-order/dtos/work-order.dto';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import { IWorkOrderRecord } from 'src/routes/work-order/interfaces/work-order-record.interface';
+import { CustomersVehicleEntity } from '../customers-vehicle/customers-vehicle.schema';
 
 @Injectable()
 export class WorkOrderRepository {
   constructor(
     @InjectModel(WorkOrderEntity.name, 'autoservice')
     private readonly model: Model<WorkOrderDocument>,
+    @InjectModel(CustomersVehicleEntity.name, 'autoservice')
+    private readonly customersVehicleModel: Model<any>,
   ) {}
 
   async createWorkOrder(
@@ -176,27 +179,36 @@ export class WorkOrderRepository {
   ) {
     const { page, limit, skip } = pagination;
 
-    const filter: FilterQuery<WorkOrderEntity> = {};
+    const filter: FilterQuery<WorkOrderEntity> = {
+      isDeleted: false,
+    };
 
-    // if (query.licensePlate) {
-    //   filter.licensePlate = query.licensePlate;
-    // }
+    if (query.status) {
+      filter.status = query.status;
+    }
 
-    // if (query.province) {
-    //   filter.province = query.province.toUpperCase();
-    // }
+    if (query.search?.trim()) {
+      const search = query.search.trim();
+      const searchRegex = new RegExp(search, 'i');
+      const matchingVehicles = await this.customersVehicleModel
+        .find({
+          $or: [
+            { licensePlate: searchRegex },
+            { province: searchRegex },
+            { firstname: searchRegex },
+            { lastname: searchRegex },
+            { billingName: searchRegex },
+            { phoneNumber: searchRegex },
+          ],
+        })
+        .select('_id')
+        .lean();
 
-    // if (query.status) {
-    //   filter.status = query.status.toUpperCase();
-    // }
-
-    // if (query.model) {
-    //   filter.model = query.model;
-    // }
-
-    // if (query.brand) {
-    //   filter.brand = query.brand;
-    // }
+      filter.$or = [
+        { workOrderNo: searchRegex },
+        { vehicleId: { $in: matchingVehicles.map((vehicle) => vehicle._id) } },
+      ];
+    }
 
     const [data, total] = await Promise.all([
       this.model

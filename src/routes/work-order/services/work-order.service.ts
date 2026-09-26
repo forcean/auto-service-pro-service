@@ -16,6 +16,8 @@ import { getPagination } from 'src/common/utils/pagination.util';
 import { WorkOrderTaskRepository } from 'src/repository/work-order-task/work-order-task.repository';
 import { InvoiceRepository } from 'src/repository/invoice/invoice.repository';
 import { calculateWorkOrderProgress } from '../utils/work-order-progress.util';
+import { CustomersVehicleRepository } from 'src/repository/customers-vehicle/customers-vehicle.repository';
+import { EVehicleStatus } from 'src/routes/vehicles-management/enums/customers-vehicle.enum';
 
 @Injectable()
 export class WorkOrderService {
@@ -28,6 +30,8 @@ export class WorkOrderService {
     private readonly taskRepository: WorkOrderTaskRepository,
     @Inject(InvoiceRepository)
     private readonly invoiceRepository: InvoiceRepository,
+    @Inject(CustomersVehicleRepository)
+    private readonly customersVehicleRepository: CustomersVehicleRepository,
   ) {}
 
   // insert new work order
@@ -51,6 +55,13 @@ export class WorkOrderService {
       if (!workOrder) {
         throw new BusinessException('5001', 'Failed to create work order');
       }
+
+      await this.syncVehicleStatus(
+        workOrder.vehicleId.toString(),
+        EWorkOrderStatus.OPEN,
+        user,
+        session,
+      );
 
       return workOrder;
     } catch (error) {
@@ -140,6 +151,12 @@ export class WorkOrderService {
           'Failed to update work order status',
         );
       }
+
+      await this.syncVehicleStatus(
+        this.getVehicleId(foundWorkOrder.vehicleId),
+        status,
+        user,
+      );
 
       return workOrder;
     } catch (error) {
@@ -329,6 +346,13 @@ export class WorkOrderService {
         );
       }
 
+      await this.syncVehicleStatus(
+        this.getVehicleId(workOrder.vehicleId),
+        EWorkOrderStatus.WAITING_APPROVAL,
+        user,
+        session,
+      );
+
       return workOrder;
     } catch (error) {
       throw error;
@@ -389,12 +413,25 @@ export class WorkOrderService {
         );
       }
 
-      return this.workOrderRepository.updateStatus(
+      const result = await this.workOrderRepository.updateStatus(
         workOrder._id.toString(),
         EWorkOrderStatus.COMPLETED,
         user,
         session,
       );
+
+      if (!result) {
+        throw new BusinessException('5003', 'Failed to close work order');
+      }
+
+      await this.syncVehicleStatus(
+        this.getVehicleId(workOrder.vehicleId),
+        EWorkOrderStatus.COMPLETED,
+        user,
+        session,
+      );
+
+      return result;
     } catch (error) {
       throw error;
     }
@@ -413,13 +450,85 @@ export class WorkOrderService {
         );
       }
 
-      return this.workOrderRepository.updateStatus(
+      const result = await this.workOrderRepository.updateStatus(
         workOrder._id.toString(),
         EWorkOrderStatus.CANCELLED,
         user,
       );
+
+      if (!result) {
+        throw new BusinessException('5003', 'Failed to cancel work order');
+      }
+
+      await this.syncVehicleStatus(
+        this.getVehicleId(workOrder.vehicleId),
+        EWorkOrderStatus.CANCELLED,
+        user,
+      );
+
+      return result;
     } catch (error) {
       throw error;
     }
+  }
+
+  private async syncVehicleStatus(
+    vehicleId: string,
+    workOrderStatus: EWorkOrderStatus,
+    user: AuthUser,
+    session?: ClientSession,
+  ): Promise<void> {
+    const vehicleStatus = this.getVehicleStatus(workOrderStatus);
+    const updatedVehicle = await this.customersVehicleRepository.updateStatusById(
+      vehicleId,
+      vehicleStatus,
+      user.publicId,
+      session,
+    );
+
+    if (!updatedVehicle) {
+      throw new BusinessException('5007', 'Failed to synchronize vehicle status');
+    }
+  }
+
+  private getVehicleStatus(workOrderStatus: EWorkOrderStatus): EVehicleStatus {
+    switch (workOrderStatus) {
+      case EWorkOrderStatus.OPEN:
+      case EWorkOrderStatus.INSPECTING:
+        return EVehicleStatus.INSPECTING;
+      case EWorkOrderStatus.WAITING_QUOTATION:
+      case EWorkOrderStatus.WAITING_APPROVAL:
+      case EWorkOrderStatus.WAITING_ADDITIONAL_APPROVAL:
+        return EVehicleStatus.WAITING_APPROVAL;
+      case EWorkOrderStatus.WAITING_ASSIGNMENT:
+      case EWorkOrderStatus.HOLD:
+        return EVehicleStatus.PENDING;
+      case EWorkOrderStatus.IN_PROGRESS:
+      case EWorkOrderStatus.REWORK:
+        return EVehicleStatus.REPAIRING;
+      case EWorkOrderStatus.WAITING_QC:
+        return EVehicleStatus.QUALITY_CHECK;
+      case EWorkOrderStatus.QC_APPROVED:
+      case EWorkOrderStatus.READY_DELIVERY:
+        return EVehicleStatus.READY_FOR_PICKUP;
+      case EWorkOrderStatus.COMPLETED:
+        return EVehicleStatus.COMPLETED;
+      case EWorkOrderStatus.CANCELLED:
+        return EVehicleStatus.CANCELLED;
+      default:
+        return EVehicleStatus.PENDING;
+    }
+  }
+
+  private getVehicleId(vehicle: unknown): string {
+    if (typeof vehicle === 'string') {
+      return vehicle;
+    }
+
+    if (vehicle && typeof vehicle === 'object' && '_id' in vehicle) {
+      return String((vehicle as { _id: unknown })._id);
+    }
+
+    return String(vehicle);
   }
 }
