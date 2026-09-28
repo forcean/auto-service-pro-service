@@ -241,31 +241,8 @@ export class InvoiceRepository {
   }
 
   async findPaymentsPaginated(pagination: PageInput, query: PaymentListQueryDto) {
-    const match: FilterQuery<InvoiceEntity> = { isDeleted: false };
-    const paymentMatch: Record<string, unknown> = {};
-    if (query.method) paymentMatch['payments.method'] = query.method;
-    if (query.paidFrom || query.paidTo) {
-      paymentMatch['payments.paidAt'] = {
-        ...(query.paidFrom ? { $gte: new Date(query.paidFrom) } : {}),
-        ...(query.paidTo
-          ? { $lte: new Date(`${query.paidTo}T23:59:59.999Z`) }
-          : {}),
-      };
-    }
-    if (query.keyword?.trim()) {
-      const keyword = new RegExp(this.escapeRegex(query.keyword.trim()), 'i');
-      paymentMatch.$or = [
-        { invoiceNo: keyword },
-        { workOrderNo: keyword },
-        { 'billingParty.name': keyword },
-        { 'payments.paymentNo': keyword },
-        { 'payments.reference': keyword },
-      ];
-    }
     const pipeline = [
-      { $match: match },
-      { $unwind: '$payments' },
-      ...(Object.keys(paymentMatch).length ? [{ $match: paymentMatch }] : []),
+      ...this.buildPaymentPipeline(query),
       { $sort: { 'payments.paidAt': -1 as const } },
       {
         $project: {
@@ -301,6 +278,148 @@ export class InvoiceRepository {
       totalPages: Math.ceil(total / pagination.limit),
       data,
     };
+  }
+
+  async getPaymentsSummary(query: PaymentListQueryDto) {
+    const pipeline = this.buildPaymentPipeline(query);
+    const interval = query.chartInterval ?? 'day';
+    const intervalLimit = interval === 'day' ? 14 : 12;
+    const paymentDate = '$payments.paidAt';
+    const periodGroup: Record<string, unknown> =
+      interval === 'week'
+        ? {
+            year: { $isoWeekYear: { date: paymentDate, timezone: 'Asia/Bangkok' } },
+            week: { $isoWeek: { date: paymentDate, timezone: 'Asia/Bangkok' } },
+          }
+        : {
+            $dateToString: {
+              format: interval === 'month' ? '%Y-%m' : '%Y-%m-%d',
+              date: paymentDate,
+              timezone: 'Asia/Bangkok',
+            },
+          };
+    const periodProjection: unknown =
+      interval === 'week'
+        ? {
+            $concat: [
+              { $toString: '$_id.year' },
+              '-W',
+              {
+                $cond: [
+                  { $lt: ['$_id.week', 10] },
+                  { $concat: ['0', { $toString: '$_id.week' }] },
+                  { $toString: '$_id.week' },
+                ],
+              },
+            ],
+          }
+        : '$_id';
+    const [totals, byMethod, series] = await Promise.all([
+      this.model.aggregate<{
+        totalAmount: number;
+        totalTransactions: number;
+        latestPaymentAt?: Date;
+      }>([
+        ...pipeline,
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: { $ifNull: ['$payments.amount', 0] } },
+            totalTransactions: { $sum: 1 },
+            latestPaymentAt: { $max: '$payments.paidAt' },
+          },
+        },
+        { $project: { _id: 0, totalAmount: 1, totalTransactions: 1, latestPaymentAt: 1 } },
+      ]),
+      this.model.aggregate<{
+        method: EPaymentMethod;
+        amount: number;
+        transactions: number;
+      }>([
+        ...pipeline,
+        {
+          $group: {
+            _id: '$payments.method',
+            amount: { $sum: { $ifNull: ['$payments.amount', 0] } },
+            transactions: { $sum: 1 },
+          },
+        },
+        { $sort: { amount: -1 } },
+        { $project: { _id: 0, method: '$_id', amount: 1, transactions: 1 } },
+      ]),
+      this.model.aggregate<{
+        period: string;
+        amount: number;
+        transactions: number;
+      }>([
+        ...pipeline,
+        {
+          $group: {
+            _id: periodGroup,
+            amount: { $sum: { $ifNull: ['$payments.amount', 0] } },
+            transactions: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: -1 } },
+        { $limit: intervalLimit },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, period: periodProjection, amount: 1, transactions: 1 } },
+      ]),
+    ]);
+    const total = totals[0];
+    const latestCashFlowTotal = series.reduce(
+      (sum, item) => sum + Number(item.amount ?? 0),
+      0,
+    );
+    const periodCount = series.length;
+    return {
+      interval,
+      totalAmount: Number(total?.totalAmount ?? 0),
+      totalTransactions: Number(total?.totalTransactions ?? 0),
+      averagePeriodAmount: periodCount
+        ? Number((latestCashFlowTotal / periodCount).toFixed(2))
+        : 0,
+      latestPaymentAt: total?.latestPaymentAt,
+      series: series.map((item) => ({
+        period: item.period,
+        amount: Number(item.amount ?? 0),
+        transactions: Number(item.transactions ?? 0),
+      })),
+      byMethod: byMethod.map((item) => ({
+        method: item.method,
+        amount: Number(item.amount ?? 0),
+        transactions: Number(item.transactions ?? 0),
+      })),
+    };
+  }
+
+  private buildPaymentPipeline(query: PaymentListQueryDto) {
+    const match: FilterQuery<InvoiceEntity> = { isDeleted: false };
+    const paymentMatch: Record<string, unknown> = {};
+    if (query.method) paymentMatch['payments.method'] = query.method;
+    if (query.paidFrom || query.paidTo) {
+      paymentMatch['payments.paidAt'] = {
+        ...(query.paidFrom ? { $gte: new Date(query.paidFrom) } : {}),
+        ...(query.paidTo
+          ? { $lte: new Date(`${query.paidTo}T23:59:59.999Z`) }
+          : {}),
+      };
+    }
+    if (query.keyword?.trim()) {
+      const keyword = new RegExp(this.escapeRegex(query.keyword.trim()), 'i');
+      paymentMatch.$or = [
+        { invoiceNo: keyword },
+        { workOrderNo: keyword },
+        { 'billingParty.name': keyword },
+        { 'payments.paymentNo': keyword },
+        { 'payments.reference': keyword },
+      ];
+    }
+    return [
+      { $match: match },
+      { $unwind: '$payments' },
+      ...(Object.keys(paymentMatch).length ? [{ $match: paymentMatch }] : []),
+    ];
   }
 
   private buildInvoiceFilter(query: InvoiceListQueryDto): FilterQuery<InvoiceEntity> {

@@ -1,6 +1,7 @@
 import {
   IsDateString,
   IsEnum,
+  IsIn,
   IsMongoId,
   IsNotEmpty,
   IsNumber,
@@ -93,4 +94,8 @@ export class PaymentListQueryDto extends PaginationQuery {
   @IsOptional()
   @IsDateString()
   paidTo?: string;
+
+  @IsOptional()
+  @IsIn(['day', 'week', 'month'])
+  chartInterval?: 'day' | 'week' | 'month';
 }
