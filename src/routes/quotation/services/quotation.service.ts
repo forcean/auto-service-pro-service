@@ -310,6 +310,57 @@ export class QuotationService {
     }
   }
 
+  async submitForApproval(quotationNo: string, user: AuthUser) {
+    const quotation = await this.getQuotationByNo(quotationNo);
+
+    if (!quotation.isLatest) {
+      throw new BusinessException(
+        '4001',
+        'Only the latest quotation can be sent for approval',
+      );
+    }
+
+    if (quotation.status !== EQuotationStatus.DRAFT) {
+      throw new BusinessException(
+        '4001',
+        'Only draft quotations can be sent for approval',
+      );
+    }
+
+    const workOrderStatus = quotation.workOrder.status as EWorkOrderStatus;
+    if (
+      workOrderStatus !== EWorkOrderStatus.WAITING_QUOTATION &&
+      workOrderStatus !== EWorkOrderStatus.WAITING_APPROVAL
+    ) {
+      throw new BusinessException(
+        '4004',
+        `Work order must be ${EWorkOrderStatus.WAITING_QUOTATION} before sending a quotation`,
+      );
+    }
+
+    const result = await this.quotationRepository.updateStatus(
+      quotation.id,
+      EQuotationStatus.PENDING_APPROVAL,
+      user,
+    );
+
+    if (!result) {
+      throw new BusinessException('5003', 'Failed to send quotation for approval');
+    }
+
+    // Existing drafts created before this workflow already moved the work order.
+    // New drafts keep the work order in WAITING_QUOTATION until they are sent.
+    if (workOrderStatus === EWorkOrderStatus.WAITING_QUOTATION) {
+      await this.workOrderService.updateStatus(
+        quotation.workOrder.workOrderNo,
+        EWorkOrderStatus.WAITING_APPROVAL,
+        user,
+      );
+    }
+
+    return mapMongoId(result);
+  }
+
   async approveQuotation(
     quotationNo: string,
     payload: ApproveQuotationDto,
@@ -443,6 +494,13 @@ export class QuotationService {
       }
       const quotationData = await this.prepareQuotation(revisionPayload);
 
+      if (oldQuotation.status !== EQuotationStatus.REJECTED) {
+        throw new BusinessException(
+          '4001',
+          'Only rejected quotations can create revision',
+        );
+      }
+
       const newQuotationNo = await this.documentNoService.generate(
         EDocumentType.QUOTATION,
       );
@@ -486,7 +544,7 @@ export class QuotationService {
         session,
       );
       await session.commitTransaction();
-      return quotation;
+      return mapMongoId(quotation.toObject());
     } catch (error) {
       await session.abortTransaction();
       throw error;

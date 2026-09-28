@@ -16,7 +16,12 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ETaskPriority, ETaskStatus } from '../enums/task.enum';
+import {
+  ETaskBlockedReason,
+  ETaskPriority,
+  ETaskStatus,
+  ETaskType,
+} from '../enums/task.enum';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 
 export class AssignedMechanicDto {
@@ -52,6 +57,31 @@ export class CreateWorkOrderTaskDto {
   @IsOptional()
   @IsEnum(ETaskStatus)
   status?: ETaskStatus;
+
+  @IsOptional()
+  @IsEnum(ETaskType)
+  taskType?: ETaskType;
+
+  @IsOptional()
+  @IsString()
+  @IsUppercase()
+  @Matches(/^WO\d{10}-T\d{3}$/)
+  parentTaskNo?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isRequired?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsUppercase({ each: true })
+  dependsOn?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  sortOrder?: number;
 
   @IsOptional()
   @IsNumber()
@@ -133,6 +163,31 @@ export class UpdateWorkOrderTaskDto {
   @IsOptional()
   @IsString()
   remark?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUppercase()
+  @Matches(/^WO\d{10}-T\d{3}$/)
+  parentTaskNo?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isRequired?: boolean;
+
+  @IsOptional()
+  @IsEnum(ETaskBlockedReason)
+  blockedReason?: ETaskBlockedReason;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsUppercase({ each: true })
+  dependsOn?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  sortOrder?: number;
 }
 
 export class UpdateTaskStatusDto {
@@ -142,6 +197,10 @@ export class UpdateTaskStatusDto {
   @IsOptional()
   @IsString()
   remark?: string;
+
+  @IsOptional()
+  @IsEnum(ETaskBlockedReason)
+  blockedReason?: ETaskBlockedReason;
 }
 
 export class ReportAdditionalProblemDto {

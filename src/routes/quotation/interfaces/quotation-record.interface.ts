@@ -1,4 +1,3 @@
-import { Types } from 'mongoose';
 import {
   EApprovalMethod,
   ECustomerDecision,
@@ -56,7 +55,6 @@ export interface IQuotationWorkOrder {
   id: string;
   workOrderNo: string;
   vehicleId: string;
-  customerId: string;
   advisorId?: string;
   status: string;
 }

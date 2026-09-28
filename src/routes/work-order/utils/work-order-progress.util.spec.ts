@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import { ETaskStatus } from '../../task/enums/task.enum';
+import { ETaskStatus, ETaskType } from '../../task/enums/task.enum';
 import { calculateWorkOrderProgress } from './work-order-progress.util';
 
 describe('calculateWorkOrderProgress', () => {
@@ -34,5 +34,20 @@ describe('calculateWorkOrderProgress', () => {
         { status: ETaskStatus.CANCELLED, progress: 100 },
       ]).progress,
     ).toBe(0);
+  });
+
+  it('excludes group and optional tasks from operational progress', () => {
+    expect(
+      calculateWorkOrderProgress([
+        { taskType: ETaskType.GROUP, status: ETaskStatus.WAITING, progress: 0 },
+        { taskType: ETaskType.EXECUTION, status: ETaskStatus.FINISHED, progress: 100, estimateMinute: 30 },
+        { taskType: ETaskType.EXECUTION, status: ETaskStatus.WAITING, progress: 0, estimateMinute: 30, isRequired: false },
+      ]),
+    ).toEqual({
+      progress: 100,
+      totalTasks: 1,
+      completedTasks: 1,
+      cancelledTasks: 0,
+    });
   });
 });

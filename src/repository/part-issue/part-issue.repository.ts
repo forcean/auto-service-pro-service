@@ -137,6 +137,13 @@ export class PartIssueRepository {
       .session(session ?? null);
   }
 
+  async getPartIssueByQuotationId(quotationId: string) {
+    return this.partIssueEntity
+      .find({ quotationId: { $eq: quotationId }, isDeleted: false })
+      .select('items status')
+      .lean();
+  }
+
   /**
    * Update items + status
    *

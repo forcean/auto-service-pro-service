@@ -1,7 +1,9 @@
 import {
   EAdditionalProblemStatus,
+  ETaskBlockedReason,
   ETaskPriority,
   ETaskStatus,
+  ETaskType,
 } from '../enums/task.enum';
 
 export interface IAdditionalProblem {
@@ -20,6 +22,11 @@ export interface ICreateTaskRequest {
   description?: string;
   priority?: ETaskPriority;
   status?: ETaskStatus;
+  taskType?: ETaskType;
+  parentTaskNo?: string | null;
+  isRequired?: boolean;
+  dependsOn?: string[];
+  sortOrder?: number;
   estimateMinute?: number;
   actualMinute?: number;
   plannedStartDate?: Date;
@@ -39,6 +46,11 @@ export interface IUpdateTaskRequest {
   description?: string;
   priority?: ETaskPriority;
   status?: ETaskStatus;
+  parentTaskNo?: string | null;
+  isRequired?: boolean;
+  blockedReason?: ETaskBlockedReason;
+  dependsOn?: string[];
+  sortOrder?: number;
   estimateMinute?: number;
   actualMinute?: number;
   plannedStartDate?: Date;

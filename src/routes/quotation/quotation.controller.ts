@@ -53,7 +53,24 @@ export class QuotationController {
 
     return this.quotationService.createQuotation(dto, authUser);
   }
-  
+
+  @Patch(':quotationNo/submit-for-approval')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:quotation')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Quotation sent for customer approval')
+  async submitForApproval(
+    @Param('quotationNo') quotationNo: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.quotationService.submitForApproval(quotationNo, authUser);
+  }
+
   // when customer approve quotation, update status to approved
   @Patch(':quotationNo/approve')
   @UseGuards(PermissionsGuard)

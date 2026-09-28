@@ -12,12 +12,15 @@ import {
 } from 'src/routes/work-order/dtos/work-order.dto';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 import { IWorkOrderRecord } from 'src/routes/work-order/interfaces/work-order-record.interface';
+import { CustomersVehicleEntity } from '../customers-vehicle/customers-vehicle.schema';
 
 @Injectable()
 export class WorkOrderRepository {
   constructor(
     @InjectModel(WorkOrderEntity.name, 'autoservice')
     private readonly model: Model<WorkOrderDocument>,
+    @InjectModel(CustomersVehicleEntity.name, 'autoservice')
+    private readonly customersVehicleModel: Model<any>,
   ) {}
 
   async createWorkOrder(
@@ -48,7 +51,6 @@ export class WorkOrderRepository {
         isDeleted: false,
       })
       .populate('vehicleId')
-      .populate('customerId')
       .populate('advisorId')
       .lean<IWorkOrderRecord>();
   }
@@ -62,10 +64,7 @@ export class WorkOrderRepository {
         })
         .populate({
           path: 'vehicleId',
-          // select: '_id licensePlate province vin vehicle',
         })
-        // .populate('customerId')
-        // .populate('advisorId')
         .lean()
     );
   }
@@ -126,7 +125,6 @@ export class WorkOrderRepository {
       {
         currentQuotationId: new Types.ObjectId(quotationId),
         updatedBy: user.publicId,
-        status: EWorkOrderStatus.WAITING_APPROVAL,
       },
       {
         new: true,
@@ -181,34 +179,58 @@ export class WorkOrderRepository {
   ) {
     const { page, limit, skip } = pagination;
 
-    const filter: FilterQuery<WorkOrderEntity> = {};
+    const filter: FilterQuery<WorkOrderEntity> = {
+      isDeleted: false,
+    };
 
-    // if (query.licensePlate) {
-    //   filter.licensePlate = query.licensePlate;
-    // }
+    if (query.status) {
+      filter.status = query.status;
+    }
 
-    // if (query.province) {
-    //   filter.province = query.province.toUpperCase();
-    // }
+    if (query.date) {
+      // The date picker represents a calendar day in the application's
+      // Thailand timezone, not a single instant in UTC.
+      const startOfDay = new Date(`${query.date}T00:00:00.000+07:00`);
+      const startOfNextDay = new Date(startOfDay);
+      startOfNextDay.setUTCDate(startOfNextDay.getUTCDate() + 1);
 
-    // if (query.status) {
-    //   filter.status = query.status.toUpperCase();
-    // }
+      filter.checkInDate = {
+        $gte: startOfDay,
+        $lt: startOfNextDay,
+      };
+    }
 
-    // if (query.model) {
-    //   filter.model = query.model;
-    // }
+    if (query.search?.trim()) {
+      const search = query.search.trim();
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
+      const matchingVehicles = await this.customersVehicleModel
+        .find({
+          $or: [
+            { licensePlate: searchRegex },
+            { province: searchRegex },
+            { firstname: searchRegex },
+            { lastname: searchRegex },
+            { billingName: searchRegex },
+            { phoneNumber: searchRegex },
+          ],
+        })
+        .select('_id')
+        .lean();
 
-    // if (query.brand) {
-    //   filter.brand = query.brand;
-    // }
+      filter.$or = [
+        { workOrderNo: searchRegex },
+        { vehicleId: { $in: matchingVehicles.map((vehicle) => vehicle._id) } },
+      ];
+    }
 
     const [data, total] = await Promise.all([
       this.model
         .find(filter)
         .populate({
           path: 'vehicleId',
-          select: '_id licensePlate province vin vehicle',
+          select:
+            '_id licensePlate province vin vehicle firstname lastname phoneNumber billingName taxId billingAddress branchNo',
         })
         .sort(sortBy ?? { checkInDate: 'desc' })
         .skip(skip)

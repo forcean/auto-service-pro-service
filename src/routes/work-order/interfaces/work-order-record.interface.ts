@@ -16,7 +16,6 @@ export interface IWorkOrderRecord {
   _id: Types.ObjectId;
   workOrderNo: string;
   vehicleId: Types.ObjectId;
-  customerId: Types.ObjectId;
   advisorId?: Types.ObjectId;
   currentQuotationId?: Types.ObjectId;
   status: EWorkOrderStatus;
@@ -42,16 +41,3 @@ export interface IWorkOrderRecord {
     cancelledTasks: number;
   };
 }
-
-// รอ refactor
-// export interface IWorkOrderDetailRecord
-//   extends Omit<
-//     IWorkOrderRecord,
-//     'vehicleId' | 'customerId' | 'advisorId'
-//   > {
-//   vehicleId: IVehicleRecord;
-
-//   customerId: ICustomerRecord;
-
-//   advisorId?: IUserRecord;
-// }

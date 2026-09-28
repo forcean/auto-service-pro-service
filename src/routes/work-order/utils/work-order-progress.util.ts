@@ -1,9 +1,11 @@
-import { ETaskStatus } from '../../task/enums/task.enum';
+import { ETaskStatus, ETaskType } from '../../task/enums/task.enum';
 
 export interface WorkOrderProgressTask {
   status?: ETaskStatus;
   progress?: number;
   estimateMinute?: number;
+  taskType?: ETaskType;
+  isRequired?: boolean;
 }
 
 export interface WorkOrderProgressResult {
@@ -20,10 +22,15 @@ export interface WorkOrderProgressResult {
 export function calculateWorkOrderProgress(
   tasks: WorkOrderProgressTask[],
 ): WorkOrderProgressResult {
-  const cancelledTasks = tasks.filter(
+  // Legacy tasks have no taskType/isRequired; treat them as required execution
+  // tasks so existing work orders retain their previous behaviour.
+  const executionTasks = tasks.filter(
+    (task) => task.taskType !== ETaskType.GROUP && task.isRequired !== false,
+  );
+  const cancelledTasks = executionTasks.filter(
     (task) => task.status === ETaskStatus.CANCELLED,
   ).length;
-  const activeTasks = tasks.filter(
+  const activeTasks = executionTasks.filter(
     (task) => task.status !== ETaskStatus.CANCELLED,
   );
   const completedTasks = activeTasks.filter(
@@ -33,7 +40,7 @@ export function calculateWorkOrderProgress(
   if (!activeTasks.length) {
     return {
       progress: 0,
-      totalTasks: tasks.length,
+      totalTasks: executionTasks.length,
       completedTasks,
       cancelledTasks,
     };
@@ -53,7 +60,7 @@ export function calculateWorkOrderProgress(
 
   return {
     progress: Math.round(progress * 100) / 100,
-    totalTasks: tasks.length,
+    totalTasks: executionTasks.length,
     completedTasks,
     cancelledTasks,
   };
