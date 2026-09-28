@@ -24,10 +24,7 @@ import {
   GetPartIssueWithPaginationDto,
   IssuePartIssueDto,
   CancelPartIssueDto,
-  GetPartIssueWithPaginationDto,
 } from '../dtos/part-issue.dto';
-import { getPagination } from 'src/common/utils/pagination.util';
-import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 import {
   IIssuePartIssueItemRequest,
@@ -366,18 +363,6 @@ export class PartIssueService {
     }
 
     return issue;
-  }
-
-  async getIssuesWithPagination(
-    query: GetPartIssueWithPaginationDto,
-    sortBy: SortCriterial,
-  ) {
-    const { page, limit, skip } = getPagination(query);
-    return this.partIssueRepository.findAllWithPaginated(
-      { page, limit, skip },
-      query,
-      sortBy,
-    );
   }
 
   async getQuotationPartAvailability(quotationId: string) {
