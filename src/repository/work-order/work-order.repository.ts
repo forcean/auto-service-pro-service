@@ -187,6 +187,19 @@ export class WorkOrderRepository {
       filter.status = query.status;
     }
 
+    if (query.date) {
+      // The date picker represents a calendar day in the application's
+      // Thailand timezone, not a single instant in UTC.
+      const startOfDay = new Date(`${query.date}T00:00:00.000+07:00`);
+      const startOfNextDay = new Date(startOfDay);
+      startOfNextDay.setUTCDate(startOfNextDay.getUTCDate() + 1);
+
+      filter.checkInDate = {
+        $gte: startOfDay,
+        $lt: startOfNextDay,
+      };
+    }
+
     if (query.search?.trim()) {
       const search = query.search.trim();
       const searchRegex = new RegExp(search, 'i');

@@ -110,4 +110,8 @@ export class GetWorkOrdersWithPaginationDto extends PaginationQuery {
   @IsOptional()
   @IsEnum(EWorkOrderStatus)
   status?: EWorkOrderStatus;
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
 }
