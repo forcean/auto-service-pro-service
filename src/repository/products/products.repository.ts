@@ -96,6 +96,8 @@ export class ProductsRepository {
 
     const filter: FilterQuery<ProductsEntity> = {};
 
+    filter.isDeleted = { $ne: true };
+
     // ดึงค่า keyword ออกมาจาก sku หรือ name ตัวใดตัวหนึ่ง
     const keyword = query.sku || query.name;
 
@@ -109,6 +111,22 @@ export class ProductsRepository {
         { name: searchRegex },
         { code: searchRegex }, // แถม search จาก code ด้วยหากใน DB เก็บช่องนี้
       ];
+    }
+
+    if (query.categoryId) {
+      filter.categoryId = query.categoryId;
+    }
+
+    if (query.brandId) {
+      filter.brandId = query.brandId;
+    }
+
+    if (query.status) {
+      filter.status = query.status;
+    }
+
+    if (query.isStocked !== undefined) {
+      filter.isStocked = query.isStocked;
     }
 
     const [data, total] = await Promise.all([
@@ -126,7 +144,7 @@ export class ProductsRepository {
       limit,
       total,
       totalPages: Math.ceil(total / limit),
-      products: data,
+      products: data.map((product) => mapMongoId(product)) as IProduct[],
     };
   }
 
