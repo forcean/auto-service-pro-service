@@ -31,7 +31,7 @@ export class StockMovementRepository {
     );
   }
 
-  async getMovements(productId: string) {
+  async getMovements(productId: string, limit = 10) {
     return this.movementModel
       .find({
         productId,
@@ -39,6 +39,7 @@ export class StockMovementRepository {
       .sort({
         createdAt: -1,
       })
+      .limit(limit)
       .lean();
   }
 

@@ -240,6 +240,10 @@ export class updateProductDto {
 
 export class getProductListDto extends PaginationQuery {
   @IsOptional()
+  @IsString({ message: 'sort must be a string' })
+  sort?: string;
+
+  @IsOptional()
   @IsString()
   name?: string;
 

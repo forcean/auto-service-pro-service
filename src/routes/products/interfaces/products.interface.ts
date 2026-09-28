@@ -1,20 +1,15 @@
 import { Type } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { EStockStatus } from 'src/routes/stock-management/enums/stock.enum';
+import {
+  EStockMovementType,
+  EStockStatus,
+} from 'src/routes/stock-management/enums/stock.enum';
 
 export enum EProductStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
   OUT_OF_STOCK = 'out_of_stock',
   DISCONTINUED = 'discontinued',
-}
-
-export enum EStockMovementType {
-  RECEIVE = 'RECEIVE',
-  ISSUE = 'ISSUE',
-  ADJUST = 'ADJUST',
-  RESERVE = 'RESERVE',
-  RELEASE = 'RELEASE',
 }
 
 export interface IEngine {
@@ -28,6 +23,17 @@ export interface IVehicle {
   yearTo: number;
   engines: IEngine[];
   remark?: string;
+}
+
+export interface IProductVehicleDetail extends IVehicle {
+  _id: string;
+  brand: string;
+  brandCode: string;
+  model: string;
+  modelCode: string;
+  generation: string;
+  platform: string;
+  isActive: boolean;
 }
 
 export interface IPrice {
@@ -73,6 +79,12 @@ export interface IProduct {
   deletedDt?: Date;
 }
 
+export interface IProductDetail extends IProduct {
+  categoryName: string;
+  brandName: string;
+  vehicles: IProductVehicleDetail[];
+}
+
 export interface IStockInfo {
   id: string;
   productId: Types.ObjectId | string;
@@ -94,12 +106,13 @@ export interface IStockMovement {
   id: string;
   productId: Types.ObjectId | string;
   sku: string;
-  movementType: EStockMovementType;
+  type: EStockMovementType;
   quantity: number;
   beforeQty: number;
   afterQty: number;
+  reference?: string;
   createdBy?: string;
-  createdDt?: Date;
+  createdDt: Date;
 }
 
 export interface IProductStockSummary {
@@ -110,7 +123,7 @@ export interface IProductStockSummary {
 }
 
 export interface IProductDetailResponse {
-  product: IProduct;
+  product: IProductDetail;
   stockInfo: IStockInfo | null;
   stockSummary?: IProductStockSummary;
   recentMovements?: IStockMovement[];

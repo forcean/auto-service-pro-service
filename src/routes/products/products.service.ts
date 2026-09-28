@@ -17,7 +17,11 @@ import { VehicleBrandsRepository } from 'src/repository/vehicle-brands/vehicle-b
 import { VehicleModelsRepository } from 'src/repository/vehicle-models/vehicle-models.repository';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { getPagination } from 'src/common/utils/pagination.util';
-import { IProductDetailResponse } from './interfaces/products.interface';
+import {
+  IProduct,
+  IProductDetail,
+  IProductDetailResponse,
+} from './interfaces/products.interface';
 import { StockManagementService } from '../stock-management/stock-management.service';
 import { CreateStockDto } from '../stock-management/dtos/stock-management.dto';
 import { Types } from 'mongoose';
@@ -326,8 +330,15 @@ export class ProductsService {
         query,
         sortBy,
       );
-      console.log(result)
-      return result;
+
+      return {
+        ...result,
+        products: await Promise.all(
+          result.products.map((product) =>
+            this.enrichProduct(product),
+          ),
+        ),
+      };
     } catch (error) {
       console.error(
         `Error getting customer vehicle: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -343,20 +354,33 @@ export class ProductsService {
       if (!product) {
         throw new BusinessException('4040', 'Product not found');
       }
-      const stock = await this.stockManagementService.getStockDetail(
-        product.id,
-      );
+      const [stock, productDetail] = await Promise.all([
+        this.stockManagementService.getStockDetail(product.id),
+        this.enrichProduct(product),
+      ]);
+      const recentMovements =
+        await this.stockManagementService.getMovementHistory(product.id);
 
       return {
-        product: {
-          ...product,
-        },
+        product: productDetail,
         stockInfo: stock
           ? {
               ...stock,
               id: stock.id?.toString(),
             }
           : null,
+        recentMovements: recentMovements.map((movement) => ({
+          id: movement._id.toString(),
+          productId: movement.productId,
+          sku: movement.sku,
+          type: movement.movementType,
+          quantity: movement.quantity,
+          beforeQty: movement.beforeQty,
+          afterQty: movement.afterQty,
+          reference: movement.referenceId ?? movement.referenceType,
+          createdBy: movement.createdBy,
+          createdDt: movement.createdAt,
+        })),
       };
     } catch (error) {
       console.error(
@@ -381,6 +405,39 @@ export class ProductsService {
       quantity: request.quantity,
       reserved: request.reserved,
       minStock: request.minStock,
+    };
+  }
+
+  private async enrichProduct(product: IProduct): Promise<IProductDetail> {
+    const [category, brand, vehicleDetails] = await Promise.all([
+      this.productCategoriesRepository.getCategoryById(product.categoryId),
+      this.productBrandsRepository.getBrandById(product.brandId),
+      Promise.all(
+        (product.vehicles ?? []).map((vehicle) =>
+          this.vehiclesRepository.getVehicleById(vehicle.vehicleId),
+        ),
+      ),
+    ]);
+
+    return {
+      ...product,
+      categoryName: category?.name ?? '',
+      brandName: brand?.name ?? '',
+      vehicles: (product.vehicles ?? []).map((vehicle, index) => {
+        const vehicleDetail = vehicleDetails[index];
+
+        return {
+          ...vehicle,
+          _id: vehicle.vehicleId,
+          brand: vehicleDetail?.brand ?? '',
+          brandCode: vehicleDetail?.brandCode ?? '',
+          model: vehicleDetail?.model ?? '',
+          modelCode: vehicleDetail?.modelCode ?? '',
+          generation: vehicleDetail?.generation ?? '',
+          platform: vehicleDetail?.platform ?? '',
+          isActive: vehicleDetail?.isActive ?? false,
+        };
+      }),
     };
   }
 }
