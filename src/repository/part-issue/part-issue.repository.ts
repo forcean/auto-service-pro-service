@@ -139,7 +139,7 @@ export class PartIssueRepository {
 
   async getPartIssueByQuotationId(quotationId: string) {
     return this.partIssueEntity
-      .find({ quotationId, isDeleted: false })
+      .find({ quotationId: { $eq: quotationId }, isDeleted: false })
       .select('items status')
       .lean();
   }
