@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { HydratedDocument, Types } from 'mongoose';
 import { EStockMovementType } from 'src/routes/stock-management/enums/stock.enum';
+import { ProductsEntity } from '../products/products.schema';
 
 export type StockMovementDocument = HydratedDocument<StockMovementEntity>;
 
@@ -12,7 +13,7 @@ export type StockMovementDocument = HydratedDocument<StockMovementEntity>;
 export class StockMovementEntity {
   @Prop({
     type: Types.ObjectId,
-    ref: 'Product',
+    ref: ProductsEntity.name,
     required: true,
     index: true,
   })

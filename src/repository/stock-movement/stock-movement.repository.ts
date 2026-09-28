@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { StockMovementEntity } from './stock-movement.schema';
-import { ClientSession, Model } from 'mongoose';
+import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 import { AuthUser } from 'src/types/user.type';
 import {
   CreateStockMovementDto,
   getMovementListDto,
 } from 'src/routes/stock-management/dtos/stock-management.dto';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
+import { ProductsEntity } from '../products/products.schema';
 
 @Injectable()
 export class StockMovementRepository {
@@ -46,18 +48,68 @@ export class StockMovementRepository {
   async getListMovements(
     param: getMovementListDto,
     pagination: { page: number; limit: number; skip: number },
+    sortBy: SortCriterial | null,
   ) {
-    const filter = {
-      ...(param.productId && {
-        productId: { $regex: param.productId, $options: 'i' },
-      }),
-      ...(param.sku && { sku: { $regex: param.sku, $options: 'i' } }),
-      ...(param.movementType && { movementType: param.movementType }),
-      ...(param.referenceType && { referenceType: param.referenceType }),
-    };
+    const filter: FilterQuery<StockMovementEntity> = {};
+
+    if (param.productId) {
+      filter.productId = new Types.ObjectId(param.productId);
+    }
+
+    if (param.sku) {
+      filter.sku = this.caseInsensitiveRegex(param.sku);
+    }
+
+    if (param.movementType) {
+      filter.movementType = param.movementType;
+    }
+
+    if (param.referenceType) {
+      filter.referenceType = param.referenceType;
+    }
+
+    if (param.referenceId) {
+      filter.referenceId = this.caseInsensitiveRegex(param.referenceId);
+    }
+
+    if (param.createdBy) {
+      filter.createdBy = param.createdBy;
+    }
+
+    if (param.keyword) {
+      const keyword = this.caseInsensitiveRegex(param.keyword);
+      filter.$or = [
+        { sku: keyword },
+        { referenceId: keyword },
+        { createdBy: keyword },
+      ];
+    }
+
+    if (param.startDate || param.endDate) {
+      const createdAt: Record<string, Date> = {};
+
+      if (param.startDate) {
+        createdAt.$gte = this.startOfBangkokDay(param.startDate);
+      }
+
+      if (param.endDate) {
+        const endExclusive = this.startOfBangkokDay(param.endDate);
+        endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
+        createdAt.$lt = endExclusive;
+      }
+
+      filter.createdAt = createdAt;
+    }
+
     const [data, total] = await Promise.all([
       this.movementModel
         .find(filter)
+        .populate({
+          path: 'productId',
+          model: ProductsEntity.name,
+          select: '_id name',
+        })
+        .sort(this.getSafeSort(sortBy))
         .skip(pagination.skip)
         .limit(pagination.limit)
         .lean(),
@@ -69,8 +121,83 @@ export class StockMovementRepository {
       limit: pagination.limit,
       total,
       totalPages: Math.ceil(total / pagination.limit),
-      data,
+      data: data.map((movement) => this.toListItem(movement)),
     };
+  }
+
+  private caseInsensitiveRegex(value: string): RegExp {
+    return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  }
+
+  private startOfBangkokDay(value: string): Date {
+    return new Date(`${value.slice(0, 10)}T00:00:00.000+07:00`);
+  }
+
+  private getSafeSort(sortBy: SortCriterial | null): Record<string, 1 | -1> {
+    const allowedFields = new Set([
+      'createdAt',
+      'movementType',
+      'sku',
+      'referenceId',
+      'quantity',
+      'afterQty',
+      'createdBy',
+    ]);
+    const safeSort = Object.entries(sortBy ?? {}).reduce<
+      Record<string, 1 | -1>
+    >((result, [field, direction]) => {
+      if (allowedFields.has(field)) {
+        result[field] = direction === 'asc' ? 1 : -1;
+      }
+
+      return result;
+    }, {});
+
+    return Object.keys(safeSort).length ? safeSort : { createdAt: -1 };
+  }
+
+  private toListItem(movement: any) {
+    const product =
+      movement.productId && typeof movement.productId === 'object'
+        ? movement.productId
+        : undefined;
+    const productId = product?._id ?? movement.productId;
+
+    return {
+      ...movement,
+      id: movement._id?.toString(),
+      productId: productId?.toString(),
+      productName: product?.name ?? movement.sku,
+      direction: this.getDirection(
+        movement.movementType,
+        movement.beforeQty,
+        movement.afterQty,
+      ),
+    };
+  }
+
+  private getDirection(
+    movementType: string,
+    beforeQty: number,
+    afterQty: number,
+  ): 'IN' | 'OUT' | 'ADJUST' {
+    if (['RECEIVE', 'RETURN', 'TRANSFER_IN'].includes(movementType)) {
+      return 'IN';
+    }
+
+    if (['ISSUE', 'TRANSFER_OUT'].includes(movementType)) {
+      return 'OUT';
+    }
+
+    if (movementType === 'ADJUST') {
+      return afterQty > beforeQty
+        ? 'IN'
+        : afterQty < beforeQty
+          ? 'OUT'
+          : 'ADJUST';
+    }
+
+    return 'ADJUST';
   }
 
   async getMovementSummary() {
