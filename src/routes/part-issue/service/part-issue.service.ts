@@ -19,6 +19,7 @@ import { PartIssueRepository } from 'src/repository/part-issue/part-issue.reposi
 
 import {
   CreatePartIssueDto,
+  GetPartIssueWithPaginationDto,
   IssuePartIssueDto,
   CancelPartIssueDto,
 } from '../dtos/part-issue.dto';
@@ -26,6 +27,8 @@ import {
 import {
   IIssuePartIssueItemRequest,
 } from '../interfaces/part-issue.interface';
+import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
+import { getPagination } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class PartIssueService {
@@ -48,6 +51,23 @@ export class PartIssueService {
     @Inject(DocumentNoService)
     private readonly documentNoService: DocumentNoService,
   ) {}
+
+  // ============================================================
+  // GET LIST
+  // ============================================================
+
+  async getIssuesWithPagination(
+    query: GetPartIssueWithPaginationDto,
+    sortBy: SortCriterial,
+  ) {
+    const { page, limit, skip } = getPagination(query);
+
+    return this.partIssueRepository.findAllWithPaginated(
+      { page, limit, skip },
+      query,
+      sortBy ?? { createdAt: 'desc' },
+    );
+  }
 
   // ============================================================
   // CREATE

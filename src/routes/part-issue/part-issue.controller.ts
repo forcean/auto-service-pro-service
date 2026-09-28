@@ -1,9 +1,21 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 
 import { AuthUser } from 'src/types/user.type';
 import {
   CancelPartIssueDto,
   CreatePartIssueDto,
+  GetPartIssueWithPaginationDto,
   IssuePartIssueDto,
 } from './dtos/part-issue.dto';
 import { PartIssueService } from './service/part-issue.service';
@@ -18,12 +30,33 @@ import {
 } from 'src/common/response/response.decorator';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import { ResponseInterceptor } from 'src/common/response/response.interceptor';
+import { ParseSortPipe } from 'src/common/pipes/parse-sort.pipe';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Controller('part-issues')
 @UseGuards(PermissionsGuard)
 @UseInterceptors(ResponseInterceptor)
 export class PartIssueController {
   constructor(private readonly partIssueService: PartIssueService) {}
+
+  /**
+   * รายการเอกสารเบิกอะไหล่
+   */
+  @Get()
+  @Permissions('view:issue')
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get part issues successful')
+  async getIssues(
+    @Query() query: GetPartIssueWithPaginationDto,
+    @Query('sort', ParseSortPipe) sortBy: SortCriterial,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.partIssueService.getIssuesWithPagination(query, sortBy);
+  }
 
   /**
    * ============================================================
