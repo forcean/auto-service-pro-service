@@ -202,7 +202,8 @@ export class WorkOrderRepository {
 
     if (query.search?.trim()) {
       const search = query.search.trim();
-      const searchRegex = new RegExp(search, 'i');
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
       const matchingVehicles = await this.customersVehicleModel
         .find({
           $or: [
