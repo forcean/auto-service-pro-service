@@ -26,8 +26,6 @@ import { ResponseInterceptor } from 'src/common/response/response.interceptor';
 
 import { BusinessException } from 'src/common/exceptions/business.exception';
 
-import { PaginationQuery } from 'src/common/dto/pagination.dto';
-
 import { StockManagementService } from './stock-management.service';
 import {
   AdjustStockDto,
@@ -39,6 +37,8 @@ import {
   ReturnStockDto,
   UpdateStockDto,
 } from './dtos/stock-management.dto';
+import { ParseSortPipe } from 'src/common/pipes/parse-sort.pipe';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 @Controller('stock-management')
 @UseGuards(PermissionsGuard)
@@ -210,13 +210,13 @@ export class StockManagementController {
   async getStocksMovement(
     @Query() dto: getMovementListDto,
     @Req() { authUser }: Request,
-    @Query() pagination: PaginationQuery,
+    @Query('sort', ParseSortPipe) sortBy: SortCriterial | null,
   ) {
     if (!authUser) {
       throw new BusinessException('4013', 'No auth user found');
     }
 
-    return this.stockManagementService.getMovementList(dto, pagination);
+    return this.stockManagementService.getMovementList(dto, sortBy);
   }
 
   @Get('stock-movements/summary')

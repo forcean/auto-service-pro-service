@@ -2,8 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ClientSession } from 'mongoose';
 
 import { BusinessException } from 'src/common/exceptions/business.exception';
-import { PaginationQuery } from 'src/common/dto/pagination.dto';
 import { getPagination } from 'src/common/utils/pagination.util';
+import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 import { StocksRepository } from 'src/repository/stock/stock.repository';
 import { StockMovementRepository } from 'src/repository/stock-movement/stock-movement.repository';
@@ -60,10 +60,13 @@ export class StockManagementService {
     return this.movementRepository.getMovements(productId);
   }
 
-  async getMovementList(dto: getMovementListDto, pagination: PaginationQuery) {
-    const paging = getPagination(pagination);
+  async getMovementList(
+    dto: getMovementListDto,
+    sortBy: SortCriterial | null,
+  ) {
+    const paging = getPagination(dto);
 
-    return this.movementRepository.getListMovements(dto, paging);
+    return this.movementRepository.getListMovements(dto, paging, sortBy);
   }
 
   async getMovementSummary() {

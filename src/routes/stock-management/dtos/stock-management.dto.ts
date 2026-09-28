@@ -6,8 +6,10 @@ import {
   IsString,
   Min,
   IsEnum,
+  IsDateString,
 } from 'class-validator';
 import { EStockMovementType, EStockReferenceType } from '../enums/stock.enum';
+import { PaginationQuery } from 'src/common/dto/pagination.dto';
 
 export class CreateStockDto {
   @IsMongoId()
@@ -176,9 +178,9 @@ export class CreateStockMovementDto {
   remark?: string;
 }
 
-export class getMovementListDto {
+export class getMovementListDto extends PaginationQuery {
   @IsOptional()
-  @IsString()
+  @IsMongoId()
   productId?: string;
 
   @IsOptional()
@@ -194,4 +196,32 @@ export class getMovementListDto {
   @IsOptional()
   @IsEnum(EStockReferenceType)
   referenceType?: string;
+
+  @IsOptional()
+  @IsString()
+  referenceId?: string;
+
+  @IsOptional()
+  @IsString()
+  createdBy?: string;
+
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+
+  @IsOptional()
+  @IsString()
+  warehouseId?: string;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsString({ message: 'sort must be a string' })
+  sort?: string;
 }
