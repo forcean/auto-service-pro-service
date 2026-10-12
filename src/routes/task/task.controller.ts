@@ -22,6 +22,7 @@ import {
   CreateWorkOrderTaskDto,
   ApproveAdditionalProblemDto,
   getWorkOrderTasksWithPaginationDto,
+  MyAssignmentsQueryDto,
   ReportAdditionalProblemDto,
   RejectAdditionalProblemDto,
   UpdateTaskStatusDto,
@@ -70,6 +71,22 @@ export class TaskController {
     }
 
     return this.taskService.getTasksWithPagination(query, sortBy);
+  }
+
+  @Get('my-assignments')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:tasks')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get my assignments successful')
+  async getMyAssignments(
+    @Query() query: MyAssignmentsQueryDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+    return this.taskService.getMyAssignments(query, authUser);
   }
 
   // GET    /tasks/:taskNo
