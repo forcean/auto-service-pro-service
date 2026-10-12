@@ -32,6 +32,8 @@ import { calculateLaborFactor, calculateLineAmount } from './billing.utils';
 import { getPagination } from 'src/common/utils/pagination.util';
 import { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
+type ReceiptPrintSize = 'a4' | '80mm' | '58mm';
+
 @Injectable()
 export class BillingService {
   constructor(
@@ -530,21 +532,9 @@ export class BillingService {
     return this.getPaymentReceipt(paymentNo);
   }
 
-  async getPrintableReceipt(invoiceId: string) {
+  async getPrintableReceipt(invoiceId: string, size?: string) {
     const receipt = await this.getReceipt(invoiceId);
-    const escapeHtml = (value: unknown) =>
-      String(value ?? '').replace(
-        /[&<>'"]/g,
-        (char) =>
-          ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;',
-          })[char] as string,
-      );
-    return `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${escapeHtml(receipt.receiptNo)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#222}h1{text-align:center}.meta{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-bottom:12px}table{width:100%;border-collapse:collapse;margin-top:24px}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:right}td:first-child,th:first-child{text-align:left}.total{font-size:1.2em;font-weight:bold}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Print</button><h1>Receipt</h1><div class="meta"><span>Receipt: ${escapeHtml(receipt.receiptNo)}</span><span>Invoice: ${escapeHtml(receipt.invoiceNo)}</span></div><p>Work Order: ${escapeHtml(receipt.workOrderNo)}</p><p>Customer: ${escapeHtml(receipt.billingParty?.name)}</p><table><tr><th>Payment</th><th>Method</th><th>Reference</th><th>Amount</th></tr><tr><td>${escapeHtml(receipt.payment.paymentNo)}</td><td>${escapeHtml(receipt.payment.method)}</td><td>${escapeHtml(receipt.payment.reference)}</td><td>${Number(receipt.payment.amount).toFixed(2)}</td></tr><tr class="total"><td colspan="3">Received</td><td>${Number(receipt.payment.amount).toFixed(2)}</td></tr></table></body></html>`;
+    return this.getPrintableReceiptByData(receipt, size);
   }
 
   async getPrintableInvoice(invoiceId: string) {
@@ -713,6 +703,10 @@ export class BillingService {
     return this.invoiceRepository.findPaymentsPaginated(getPagination(query), query);
   }
 
+  async getPaymentSummary(query: PaymentListQueryDto) {
+    return this.invoiceRepository.getPaymentsSummary(query);
+  }
+
   async getPaymentReceipt(paymentNo: string) {
     const invoice: any = await this.invoiceRepository.findPaymentByNo(paymentNo);
     if (!invoice) throw new BusinessException('4040', 'Payment not found');
@@ -732,9 +726,9 @@ export class BillingService {
     };
   }
 
-  async getPrintablePaymentReceipt(paymentNo: string) {
+  async getPrintablePaymentReceipt(paymentNo: string, size?: string) {
     const receipt = await this.getPaymentReceipt(paymentNo);
-    return this.getPrintableReceiptByData(receipt);
+    return this.getPrintableReceiptByData(receipt, size);
   }
 
   async receivePayment(
@@ -843,7 +837,7 @@ export class BillingService {
     return issuedParts.size === 0;
   }
 
-  private async getPrintableReceiptByData(receipt: any) {
+  private async getPrintableReceiptByData(receipt: any, size?: string) {
     const escapeHtml = (value: unknown) =>
       String(value ?? '').replace(
         /[&<>'"]/g,
@@ -856,6 +850,228 @@ export class BillingService {
             '"': '&quot;',
           })[char] as string,
       );
-    return `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${escapeHtml(receipt.receiptNo)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#222}h1{text-align:center}.meta{display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-bottom:12px}table{width:100%;border-collapse:collapse;margin-top:24px}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:right}td:first-child,th:first-child{text-align:left}.total{font-size:1.2em;font-weight:bold}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Print</button><h1>Receipt</h1><div class="meta"><span>Receipt: ${escapeHtml(receipt.receiptNo)}</span><span>Invoice: ${escapeHtml(receipt.invoiceNo)}</span></div><p>Work Order: ${escapeHtml(receipt.workOrderNo)}</p><p>Customer: ${escapeHtml(receipt.billingParty?.name)}</p><table><tr><th>Method</th><th>Reference</th><th>Amount</th></tr><tr><td>${escapeHtml(receipt.payment.method)}</td><td>${escapeHtml(receipt.payment.reference)}</td><td>${Number(receipt.payment.amount).toFixed(2)}</td></tr></table></body></html>`;
+    const currency = (value: unknown) =>
+      Number(value ?? 0).toLocaleString('th-TH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    const formatDate = (value: unknown) =>
+      value
+        ? new Intl.DateTimeFormat('th-TH', {
+            dateStyle: 'long',
+            timeStyle: 'short',
+            timeZone: 'Asia/Bangkok',
+          }).format(new Date(String(value)))
+        : '-';
+    const methodLabel: Record<string, string> = {
+      CASH: 'เงินสด / Cash',
+      TRANSFER: 'โอนเงิน / Bank Transfer',
+      CARD: 'บัตรเครดิต/เดบิต / Card',
+      QR: 'PromptPay QR',
+      OTHER: 'อื่น ๆ / Other',
+    };
+    const payment = receipt.payment ?? {};
+    const customerName = receipt.billingParty?.name || '-';
+    const customerPhone = receipt.billingParty?.phone || '';
+    const customerTaxId = receipt.billingParty?.taxId || '';
+    const customerAddress = [
+      receipt.billingParty?.address,
+      receipt.billingParty?.branchNo
+        ? `สาขา ${receipt.billingParty.branchNo}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const vehicle = [
+      receipt.vehicleSnapshot?.brand,
+      receipt.vehicleSnapshot?.model,
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const hasReference = Boolean(payment.reference);
+    const hasNote = Boolean(payment.note);
+    const printSize: ReceiptPrintSize =
+      size === '80mm' || size === '58mm' ? size : 'a4';
+    const isThermal = printSize !== 'a4';
+    const paperWidth = printSize === '58mm' ? '58mm' : '80mm';
+    const receiptClass = isThermal ? 'sheet thermal' : 'sheet';
+    const printLabel =
+      printSize === '80mm'
+        ? 'พิมพ์ใบเสร็จ 80 มม.'
+        : printSize === '58mm'
+          ? 'พิมพ์ใบเสร็จ 58 มม.'
+          : 'พิมพ์ใบเสร็จ A4';
+
+    return `<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Receipt ${escapeHtml(receipt.receiptNo)}</title>
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; }
+      @page { size: ${isThermal ? `${paperWidth} auto` : 'A4'}; margin: ${isThermal ? '2mm' : '12mm'}; }
+      body {
+        margin: 0;
+        background: ${isThermal ? '#fff' : '#eef3f7'};
+        color: #162235;
+        font-family: Tahoma, "Noto Sans Thai", "Leelawadee UI", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .toolbar {
+        width: ${isThermal ? paperWidth : '186mm'};
+        margin: 18px auto 10px;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .print-button {
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 16px;
+        color: #fff;
+        background: #0f766e;
+        font: 700 13px/1 Tahoma, sans-serif;
+        cursor: pointer;
+        box-shadow: 0 6px 14px rgba(15, 118, 110, .22);
+      }
+      .sheet {
+        width: ${isThermal ? paperWidth : '186mm'};
+        min-height: ${isThermal ? '0' : '252mm'};
+        margin: ${isThermal ? '0 auto' : '0 auto 24px'};
+        padding: ${isThermal ? '4mm' : '14mm'};
+        background: #fff;
+        box-shadow: ${isThermal ? 'none' : '0 14px 40px rgba(15, 23, 42, .14)'};
+      }
+      .document-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 22px;
+        padding-bottom: 8mm;
+        border-bottom: 2px solid #0f766e;
+      }
+      .brand { display: flex; align-items: center; gap: 13px; }
+      .brand-mark {
+        width: 47px; height: 47px; border-radius: 14px;
+        display: grid; place-items: center;
+        background: linear-gradient(145deg, #0f766e, #115e59);
+        color: #fff; font: 800 18px/1 Arial, sans-serif;
+        letter-spacing: -1px;
+      }
+      .brand-name { color: #0f172a; font-size: 18px; font-weight: 800; letter-spacing: .2px; }
+      .brand-subtitle { margin-top: 3px; color: #64748b; font-size: 10px; }
+      .document-type { text-align: right; }
+      .document-type h1 { margin: 0; color: #0f172a; font-size: 27px; line-height: 1.1; letter-spacing: -.5px; }
+      .document-type p { margin: 4px 0 0; color: #64748b; font-size: 11px; }
+      .paid-badge {
+        display: inline-block; margin-top: 8px; border: 1px solid #99f6e4;
+        border-radius: 999px; padding: 4px 9px; background: #f0fdfa;
+        color: #0f766e; font-size: 10px; font-weight: 800; letter-spacing: .5px;
+      }
+      .metadata { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; margin: 8mm 0; }
+      .metadata-item { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px dashed #d7e0e8; font-size: 11px; }
+      .metadata-item span { color: #64748b; }
+      .metadata-item strong { color: #1e293b; font-family: "Courier New", monospace; font-size: 11px; text-align: right; }
+      .info-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; margin: 8mm 0; }
+      .info-card { min-height: 92px; padding: 14px 15px; border: 1px solid #dce6ec; border-radius: 12px; background: #fbfdfe; }
+      .info-card h2 { margin: 0 0 9px; color: #0f766e; font-size: 10px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+      .info-card strong { display: block; color: #172033; font-size: 14px; }
+      .info-card p { margin: 4px 0 0; color: #607086; font-size: 10.5px; line-height: 1.5; }
+      .payment-table { width: 100%; margin-top: 8mm; border-collapse: separate; border-spacing: 0; overflow: hidden; border: 1px solid #dce6ec; border-radius: 12px; }
+      .payment-table thead th { padding: 10px 12px; background: #edf7f6; color: #31545a; font-size: 10px; font-weight: 800; letter-spacing: .35px; text-align: left; }
+      .payment-table thead th:last-child, .payment-table td:last-child { text-align: right; }
+      .payment-table td { padding: 14px 12px; border-top: 1px solid #e4ebf0; color: #26364a; font-size: 12px; vertical-align: top; }
+      .payment-table .method { font-weight: 800; color: #0f766e; }
+      .payment-table .amount { color: #087569; font-family: "Courier New", monospace; font-size: 15px; font-weight: 800; white-space: nowrap; }
+      .amount-summary { display: flex; justify-content: flex-end; margin-top: 4mm; }
+      .amount-box { min-width: 265px; padding: 14px 16px; border-radius: 12px; background: #0f766e; color: #fff; }
+      .amount-box .label { display: block; font-size: 10px; font-weight: 700; opacity: .8; }
+      .amount-box .amount { display: block; margin-top: 4px; font-family: "Courier New", monospace; font-size: 23px; font-weight: 800; text-align: right; }
+      .note { margin-top: 6mm; padding: 11px 13px; border-left: 3px solid #14b8a6; border-radius: 6px; background: #f0fdfa; color: #365f61; font-size: 10.5px; line-height: 1.55; }
+      .note strong { color: #0f766e; }
+      .signature { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 22mm; }
+      .signature div { padding-top: 8px; border-top: 1px solid #94a3b8; color: #64748b; font-size: 10px; text-align: center; }
+      .footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 9mm; padding-top: 5mm; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 9px; }
+      .thermal .document-header { display: block; padding-bottom: 4mm; text-align: center; }
+      .thermal .brand { justify-content: center; gap: 8px; }
+      .thermal .brand-mark { width: 34px; height: 34px; border-radius: 10px; font-size: 14px; }
+      .thermal .brand-name { font-size: 14px; }
+      .thermal .brand-subtitle { font-size: 8px; }
+      .thermal .document-type { margin-top: 4mm; text-align: center; }
+      .thermal .document-type h1 { font-size: 19px; }
+      .thermal .document-type p { font-size: 9px; }
+      .thermal .paid-badge { margin-top: 5px; font-size: 8px; }
+      .thermal .metadata { grid-template-columns: 1fr; gap: 0; margin: 4mm 0; }
+      .thermal .metadata-item { padding: 5px 0; font-size: 9px; }
+      .thermal .metadata-item strong { font-size: 9px; }
+      .thermal .info-grid { grid-template-columns: 1fr; gap: 7px; margin: 4mm 0; }
+      .thermal .info-card { min-height: 0; padding: 9px 10px; border-radius: 8px; }
+      .thermal .info-card h2 { margin-bottom: 5px; font-size: 8px; }
+      .thermal .info-card strong { font-size: 11px; }
+      .thermal .info-card p { font-size: 8.5px; }
+      .thermal .payment-table { margin-top: 4mm; border-radius: 8px; }
+      .thermal .payment-table thead th { padding: 7px 5px; font-size: 8px; }
+      .thermal .payment-table th:nth-child(1), .thermal .payment-table td:nth-child(1) { display: none; }
+      .thermal .payment-table td { padding: 9px 5px; font-size: 9px; word-break: break-word; }
+      .thermal .payment-table .amount { font-size: 11px; }
+      .thermal .amount-summary { margin-top: 3mm; }
+      .thermal .amount-box { min-width: 0; width: 100%; padding: 10px; border-radius: 8px; }
+      .thermal .amount-box .label { font-size: 8px; }
+      .thermal .amount-box .amount { font-size: 17px; }
+      .thermal .note { margin-top: 4mm; padding: 8px 9px; font-size: 8.5px; }
+      .thermal .signature { display: none; }
+      .thermal .footer { display: block; margin-top: 5mm; padding-top: 3mm; font-size: 8px; text-align: center; }
+      .thermal .footer span { display: block; margin: 2px 0; }
+      @media print {
+        body { background: #fff; }
+        .toolbar { display: none; }
+        .sheet { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+      }
+      @media (max-width: 760px) {
+        .toolbar, .sheet { width: calc(100% - 20px); }
+        .sheet { padding: 24px; }
+        .document-header, .info-grid, .metadata { grid-template-columns: 1fr; display: grid; }
+        .document-type { text-align: left; }
+        .amount-summary { justify-content: stretch; }
+        .amount-box { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar"><button class="print-button" onclick="window.print()">${printLabel}</button></div>
+    <main class="${receiptClass}">
+      <header class="document-header">
+        <div class="brand">
+          <div class="brand-mark">AS</div>
+          <div><div class="brand-name">AutoServicePro</div><div class="brand-subtitle">Automotive service &amp; repair management</div></div>
+        </div>
+        <div class="document-type"><h1>ใบเสร็จรับเงิน</h1><p>RECEIPT</p><span class="paid-badge">PAID / รับชำระแล้ว</span></div>
+      </header>
+
+      <section class="metadata">
+        <div class="metadata-item"><span>เลขที่ใบเสร็จ</span><strong>${escapeHtml(receipt.receiptNo)}</strong></div>
+        <div class="metadata-item"><span>วันที่รับชำระ</span><strong>${escapeHtml(formatDate(receipt.issuedAt))}</strong></div>
+        <div class="metadata-item"><span>เลขที่ Invoice</span><strong>${escapeHtml(receipt.invoiceNo)}</strong></div>
+        <div class="metadata-item"><span>เลขที่ใบสั่งงาน</span><strong>${escapeHtml(receipt.workOrderNo)}</strong></div>
+      </section>
+
+      <section class="info-grid">
+        <article class="info-card"><h2>ข้อมูลผู้ชำระเงิน / Bill to</h2><strong>${escapeHtml(customerName)}</strong>${customerPhone ? `<p>โทร. ${escapeHtml(customerPhone)}</p>` : ''}${customerTaxId ? `<p>เลขประจำตัวผู้เสียภาษี ${escapeHtml(customerTaxId)}</p>` : ''}${customerAddress ? `<p>${escapeHtml(customerAddress)}</p>` : ''}</article>
+        <article class="info-card"><h2>ข้อมูลรถ / Vehicle</h2><strong>${escapeHtml(receipt.vehicleSnapshot?.licensePlate || '-')} ${escapeHtml(receipt.vehicleSnapshot?.province || '')}</strong><p>${escapeHtml(vehicle || 'ไม่ระบุรุ่นรถ')}</p></article>
+      </section>
+
+      <table class="payment-table">
+        <thead><tr><th>รายการรับชำระ</th><th>วิธีชำระเงิน</th><th>เลขอ้างอิง</th><th>จำนวนเงิน</th></tr></thead>
+        <tbody><tr><td><strong>${escapeHtml(receipt.receiptNo)}</strong><br><span style="color:#64748b;font-size:10px">Payment receipt</span></td><td class="method">${escapeHtml(methodLabel[payment.method] || payment.method || '-')}</td><td>${hasReference ? escapeHtml(payment.reference) : '-'}</td><td class="amount">฿ ${currency(payment.amount)}</td></tr></tbody>
+      </table>
+
+      <div class="amount-summary"><div class="amount-box"><span class="label">ยอดรับชำระสุทธิ / AMOUNT RECEIVED</span><span class="amount">฿ ${currency(payment.amount)}</span></div></div>
+      ${hasNote ? `<div class="note"><strong>หมายเหตุ / Note</strong><br>${escapeHtml(payment.note)}</div>` : ''}
+      <div class="note"><strong>เอกสารรับชำระเงิน</strong> ฉบับนี้ออกโดยระบบ AutoServicePro เพื่อยืนยันการรับชำระตามรายละเอียดข้างต้น</div>
+      <section class="signature"><div>ผู้รับชำระเงิน / Received by</div><div>ผู้ชำระเงิน / Customer</div></section>
+      <footer class="footer"><span>AutoServicePro · Payment receipt</span><span>พิมพ์เมื่อ ${escapeHtml(formatDate(new Date()))}</span></footer>
+    </main>
+  </body>
+</html>`;
   }
 }

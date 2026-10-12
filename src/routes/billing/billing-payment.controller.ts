@@ -20,6 +20,14 @@ export class BillingPaymentController {
     return this.billingService.listPayments(query);
   }
 
+  @Get('summary')
+  @Permissions('view:invoices')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  summary(@Query() query: PaymentListQueryDto) {
+    return this.billingService.getPaymentSummary(query);
+  }
+
   @Get(':paymentNo/receipt')
   @Permissions('view:invoices')
   @UseInterceptors(ResponseInterceptor)
@@ -30,7 +38,13 @@ export class BillingPaymentController {
 
   @Get(':paymentNo/receipt/print')
   @Permissions('view:invoices')
-  async printReceipt(@Param('paymentNo') paymentNo: string, @Res() response: Response) {
-    response.type('html').send(await this.billingService.getPrintablePaymentReceipt(paymentNo));
+  async printReceipt(
+    @Param('paymentNo') paymentNo: string,
+    @Query('size') size: string | undefined,
+    @Res() response: Response,
+  ) {
+    response
+      .type('html')
+      .send(await this.billingService.getPrintablePaymentReceipt(paymentNo, size));
   }
 }

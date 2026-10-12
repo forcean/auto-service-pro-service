@@ -162,10 +162,14 @@ export class BillingController {
 
   @Get(':id/receipt/print')
   @Permissions('view:invoices')
-  async printReceipt(@Param('id') id: string, @Res() response: Response) {
+  async printReceipt(
+    @Param('id') id: string,
+    @Query('size') size: string | undefined,
+    @Res() response: Response,
+  ) {
     response
       .type('html')
-      .send(await this.billingService.getPrintableReceipt(id));
+      .send(await this.billingService.getPrintableReceipt(id, size));
   }
 
   @Get(':id/audit-events')
