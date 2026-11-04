@@ -35,6 +35,7 @@ export class AdditionalProblem {
   createdBy!: string;
 
   @Prop({
+    type: String,
     enum: EAdditionalProblemStatus,
     default: EAdditionalProblemStatus.PENDING,
   })
@@ -85,6 +86,7 @@ export class WorkOrderTaskEntity {
   description?: string;
 
   @Prop({
+    type: String,
     enum: ETaskPriority,
     default: ETaskPriority.NORMAL,
   })
@@ -99,6 +101,7 @@ export class WorkOrderTaskEntity {
    * CANCELLED
    */
   @Prop({
+    type: String,
     enum: ETaskStatus,
     default: ETaskStatus.WAITING,
     index: true,
@@ -106,6 +109,7 @@ export class WorkOrderTaskEntity {
   status!: ETaskStatus;
 
   @Prop({
+    type: String,
     enum: ETaskType,
     default: ETaskType.EXECUTION,
     index: true,
@@ -120,7 +124,7 @@ export class WorkOrderTaskEntity {
   @Prop({ default: true })
   isRequired!: boolean;
 
-  @Prop({ enum: ETaskBlockedReason })
+  @Prop({ type: String, enum: ETaskBlockedReason })
   blockedReason?: ETaskBlockedReason;
 
   @Prop({ type: [String], default: [] })

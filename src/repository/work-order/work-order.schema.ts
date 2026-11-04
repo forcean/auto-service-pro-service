@@ -23,6 +23,7 @@ export class InspectionItem {
   item!: string;
 
   @Prop({
+    type: String,
     enum: ['GOOD', 'WARNING', 'BAD'],
     default: 'GOOD',
   })
@@ -53,6 +54,7 @@ export class WorkOrderEntity {
   vehicleId!: Types.ObjectId;
 
   @Prop({
+    type: String,
     enum: EWorkOrderStatus,
     default: EWorkOrderStatus.OPEN,
     index: true,
@@ -65,6 +67,7 @@ export class WorkOrderEntity {
   mileage!: number;
 
   @Prop({
+    type: String,
     enum: EFuelLevel,
   })
   fuelLevel?: EFuelLevel;
