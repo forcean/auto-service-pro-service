@@ -16,11 +16,11 @@ export class ProductCategoriesRepository {
       isDeleted: { $ne: true },
     };
 
-    if (dto.isActive !== undefined) {
+    if (typeof dto.isActive === 'boolean') {
       query.isActive = dto.isActive;
     }
 
-    if (dto.isSelectable !== undefined) {
+    if (typeof dto.isSelectable === 'boolean') {
       query.isSelectable = dto.isSelectable;
     }
     return await this.productCategoriesEntity
