@@ -185,6 +185,35 @@ export class UserManageService {
     }
   }
 
+  async getCurrentUserProfile(authUser: AuthUser): Promise<IGetUser> {
+    try {
+      const user = await this.usersRepository.getUserByPublicId(authUser.publicId);
+      if (!user) {
+        throw new BusinessException('4040', 'User does not exist');
+      }
+
+      return {
+        id: user._id,
+        publicId: user.publicId,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        activeFlag: user.activeFlag,
+        createdDt: user.createdDt,
+        createdBy: user.createdBy,
+        lastLogin: user.lastAccessDt,
+        role: user.role,
+        managerId: user.managerId,
+        updatedDt: user.updatedDt,
+        updatedBy: user.updatedBy,
+      };
+    } catch (error) {
+      console.log(`Get current user profile failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    }
+  }
+
   async resetPassword(
     userId: string,
     newPainTextPassword: string,

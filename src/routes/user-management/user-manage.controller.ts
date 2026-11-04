@@ -91,6 +91,17 @@ export class UserManageController {
     );
   }
 
+  @Get('profile')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get current user profile successful')
+  async getCurrentUserProfile(@Req() { authUser }: Request) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+    return await this.userManageService.getCurrentUserProfile(authUser);
+  }
+
   @Patch(':id/update')
   @UseGuards(PermissionsGuard)
   @Permissions('update:user')
