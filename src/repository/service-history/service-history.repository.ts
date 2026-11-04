@@ -31,4 +31,31 @@ export class ServiceHistoryRepository {
       })
       .lean();
   }
+
+  async findByVehicleId(vehicleId: string) {
+    const normalizedVehicleId = new Types.ObjectId(vehicleId);
+
+    return this.model
+      .find({
+        isDeleted: false,
+        // New records store only the ObjectId. Older records were written
+        // while the work order relation was populated, leaving the complete
+        // vehicle object in this field. Keep both forms readable until the
+        // historical collection is migrated.
+        $or: [
+          { vehicleId: normalizedVehicleId },
+          { 'vehicleId._id': normalizedVehicleId },
+        ],
+      })
+      .populate({
+        path: 'workOrderId',
+        select: 'advisorId internalRemark inspections',
+        populate: {
+          path: 'advisorId',
+          select: 'firstname lastname publicId',
+        },
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+  }
 }

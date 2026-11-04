@@ -95,10 +95,28 @@ export class CustomersVehicleRepository {
   ) {
     const { page, limit, skip } = pagination;
 
-    const filter: FilterQuery<CustomersVehicleEntity> = { }
+    const filter: FilterQuery<CustomersVehicleEntity> = {};
+
+    if (query.keyword?.trim()) {
+      const keyword = {
+        $regex: this.escapeRegExp(query.keyword.trim()),
+        $options: 'i',
+      };
+      filter.$or = [
+        { licensePlate: keyword },
+        { firstname: keyword },
+        { lastname: keyword },
+        { phoneNumber: keyword },
+        { 'vehicle.brand': keyword },
+        { 'vehicle.model': keyword },
+      ];
+    }
 
     if (query.licensePlate) {
-      filter.licensePlate = query.licensePlate;
+      filter.licensePlate = {
+        $regex: this.escapeRegExp(query.licensePlate.trim()),
+        $options: 'i',
+      };
     }
 
     if (query.province) {
@@ -110,20 +128,22 @@ export class CustomersVehicleRepository {
     }
 
     if (query.model) {
-      filter.model = query.model;
+      filter['vehicle.modelCode'] = query.model;
     }
 
     if (query.brand) {
-      filter.brand = query.brand;
+      filter['vehicle.brandCode'] = query.brand;
     }
+
+    const sort = this.mapListSort(sortBy);
 
     const [data, total] = await Promise.all([
       this.CustomersVehicleEntity.find(filter)
-        .sort(sortBy ?? 'registrationDt.desc')
+        .sort(sort)
         .skip(skip)
         .limit(limit)
         .lean(),
-      this.CustomersVehicleEntity.countDocuments(),
+      this.CustomersVehicleEntity.countDocuments(filter),
     ]);
 
     return {
@@ -133,5 +153,79 @@ export class CustomersVehicleRepository {
       totalPages: Math.ceil(total / limit),
       data,
     };
+  }
+
+  async getDashboardSummary() {
+    const now = new Date();
+    const startOfCurrentMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
+
+    const [summary] = await this.CustomersVehicleEntity.aggregate([
+      {
+        $facet: {
+          vehicles: [{ $count: 'count' }],
+          customers: [
+            { $match: { phoneNumber: { $type: 'string', $ne: '' } } },
+            { $group: { _id: '$phoneNumber' } },
+            { $count: 'count' },
+          ],
+          brands: [
+            { $match: { 'vehicle.brand': { $type: 'string', $ne: '' } } },
+            {
+              $group: {
+                _id: { $ifNull: ['$vehicle.brandCode', '$vehicle.brand'] },
+              },
+            },
+            { $count: 'count' },
+          ],
+          newVehicles: [
+            { $match: { registrationDt: { $gte: startOfCurrentMonth } } },
+            { $count: 'count' },
+          ],
+        },
+      },
+    ]);
+
+    const count = (key: 'vehicles' | 'customers' | 'brands' | 'newVehicles') =>
+      Number(summary?.[key]?.[0]?.count ?? 0);
+
+    return {
+      totalVehicles: count('vehicles'),
+      totalCustomers: count('customers'),
+      totalBrands: count('brands'),
+      newVehicles: count('newVehicles'),
+    };
+  }
+
+  private mapListSort(sortBy: SortCriterial | null): SortCriterial {
+    const fieldMap: Record<string, string> = {
+      plateNumber: 'licensePlate',
+      ownerName: 'firstname',
+      brand: 'vehicle.brand',
+      model: 'vehicle.model',
+      mileage: 'mileage',
+      registrationDt: 'registrationDt',
+      lastServiceDate: 'registrationDt',
+      status: 'status',
+    };
+
+    if (!sortBy || !Object.keys(sortBy).length) {
+      return { registrationDt: 'desc' };
+    }
+
+    const mappedSort = Object.entries(sortBy).reduce<SortCriterial>((result, [field, direction]) => {
+      const databaseField = fieldMap[field];
+      if (databaseField) result[databaseField] = direction;
+      return result;
+    }, {}) || { registrationDt: 'desc' };
+
+    return Object.keys(mappedSort).length
+      ? mappedSort
+      : { registrationDt: 'desc' };
+  }
+
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

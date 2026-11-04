@@ -104,6 +104,13 @@ import { WarrantyClaimRepository } from './warranty-claim/warranty-claim.reposit
 } from './daily-closing/daily-closing.schema';
 import { DailyClosingRepository } from './daily-closing/daily-closing.repository';
 import { OperationsRepository } from './operations/operations.repository';
+import {  VehicleDocumentEntity,
+  VehicleDocumentSchema,
+} from './vehicle-document/vehicle-document.schema';
+import { VehicleDocumentRepository } from './vehicle-document/vehicle-document.repository';
+import { CustomerCrmRepository } from './customer-crm/customer-crm.repository';
+import { CustomerEntity, CustomerSchema } from './customer/customer.schema';
+import { CustomerRepository } from './customer/customer.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -156,6 +163,8 @@ import { OperationsRepository } from './operations/operations.repository';
         { name: AppointmentEntity.name, schema: AppointmentSchema },
         { name: WarrantyClaimEntity.name, schema: WarrantyClaimSchema },
         { name: DailyClosingEntity.name, schema: DailyClosingSchema },
+        { name: VehicleDocumentEntity.name, schema: VehicleDocumentSchema },
+        { name: CustomerEntity.name, schema: CustomerSchema },
       ],
       'autoservice',
     ),
@@ -189,6 +198,9 @@ import { OperationsRepository } from './operations/operations.repository';
     WarrantyClaimRepository,
     DailyClosingRepository,
     OperationsRepository,
+    VehicleDocumentRepository,
+    CustomerCrmRepository,
+    CustomerRepository,
   ],
   exports: [
     UsersRepository,
@@ -219,6 +231,9 @@ import { OperationsRepository } from './operations/operations.repository';
     WarrantyClaimRepository,
     DailyClosingRepository,
     OperationsRepository,
+    VehicleDocumentRepository,
+    CustomerCrmRepository,
+    CustomerRepository,
   ],
 })
 export class RepositoryModule {}
