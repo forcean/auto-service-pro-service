@@ -7,8 +7,14 @@ import {
   Min,
   IsEnum,
   IsDateString,
+  IsBoolean,
 } from 'class-validator';
-import { EStockMovementType, EStockReferenceType } from '../enums/stock.enum';
+import { Type } from 'class-transformer';
+import {
+  EStockMovementType,
+  EStockReferenceType,
+  EStockStatus,
+} from '../enums/stock.enum';
 import { PaginationQuery } from 'src/common/dto/pagination.dto';
 
 export class CreateStockDto {
@@ -54,6 +60,25 @@ export class UpdateStockDto {
   @IsInt()
   @Min(0)
   minStock?: number;
+}
+
+export class getStockListDto extends PaginationQuery {
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+
+  @IsOptional()
+  @IsMongoId()
+  warehouseId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  alertOnly?: boolean;
+
+  @IsOptional()
+  @IsEnum(EStockStatus)
+  status?: EStockStatus;
 }
 
 export class ReceiveStockDto {
