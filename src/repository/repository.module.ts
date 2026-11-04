@@ -99,6 +99,11 @@ import { AppointmentRepository } from './appointment/appointment.repository';
   WarrantyClaimSchema,
 } from './warranty-claim/warranty-claim.schema';
 import { WarrantyClaimRepository } from './warranty-claim/warranty-claim.repository';
+  import {DailyClosingEntity,
+  DailyClosingSchema,
+} from './daily-closing/daily-closing.schema';
+import { DailyClosingRepository } from './daily-closing/daily-closing.repository';
+import { OperationsRepository } from './operations/operations.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -150,6 +155,7 @@ import { WarrantyClaimRepository } from './warranty-claim/warranty-claim.reposit
         { name: WorkOrderPaymentEntity.name, schema: WorkOrderPaymentSchema },
         { name: AppointmentEntity.name, schema: AppointmentSchema },
         { name: WarrantyClaimEntity.name, schema: WarrantyClaimSchema },
+        { name: DailyClosingEntity.name, schema: DailyClosingSchema },
       ],
       'autoservice',
     ),
@@ -181,6 +187,8 @@ import { WarrantyClaimRepository } from './warranty-claim/warranty-claim.reposit
     WorkOrderPaymentRepository,
     AppointmentRepository,
     WarrantyClaimRepository,
+    DailyClosingRepository,
+    OperationsRepository,
   ],
   exports: [
     UsersRepository,
@@ -209,6 +217,8 @@ import { WarrantyClaimRepository } from './warranty-claim/warranty-claim.reposit
     WorkOrderPaymentRepository,
     AppointmentRepository,
     WarrantyClaimRepository,
+    DailyClosingRepository,
+    OperationsRepository,
   ],
 })
 export class RepositoryModule {}

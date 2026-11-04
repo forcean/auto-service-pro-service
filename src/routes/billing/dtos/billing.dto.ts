@@ -52,6 +52,10 @@ export class CreateRefundDto {
   @IsString()
   @IsNotEmpty()
   reason!: string;
+
+  @IsOptional()
+  @IsEnum(EPaymentMethod)
+  method?: EPaymentMethod;
 }
 
 export class VoidInvoiceDto {

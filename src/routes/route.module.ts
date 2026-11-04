@@ -15,6 +15,7 @@ import { BillingModule } from './billing/billing.module';
 import { QuotationPresetModule } from './quotation-preset/quotation-preset.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { WarrantyClaimModule } from './warranty-claim/warranty-claim.module';
+import { OperationsModule } from './operations/operations.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { WarrantyClaimModule } from './warranty-claim/warranty-claim.module';
     QuotationPresetModule,
     AppointmentModule,
     WarrantyClaimModule,
+    OperationsModule,
     TaskModule,
     PartIssueModule,
     BillingModule,
