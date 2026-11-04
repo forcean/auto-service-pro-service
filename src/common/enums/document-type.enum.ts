@@ -6,6 +6,7 @@ export enum EDocumentType {
   REFUND = 'REFUND',
   PURCHASE_ORDER = 'PURCHASE_ORDER',
   PART_ISSUE = 'PART_ISSUE',
+  WARRANTY_CLAIM = 'WARRANTY_CLAIM',
 }
 
 export enum ESequenceType {
