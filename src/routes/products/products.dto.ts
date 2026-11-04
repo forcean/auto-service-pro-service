@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
+import { ArrayNotEmpty, IsArray, IsBoolean, IsIn, IsInt, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
 import { Type } from "class-transformer"
 import { PaginationQuery } from "src/common/dto/pagination.dto";
 export class EngineDto {
@@ -183,6 +183,117 @@ export class getProductCategoriesDto {
   @Type(() => Boolean)
   @IsBoolean()
   isSelectable?: boolean;
+}
+
+export class createProductCategoryDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  code!: string;
+
+  @IsOptional()
+  @IsMongoId()
+  parentId?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isSelectable?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  allowVehicleBinding?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  allowStock?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class updateProductCategoryDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  code?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isSelectable?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  allowVehicleBinding?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  allowStock?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class reorderProductCategoriesDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsMongoId({ each: true })
+  categoryIds!: string[];
+}
+
+export class createProductBrandDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  code!: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class updateProductBrandDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 export class updateProductDto {

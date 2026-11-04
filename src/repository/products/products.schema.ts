@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { EProductStatus } from 'src/routes/products/interfaces/products.interface';
-import { ObjectId as String } from 'typeorm';
 
 export class Vehicles {
   @Prop({ type: String })

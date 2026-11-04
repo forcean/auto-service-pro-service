@@ -1,9 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  createProductBrandDto,
+  createProductCategoryDto,
   createProductDto,
   stockRequestDto,
   getProductCategoriesDto,
   getProductListDto,
+  reorderProductCategoriesDto,
+  updateProductBrandDto,
+  updateProductCategoryDto,
   updateProductDto,
 } from './products.dto';
 import { BusinessException } from 'src/common/exceptions/business.exception';
@@ -188,6 +193,125 @@ export class ProductsService {
     }
   }
 
+  async createProductCategory(
+    dto: createProductCategoryDto,
+    authUser: AuthUser,
+  ) {
+    this.ensureCatalogAccess(authUser);
+
+    const code = this.normalizeCode(dto.code);
+    const duplicate = await this.productCategoriesRepository.getCategoryByCode(code);
+    if (duplicate) {
+      throw new BusinessException('4091', 'Product category code already exists');
+    }
+
+    const parent = dto.parentId
+      ? await this.productCategoriesRepository.getCategoryById(dto.parentId)
+      : null;
+    if (dto.parentId && !parent) {
+      throw new BusinessException('4040', 'Parent product category not found');
+    }
+
+    const parentId = parent?._id.toString() ?? null;
+    const sortOrder = await this.productCategoriesRepository.getNextSortOrder(parentId);
+
+    const category = await this.productCategoriesRepository.createCategory(
+      {
+        name: dto.name.trim(),
+        code,
+        slug: this.slugFromCode(code),
+        parentId,
+        level: parent ? parent.level + 1 : 0,
+        path: parent ? [...(parent.path ?? []), parent._id.toString()] : [],
+        sortOrder,
+        isSelectable: dto.isSelectable ?? true,
+        allowVehicleBinding: dto.allowVehicleBinding ?? false,
+        allowStock: dto.allowStock ?? true,
+        isActive: dto.isActive ?? true,
+      },
+      authUser,
+    );
+
+    return { id: category._id.toString() };
+  }
+
+  async updateProductCategory(
+    categoryId: string,
+    dto: updateProductCategoryDto,
+    authUser: AuthUser,
+  ) {
+    this.ensureCatalogAccess(authUser);
+
+    const category = await this.productCategoriesRepository.getCategoryById(categoryId);
+    if (!category) {
+      throw new BusinessException('4040', 'Product category not found');
+    }
+
+    const code = dto.code ? this.normalizeCode(dto.code) : undefined;
+    if (code && code !== category.code) {
+      const duplicate = await this.productCategoriesRepository.getCategoryByCode(code);
+      if (duplicate && duplicate._id.toString() !== categoryId) {
+        throw new BusinessException('4091', 'Product category code already exists');
+      }
+    }
+
+    const updated = await this.productCategoriesRepository.updateCategory(
+      categoryId,
+      {
+        ...(dto.name !== undefined && { name: dto.name.trim() }),
+        ...(code && { code, slug: this.slugFromCode(code) }),
+        ...(dto.isSelectable !== undefined && { isSelectable: dto.isSelectable }),
+        ...(dto.allowVehicleBinding !== undefined && {
+          allowVehicleBinding: dto.allowVehicleBinding,
+        }),
+        ...(dto.allowStock !== undefined && { allowStock: dto.allowStock }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      },
+      authUser,
+    );
+
+    if (!updated) {
+      throw new BusinessException('5001', 'Update product category failed');
+    }
+
+    return { success: true };
+  }
+
+  async reorderProductCategories(
+    dto: reorderProductCategoriesDto,
+    authUser: AuthUser,
+  ) {
+    this.ensureCatalogAccess(authUser);
+
+    if (new Set(dto.categoryIds).size !== dto.categoryIds.length) {
+      throw new BusinessException('4000', 'Category ids must be unique');
+    }
+
+    const categories = await this.productCategoriesRepository.getCategoriesByIds(
+      dto.categoryIds,
+    );
+    if (categories.length !== dto.categoryIds.length) {
+      throw new BusinessException('4040', 'One or more product categories not found');
+    }
+
+    const parentIds = new Set(
+      categories.map((category) => category.parentId ?? '__root__'),
+    );
+    if (parentIds.size !== 1) {
+      throw new BusinessException(
+        '4000',
+        'Product categories must have the same parent to reorder',
+      );
+    }
+
+    await this.productCategoriesRepository.updateSortOrders(
+      dto.categoryIds,
+      authUser,
+    );
+
+    return { success: true };
+  }
+
   async getProductBrands(isActive: boolean) {
     try {
       const getBrands =
@@ -203,6 +327,8 @@ export class ProductsService {
           slug: data.slug,
           code: data.code,
           country: data.country,
+          description: data.description,
+          isActive: data.isActive,
           logoUrl: data.logo?.url,
         })),
       };
@@ -212,6 +338,71 @@ export class ProductsService {
       );
       throw error;
     }
+  }
+
+  async createProductBrand(dto: createProductBrandDto, authUser: AuthUser) {
+    this.ensureCatalogAccess(authUser);
+
+    const code = this.normalizeCode(dto.code);
+    const duplicate = await this.productBrandsRepository.getBrandByCode(code);
+    if (duplicate) {
+      throw new BusinessException('4091', 'Product brand code already exists');
+    }
+
+    const brand = await this.productBrandsRepository.createBrand(
+      {
+        name: dto.name.trim(),
+        code,
+        slug: this.slugFromCode(code),
+        country: dto.country?.trim() ?? '',
+        description: dto.description?.trim() ?? '',
+        isActive: dto.isActive ?? true,
+      },
+      authUser,
+    );
+
+    return { id: brand._id.toString() };
+  }
+
+  async updateProductBrand(
+    brandId: string,
+    dto: updateProductBrandDto,
+    authUser: AuthUser,
+  ) {
+    this.ensureCatalogAccess(authUser);
+
+    const brand = await this.productBrandsRepository.getBrandById(brandId);
+    if (!brand) {
+      throw new BusinessException('4041', 'Product brand not found');
+    }
+
+    const code = dto.code ? this.normalizeCode(dto.code) : undefined;
+    if (code && code !== brand.code) {
+      const duplicate = await this.productBrandsRepository.getBrandByCode(code);
+      if (duplicate && duplicate._id.toString() !== brandId) {
+        throw new BusinessException('4091', 'Product brand code already exists');
+      }
+    }
+
+    const updated = await this.productBrandsRepository.updateBrand(
+      brandId,
+      {
+        ...(dto.name !== undefined && { name: dto.name.trim() }),
+        ...(code && { code, slug: this.slugFromCode(code) }),
+        ...(dto.country !== undefined && { country: dto.country.trim() }),
+        ...(dto.description !== undefined && {
+          description: dto.description.trim(),
+        }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      },
+      authUser,
+    );
+
+    if (!updated) {
+      throw new BusinessException('5001', 'Update product brand failed');
+    }
+
+    return { success: true };
   }
 
   async getVehicleBrands(isActive: boolean) {
@@ -260,6 +451,23 @@ export class ProductsService {
       );
       throw error;
     }
+  }
+
+  private ensureCatalogAccess(authUser: AuthUser) {
+    if (authUser.role !== 'ADM' && authUser.role !== 'SO') {
+      throw new BusinessException(
+        '4030',
+        'Only system owner or admin can manage product catalog',
+      );
+    }
+  }
+
+  private normalizeCode(value: string) {
+    return value.trim().toUpperCase().replace(/\s+/g, '-');
+  }
+
+  private slugFromCode(code: string) {
+    return code.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
   private async buildTree(categories: any[]) {

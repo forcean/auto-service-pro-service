@@ -20,9 +20,14 @@ import {
   ResponseResultCode,
 } from 'src/common/response/response.decorator';
 import {
+  createProductBrandDto,
+  createProductCategoryDto,
   createProductDto,
   getProductCategoriesDto,
   getProductListDto,
+  reorderProductCategoriesDto,
+  updateProductBrandDto,
+  updateProductCategoryDto,
   updateProductDto,
 } from './products.dto';
 import type { Request } from 'express';
@@ -89,6 +94,58 @@ export class ProductsController {
     return await this.productsService.getProductCategories(queryDto);
   }
 
+  @Post('categories')
+  @UseGuards(PermissionsGuard)
+  @Permissions('create:product')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Create product category successful')
+  async createProductCategory(
+    @Body() dto: createProductCategoryDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.productsService.createProductCategory(dto, authUser);
+  }
+
+  @Patch('categories/reorder')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:product')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Reorder product categories successful')
+  async reorderProductCategories(
+    @Body() dto: reorderProductCategoriesDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.productsService.reorderProductCategories(dto, authUser);
+  }
+
+  @Patch('categories/:categoryId')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:product')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Update product category successful')
+  async updateProductCategory(
+    @Param('categoryId') categoryId: string,
+    @Body() dto: updateProductCategoryDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.productsService.updateProductCategory(categoryId, dto, authUser);
+  }
+
   @Get('brands')
   @UseGuards(PermissionsGuard)
   @Permissions()
@@ -104,6 +161,41 @@ export class ProductsController {
     }
 
     return await this.productsService.getProductBrands(isActive);
+  }
+
+  @Post('brands')
+  @UseGuards(PermissionsGuard)
+  @Permissions('create:product')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Create product brand successful')
+  async createProductBrand(
+    @Body() dto: createProductBrandDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.productsService.createProductBrand(dto, authUser);
+  }
+
+  @Patch('brands/:brandId')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:product')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Update product brand successful')
+  async updateProductBrand(
+    @Param('brandId') brandId: string,
+    @Body() dto: updateProductBrandDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.productsService.updateProductBrand(brandId, dto, authUser);
   }
 
   @Get('vehicles/brands')
