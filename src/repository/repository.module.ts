@@ -85,6 +85,12 @@ import {
   WorkOrderPaymentSchema,
 } from './work-order-payment/work-order-payment.schema';
 import { WorkOrderPaymentRepository } from './work-order-payment/work-order-payment.repository';
+import {
+  QuotationPresetEntity,
+  QuotationPresetSchema,
+} from './quotation-preset/quotation-preset.schema';
+import { QuotationPresetRepository } from './quotation-preset/quotation-preset.repository';
+import { CustomerRepository } from './customer/customer.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -128,6 +134,7 @@ import { WorkOrderPaymentRepository } from './work-order-payment/work-order-paym
         { name: WorkOrderEntity.name, schema: WorkOrderSchema },
         { name: CounterEntity.name, schema: CounterSchema },
         { name: QuotationEntity.name, schema: QuotationSchema },
+        { name: QuotationPresetEntity.name, schema: QuotationPresetSchema },
         { name: WorkOrderTaskEntity.name, schema: WorkOrderTaskSchema },
         { name: PartIssueEntity.name, schema: PartIssueSchema },
         { name: InvoiceEntity.name, schema: InvoiceSchema },
@@ -156,6 +163,7 @@ import { WorkOrderPaymentRepository } from './work-order-payment/work-order-paym
     WorkOrderRepository,
     CounterRepository,
     QuotationRepository,
+    QuotationPresetRepository,
     WorkOrderTaskRepository,
     PartIssueRepository,
     InvoiceRepository,
@@ -181,6 +189,7 @@ import { WorkOrderPaymentRepository } from './work-order-payment/work-order-paym
     WorkOrderRepository,
     CounterRepository,
     QuotationRepository,
+    QuotationPresetRepository,
     WorkOrderTaskRepository,
     PartIssueRepository,
     InvoiceRepository,
