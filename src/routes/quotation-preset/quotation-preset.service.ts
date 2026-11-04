@@ -20,7 +20,26 @@ export class QuotationPresetService {
   ) {}
 
   async getAll(query: GetQuotationPresetDto) {
-    const presets = await this.quotationPresetRepository.findAll(query.isActive);
+    const rawIsActive = query.isActive as unknown;
+    let isActive: boolean | undefined;
+
+    if (rawIsActive === undefined || rawIsActive === null || rawIsActive === '') {
+      isActive = undefined;
+    } else if (typeof rawIsActive === 'boolean') {
+      isActive = rawIsActive;
+    } else if (typeof rawIsActive === 'string') {
+      if (rawIsActive === 'true') {
+        isActive = true;
+      } else if (rawIsActive === 'false') {
+        isActive = false;
+      } else {
+        throw new BusinessException('4000', 'Invalid isActive query parameter');
+      }
+    } else {
+      throw new BusinessException('4000', 'Invalid isActive query parameter');
+    }
+
+    const presets = await this.quotationPresetRepository.findAll(isActive);
     return presets.map((preset) => this.toResponse(preset));
   }
 
