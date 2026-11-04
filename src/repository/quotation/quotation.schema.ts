@@ -13,6 +13,7 @@ export type QuotationDocument = HydratedDocument<QuotationEntity>;
 @Schema({ _id: false })
 export class QuotationItem {
   @Prop({
+    type: String,
     enum: EQuotationItemType,
     required: true,
   })
@@ -62,6 +63,7 @@ export const QuotationItemSchema = SchemaFactory.createForClass(QuotationItem);
 @Schema({ _id: false })
 export class ApprovalHistory {
   @Prop({
+    type: String,
     enum: ECustomerDecision,
     required: true,
   })
@@ -71,6 +73,7 @@ export class ApprovalHistory {
   customerName!: string;
 
   @Prop({
+    type: String,
     enum: EApprovalMethod,
   })
   method!: EApprovalMethod;
@@ -111,6 +114,7 @@ export class QuotationEntity {
   workOrderId!: Types.ObjectId;
 
   @Prop({
+    type: String,
     enum: EQuotationStatus,
     default: EQuotationStatus.DRAFT,
     index: true,
