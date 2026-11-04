@@ -96,10 +96,16 @@ export class CustomersVehicleRepository {
     const { page, limit, skip } = pagination;
 
     const filter: FilterQuery<CustomersVehicleEntity> = {};
+    const normalizeString = (value: unknown): string | undefined => {
+      if (typeof value !== 'string') return undefined;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : undefined;
+    };
 
-    if (query.keyword?.trim()) {
+    const keywordValue = normalizeString(query.keyword);
+    if (keywordValue) {
       const keyword = {
-        $regex: this.escapeRegExp(query.keyword.trim()),
+        $regex: this.escapeRegExp(keywordValue),
         $options: 'i',
       };
       filter.$or = [
@@ -112,27 +118,32 @@ export class CustomersVehicleRepository {
       ];
     }
 
-    if (query.licensePlate) {
+    const licensePlateValue = normalizeString(query.licensePlate);
+    if (licensePlateValue) {
       filter.licensePlate = {
-        $regex: this.escapeRegExp(query.licensePlate.trim()),
+        $regex: this.escapeRegExp(licensePlateValue),
         $options: 'i',
       };
     }
 
-    if (query.province) {
-      filter.province = query.province.toUpperCase();
+    const provinceValue = normalizeString(query.province);
+    if (provinceValue) {
+      filter.province = provinceValue.toUpperCase();
     }
 
-    if (query.status) {
-      filter.status = query.status.toUpperCase();
+    const statusValue = normalizeString(query.status);
+    if (statusValue) {
+      filter.status = statusValue.toUpperCase();
     }
 
-    if (query.model) {
-      filter['vehicle.modelCode'] = query.model;
+    const modelValue = normalizeString(query.model);
+    if (modelValue) {
+      filter['vehicle.modelCode'] = modelValue;
     }
 
-    if (query.brand) {
-      filter['vehicle.brandCode'] = query.brand;
+    const brandValue = normalizeString(query.brand);
+    if (brandValue) {
+      filter['vehicle.brandCode'] = brandValue;
     }
 
     const sort = this.mapListSort(sortBy);
