@@ -90,7 +90,11 @@ import {
   QuotationPresetSchema,
 } from './quotation-preset/quotation-preset.schema';
 import { QuotationPresetRepository } from './quotation-preset/quotation-preset.repository';
-import { CustomerRepository } from './customer/customer.repository';
+import {
+  AppointmentEntity,
+  AppointmentSchema,
+} from './appointment/appointment.schema';
+import { AppointmentRepository } from './appointment/appointment.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -140,6 +144,7 @@ import { CustomerRepository } from './customer/customer.repository';
         { name: InvoiceEntity.name, schema: InvoiceSchema },
         { name: ServiceHistoryEntity.name, schema: ServiceHistorySchema },
         { name: WorkOrderPaymentEntity.name, schema: WorkOrderPaymentSchema },
+        { name: AppointmentEntity.name, schema: AppointmentSchema },
       ],
       'autoservice',
     ),
@@ -169,6 +174,7 @@ import { CustomerRepository } from './customer/customer.repository';
     InvoiceRepository,
     ServiceHistoryRepository,
     WorkOrderPaymentRepository,
+    AppointmentRepository,
   ],
   exports: [
     UsersRepository,
@@ -195,6 +201,7 @@ import { CustomerRepository } from './customer/customer.repository';
     InvoiceRepository,
     ServiceHistoryRepository,
     WorkOrderPaymentRepository,
+    AppointmentRepository,
   ],
 })
 export class RepositoryModule {}

@@ -13,6 +13,7 @@ import { TaskModule } from './task/task.module';
 import { PartIssueModule } from './part-issue/part-issue.module';
 import { BillingModule } from './billing/billing.module';
 import { QuotationPresetModule } from './quotation-preset/quotation-preset.module';
+import { AppointmentModule } from './appointment/appointment.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { QuotationPresetModule } from './quotation-preset/quotation-preset.modul
     WorkOrderModule,
     QuotationModule,
     QuotationPresetModule,
+    AppointmentModule,
     TaskModule,
     PartIssueModule,
     BillingModule,
