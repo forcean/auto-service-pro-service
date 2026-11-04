@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ClientSession, FilterQuery, Model } from 'mongoose';
+import { ClientSession, FilterQuery, Model, Types } from 'mongoose';
 import { ProductsEntity } from './products.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -36,6 +36,27 @@ export class ProductsRepository {
       return null;
     }
     return mapMongoId(product);
+  }
+
+  async getProductNamesByIds(
+    productIds: Array<string | Types.ObjectId>,
+  ): Promise<Map<string, string>> {
+    if (!productIds.length) {
+      return new Map();
+    }
+
+    const products = await this.productsEntity
+      .find({
+        _id: { $in: productIds },
+        isDeleted: { $ne: true },
+      })
+      .select({ name: 1 })
+      .lean()
+      .exec();
+
+    return new Map(
+      products.map((product) => [product._id.toString(), product.name]),
+    );
   }
 
   async createProduct(

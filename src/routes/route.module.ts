@@ -12,6 +12,7 @@ import { QuotationModule } from './quotation/quotation.module';
 import { TaskModule } from './task/task.module';
 import { PartIssueModule } from './part-issue/part-issue.module';
 import { BillingModule } from './billing/billing.module';
+import { QuotationPresetModule } from './quotation-preset/quotation-preset.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { BillingModule } from './billing/billing.module';
     VehiclesModule,
     WorkOrderModule,
     QuotationModule,
+    QuotationPresetModule,
     TaskModule,
     PartIssueModule,
     BillingModule,
