@@ -7,6 +7,7 @@ import type { SortCriterial } from 'src/common/pipes/parse-sort.pipe';
 
 import { StocksRepository } from 'src/repository/stock/stock.repository';
 import { StockMovementRepository } from 'src/repository/stock-movement/stock-movement.repository';
+import { ProductsRepository } from 'src/repository/products/products.repository';
 
 import { AuthUser } from 'src/types/user.type';
 
@@ -15,6 +16,7 @@ import {
   CreateStockDto,
   CreateStockMovementDto,
   getMovementListDto,
+  getStockListDto,
   IssueStockDto,
   ReceiveStockDto,
   ReleaseReservationDto,
@@ -37,6 +39,9 @@ export class StockManagementService {
 
     @Inject(StockMovementRepository)
     private readonly movementRepository: StockMovementRepository,
+
+    @Inject(ProductsRepository)
+    private readonly productsRepository: ProductsRepository,
   ) {}
 
   async getStockDetail(productId: string) {
@@ -54,6 +59,27 @@ export class StockManagementService {
 
     return this.mapStockResponse(stock);
   }
+
+  async getStockList(dto: getStockListDto) {
+    const paging = getPagination(dto);
+    const result = await this.stocksRepository.getStockList(
+      dto,
+      paging.page,
+      paging.limit,
+    );
+    const productNames = await this.productsRepository.getProductNamesByIds(
+      result.data.map((stock) => stock.productId),
+    );
+
+    return {
+      ...result,
+      data: result.data.map((stock) => ({
+        ...this.mapStockResponse(stock),
+        productName: productNames.get(stock.productId.toString()) ?? stock.sku,
+      })),
+    };
+  }
+
   async getMovementHistory(productId: string) {
     await this.ensureStockExists(productId);
 

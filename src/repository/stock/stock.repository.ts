@@ -6,10 +6,12 @@ import { AuthUser } from 'src/types/user.type';
 import { StockEntity } from './stock.schema';
 import {
   CreateStockDto,
+  getStockListDto,
   UpdateStockDto,
 } from 'src/routes/stock-management/dtos/stock-management.dto';
 import { IStockManagementResponse } from 'src/routes/stock-management/interfaces/stock-management.interface';
 import { mapMongoId } from 'src/common/helper/mongo.helper';
+import { EStockStatus } from 'src/routes/stock-management/enums/stock.enum';
 
 @Injectable()
 export class StocksRepository {
@@ -132,8 +134,42 @@ export class StocksRepository {
       limit,
       total,
       totalPages: Math.ceil(total / limit),
-      data,
+      data: data.map((stock) => mapMongoId(stock)),
     };
+  }
+
+  async getStockList(
+    dto: getStockListDto,
+    page = 1,
+    limit = 20,
+  ) {
+    const filter: FilterQuery<StockEntity> = {};
+    const available = { $subtract: ['$quantity', '$reserved'] };
+
+    if (dto.keyword?.trim()) {
+      filter.sku = { $regex: dto.keyword.trim(), $options: 'i' };
+    }
+
+    if (dto.warehouseId) {
+      filter.warehouseId = new Types.ObjectId(dto.warehouseId);
+    }
+
+    if (dto.status === EStockStatus.OUT) {
+      filter.$expr = { $lte: [available, 0] };
+    } else if (dto.status === EStockStatus.LOW) {
+      filter.$expr = {
+        $and: [
+          { $gt: [available, 0] },
+          { $lte: [available, '$minStock'] },
+        ],
+      };
+    } else if (dto.status === EStockStatus.NORMAL) {
+      filter.$expr = { $gt: [available, '$minStock'] };
+    } else if (dto.alertOnly) {
+      filter.$expr = { $lte: [available, '$minStock'] };
+    }
+
+    return this.getStocks(filter, page, limit);
   }
 
   async updateByProductId(

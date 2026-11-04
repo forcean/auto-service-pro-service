@@ -30,6 +30,7 @@ import { StockManagementService } from './stock-management.service';
 import {
   AdjustStockDto,
   getMovementListDto,
+  getStockListDto,
   IssueStockDto,
   ReceiveStockDto,
   ReleaseReservationDto,
@@ -56,13 +57,20 @@ export class StockManagementController {
     return this.stockManagementService.getStockDetailBySku(sku);
   }
 
-  // @Get('stocks')
-  // // @Permissions('view:stock-detail')
-  // @ResponseResultCode('2000')
-  // @ResponseMessage('Get stocks successful')
-  // async getStocks() {
-  //   return this.stockManagementService.getStockList();
-  // }
+  @Get('stocks')
+  // @Permissions('view:stock-detail')
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get stocks successful')
+  async getStocks(
+    @Query() dto: getStockListDto,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.stockManagementService.getStockList(dto);
+  }
 
   @Delete('stocks/:sku')
   @Permissions('delete:product')
