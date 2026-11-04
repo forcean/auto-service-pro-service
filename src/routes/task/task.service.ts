@@ -5,6 +5,7 @@ import {
   CreateWorkOrderTaskDto,
   ApproveAdditionalProblemDto,
   getWorkOrderTasksWithPaginationDto,
+  MyAssignmentsQueryDto,
   ReportAdditionalProblemDto,
   RejectAdditionalProblemDto,
   UpdateWorkOrderTaskDto,
@@ -215,6 +216,16 @@ export class TaskService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getMyAssignments(query: MyAssignmentsQueryDto, user: AuthUser) {
+    const { page, limit, skip } = getPagination(query);
+    const userId = String((user as AuthUser & { _id?: unknown })._id ?? user.id);
+    return this.taskRepository.findMyAssignmentsPaginated(
+      { page, limit, skip },
+      query,
+      userId,
+    );
   }
 
   async updateStatus(

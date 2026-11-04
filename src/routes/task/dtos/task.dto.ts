@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsIn,
   IsMongoId,
   IsNotEmpty,
   IsNumber,
@@ -262,4 +263,22 @@ export class getWorkOrderTasksWithPaginationDto extends PaginationQuery {
     message: 'taskNo format must be WOYYYYNNNNNN-TNNN',
   })
   taskNo?: string;
+}
+
+export class MyAssignmentsQueryDto extends PaginationQuery {
+  @IsOptional()
+  @IsEnum(ETaskStatus)
+  status?: ETaskStatus;
+
+  @IsOptional()
+  @IsEnum(ETaskPriority)
+  priority?: ETaskPriority;
+
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+
+  @IsOptional()
+  @IsIn(['ALL', 'OVERDUE', 'TODAY', 'UPCOMING', 'UNSCHEDULED'])
+  schedule?: 'ALL' | 'OVERDUE' | 'TODAY' | 'UPCOMING' | 'UNSCHEDULED';
 }

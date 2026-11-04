@@ -210,6 +210,12 @@ WorkOrderTaskSchema.index({
 });
 
 WorkOrderTaskSchema.index({
+  'mechanics.mechanicId': 1,
+  status: 1,
+  plannedFinishDate: 1,
+});
+
+WorkOrderTaskSchema.index({
   taskNo: 1,
 }, {
   unique: true,
