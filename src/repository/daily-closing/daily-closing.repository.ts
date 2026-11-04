@@ -25,7 +25,7 @@ export class DailyClosingRepository {
   ) {}
 
   findByBusinessDate(businessDate: string) {
-    return this.model.findOne({ businessDate }).lean();
+    return this.model.findOne({ businessDate: { $eq: businessDate } }).lean();
   }
 
   async create(payload: DailyClosingPayload, user: AuthUser) {
