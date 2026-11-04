@@ -265,4 +265,18 @@ export class WorkOrderRepository {
       .populate({ path: 'vehicleId' })
       .lean();
   }
+
+  async findByVehicleId(vehicleId: string) {
+    return this.model
+      .find({
+        vehicleId: new Types.ObjectId(vehicleId),
+        isDeleted: false,
+      })
+      .populate({
+        path: 'advisorId',
+        select: 'firstname lastname publicId',
+      })
+      .sort({ checkInDate: -1 })
+      .lean();
+  }
 }

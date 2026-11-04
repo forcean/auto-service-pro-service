@@ -23,6 +23,7 @@ import type { Request } from 'express';
 import { BusinessException } from 'src/common/exceptions/business.exception';
 import {
   customerVehicleDto,
+  createVehicleDocumentDto,
   getVehiclesDto,
   getVehiclesWithPaginationDto,
   updateCustomerVehicleDto,
@@ -107,6 +108,161 @@ export class VehiclesController {
     );
   }
 
+  @Get('customer/:province/:licensePlate/overview')
+  @UseGuards(PermissionsGuard)
+  @Permissions()
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get customer vehicle overview successful')
+  async getCustomerVehicleOverview(
+    @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.customersVehicleService.getVehicleOverview(
+      licensePlate,
+      province,
+    );
+  }
+
+  @Get('customer/:province/:licensePlate/services')
+  @UseGuards(PermissionsGuard)
+  @Permissions()
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get customer vehicle service history successful')
+  async getCustomerVehicleServices(
+    @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.customersVehicleService.getVehicleServiceHistory(
+      licensePlate,
+      province,
+    );
+  }
+
+  @Get('customer/:province/:licensePlate/work-orders')
+  @UseGuards(PermissionsGuard)
+  @Permissions()
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get customer vehicle work orders successful')
+  async getCustomerVehicleWorkOrders(
+    @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.customersVehicleService.getVehicleWorkOrders(
+      licensePlate,
+      province,
+    );
+  }
+
+  @Get('customer/:province/:licensePlate/documents')
+  @UseGuards(PermissionsGuard)
+  @Permissions()
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get customer vehicle documents successful')
+  async getCustomerVehicleDocuments(
+    @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.customersVehicleService.getVehicleDocuments(
+      licensePlate,
+      province,
+    );
+  }
+
+  @Post('customer/:province/:licensePlate/documents')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:customer-vehicle')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2001')
+  @ResponseMessage('Upload customer vehicle document successful')
+  async createCustomerVehicleDocument(
+    @Body() dto: createVehicleDocumentDto,
+    @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.customersVehicleService.createVehicleDocument(
+      licensePlate,
+      province,
+      dto,
+      authUser,
+    );
+  }
+
+  @Get('customer/:province/:licensePlate/documents/:documentId/content')
+  @UseGuards(PermissionsGuard)
+  @Permissions()
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get customer vehicle document content successful')
+  async getCustomerVehicleDocumentContent(
+    @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
+    @Param('documentId') documentId: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.customersVehicleService.getVehicleDocumentContent(
+      licensePlate,
+      province,
+      documentId,
+    );
+  }
+
+  @Post('customer/:province/:licensePlate/documents/:documentId/delete')
+  @UseGuards(PermissionsGuard)
+  @Permissions('update:customer-vehicle')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Delete customer vehicle document successful')
+  async deleteCustomerVehicleDocument(
+    @Param('licensePlate') licensePlate: string,
+    @Param('province') province: string,
+    @Param('documentId') documentId: string,
+    @Req() { authUser }: Request,
+  ) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.customersVehicleService.deleteVehicleDocument(
+      licensePlate,
+      province,
+      documentId,
+      authUser,
+    );
+  }
+
   @Patch('customer/:province/:licensePlate')
   @UseGuards(PermissionsGuard)
   @Permissions('update:customer-vehicle')
@@ -172,5 +328,19 @@ export class VehiclesController {
       query,
       sortBy,
     );
+  }
+
+  @Get('customer/dashboard')
+  @UseGuards(PermissionsGuard)
+  @Permissions('view:customer-vehicle')
+  @UseInterceptors(ResponseInterceptor)
+  @ResponseResultCode('2000')
+  @ResponseMessage('Get customer vehicle dashboard successful')
+  async getCustomerVehicleDashboard(@Req() { authUser }: Request) {
+    if (!authUser) {
+      throw new BusinessException('4013', 'No auth user found');
+    }
+
+    return this.customersVehicleService.getVehicleDashboardSummary();
   }
 }

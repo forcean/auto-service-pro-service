@@ -95,35 +95,66 @@ export class CustomersVehicleRepository {
   ) {
     const { page, limit, skip } = pagination;
 
-    const filter: FilterQuery<CustomersVehicleEntity> = { }
+    const filter: FilterQuery<CustomersVehicleEntity> = {};
+    const normalizeString = (value: unknown): string | undefined => {
+      if (typeof value !== 'string') return undefined;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : undefined;
+    };
 
-    if (query.licensePlate) {
-      filter.licensePlate = query.licensePlate;
+    const keywordValue = normalizeString(query.keyword);
+    if (keywordValue) {
+      const keyword = {
+        $regex: this.escapeRegExp(keywordValue),
+        $options: 'i',
+      };
+      filter.$or = [
+        { licensePlate: keyword },
+        { firstname: keyword },
+        { lastname: keyword },
+        { phoneNumber: keyword },
+        { 'vehicle.brand': keyword },
+        { 'vehicle.model': keyword },
+      ];
     }
 
-    if (query.province) {
-      filter.province = query.province.toUpperCase();
+    const licensePlateValue = normalizeString(query.licensePlate);
+    if (licensePlateValue) {
+      filter.licensePlate = {
+        $regex: this.escapeRegExp(licensePlateValue),
+        $options: 'i',
+      };
     }
 
-    if (query.status) {
-      filter.status = query.status.toUpperCase();
+    const provinceValue = normalizeString(query.province);
+    if (provinceValue) {
+      filter.province = provinceValue.toUpperCase();
     }
 
-    if (query.model) {
-      filter.model = query.model;
+    const statusValue = normalizeString(query.status);
+    if (statusValue) {
+      filter.status = statusValue.toUpperCase();
     }
 
-    if (query.brand) {
-      filter.brand = query.brand;
+    const modelValue = normalizeString(query.model);
+    if (modelValue) {
+      filter['vehicle.modelCode'] = modelValue;
     }
+
+    const brandValue = normalizeString(query.brand);
+    if (brandValue) {
+      filter['vehicle.brandCode'] = brandValue;
+    }
+
+    const sort = this.mapListSort(sortBy);
 
     const [data, total] = await Promise.all([
       this.CustomersVehicleEntity.find(filter)
-        .sort(sortBy ?? 'registrationDt.desc')
+        .sort(sort)
         .skip(skip)
         .limit(limit)
         .lean(),
-      this.CustomersVehicleEntity.countDocuments(),
+      this.CustomersVehicleEntity.countDocuments(filter),
     ]);
 
     return {
@@ -133,5 +164,79 @@ export class CustomersVehicleRepository {
       totalPages: Math.ceil(total / limit),
       data,
     };
+  }
+
+  async getDashboardSummary() {
+    const now = new Date();
+    const startOfCurrentMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
+
+    const [summary] = await this.CustomersVehicleEntity.aggregate([
+      {
+        $facet: {
+          vehicles: [{ $count: 'count' }],
+          customers: [
+            { $match: { phoneNumber: { $type: 'string', $ne: '' } } },
+            { $group: { _id: '$phoneNumber' } },
+            { $count: 'count' },
+          ],
+          brands: [
+            { $match: { 'vehicle.brand': { $type: 'string', $ne: '' } } },
+            {
+              $group: {
+                _id: { $ifNull: ['$vehicle.brandCode', '$vehicle.brand'] },
+              },
+            },
+            { $count: 'count' },
+          ],
+          newVehicles: [
+            { $match: { registrationDt: { $gte: startOfCurrentMonth } } },
+            { $count: 'count' },
+          ],
+        },
+      },
+    ]);
+
+    const count = (key: 'vehicles' | 'customers' | 'brands' | 'newVehicles') =>
+      Number(summary?.[key]?.[0]?.count ?? 0);
+
+    return {
+      totalVehicles: count('vehicles'),
+      totalCustomers: count('customers'),
+      totalBrands: count('brands'),
+      newVehicles: count('newVehicles'),
+    };
+  }
+
+  private mapListSort(sortBy: SortCriterial | null): SortCriterial {
+    const fieldMap: Record<string, string> = {
+      plateNumber: 'licensePlate',
+      ownerName: 'firstname',
+      brand: 'vehicle.brand',
+      model: 'vehicle.model',
+      mileage: 'mileage',
+      registrationDt: 'registrationDt',
+      lastServiceDate: 'registrationDt',
+      status: 'status',
+    };
+
+    if (!sortBy || !Object.keys(sortBy).length) {
+      return { registrationDt: 'desc' };
+    }
+
+    const mappedSort = Object.entries(sortBy).reduce<SortCriterial>((result, [field, direction]) => {
+      const databaseField = fieldMap[field];
+      if (databaseField) result[databaseField] = direction;
+      return result;
+    }, {}) || { registrationDt: 'desc' };
+
+    return Object.keys(mappedSort).length
+      ? mappedSort
+      : { registrationDt: 'desc' };
+  }
+
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

@@ -1,8 +1,10 @@
 import {
   IsArray,
   IsBoolean,
+  IsEnum,
   IsIn,
   IsInt,
+  IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -73,6 +75,10 @@ export class vehiclesDto {
 }
 
 export class customerVehicleDto {
+  @IsOptional()
+  @IsMongoId()
+  customerId?: string;
+
   @IsString({ message: 'firstname must be a string' })
   @IsNotEmpty({ message: 'firstname is required' })
   firstname!: string;
@@ -139,6 +145,10 @@ export class customerVehicleDto {
   vehicle!: vehiclesDto;
 }
 export class updateCustomerVehicleDto {
+  @IsOptional()
+  @IsMongoId()
+  customerId?: string;
+
   @IsOptional()
   @IsString({ message: 'firstname must be a string' })
   firstname?: string;
@@ -229,6 +239,10 @@ export class getVehiclesWithPaginationDto extends PaginationQuery {
   sort?: string;
 
   @IsOptional()
+  @IsString({ message: 'keyword must be a string' })
+  keyword?: string;
+
+  @IsOptional()
   @IsString({ message: 'licensePlate must be a string' })
   licensePlate?: string;
 
@@ -251,4 +265,38 @@ export class getVehiclesWithPaginationDto extends PaginationQuery {
   @IsString({ message: 'brand must be a string' })
   @IsUppercase({ message: 'brand must be uppercase' })
   brand?: string;
+}
+
+export enum EVehicleDocumentCategory {
+  INVOICE = 'Invoice',
+  RECEIPT = 'Receipt',
+  WARRANTY = 'Warranty',
+  INSURANCE = 'Insurance',
+  QUOTATION = 'Quotation',
+  OTHER = 'Other',
+}
+
+export class createVehicleDocumentDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsEnum(EVehicleDocumentCategory)
+  category!: EVehicleDocumentCategory;
+
+  @IsString()
+  @IsNotEmpty()
+  extension!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  content!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

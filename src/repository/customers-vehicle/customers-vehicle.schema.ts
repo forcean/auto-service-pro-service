@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { EVehicleStatus } from 'src/routes/vehicles-management/enums/customers-vehicle.enum';
+import { Types } from 'mongoose';
+import { CustomerEntity } from '../customer/customer.schema';
 
 export class Vehicle {
   @Prop({ type: String })
@@ -43,6 +45,9 @@ export class Vehicle {
 
 @Schema({ collection: 'customersVehicle' })
 export class CustomersVehicleEntity {
+  @Prop({ type: Types.ObjectId, ref: CustomerEntity.name, index: true })
+  customerId?: Types.ObjectId;
+
   @Prop({ required: true, type: String })
   firstname!: string;
 
@@ -73,7 +78,7 @@ export class CustomersVehicleEntity {
   @Prop({ required: true, type: Vehicle, _id: false })
   vehicle!: Vehicle;
 
-  @Prop({ required: true, enum: EVehicleStatus })
+  @Prop({ type: String, required: true, enum: EVehicleStatus })
   status!: EVehicleStatus;
 
   @Prop({ required: true, type: String })
