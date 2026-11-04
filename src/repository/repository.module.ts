@@ -95,6 +95,10 @@ import {
   AppointmentSchema,
 } from './appointment/appointment.schema';
 import { AppointmentRepository } from './appointment/appointment.repository';
+  import {WarrantyClaimEntity,
+  WarrantyClaimSchema,
+} from './warranty-claim/warranty-claim.schema';
+import { WarrantyClaimRepository } from './warranty-claim/warranty-claim.repository';
 
 // const reposytories = [UsersRepository];
 // const entities = [
@@ -145,6 +149,7 @@ import { AppointmentRepository } from './appointment/appointment.repository';
         { name: ServiceHistoryEntity.name, schema: ServiceHistorySchema },
         { name: WorkOrderPaymentEntity.name, schema: WorkOrderPaymentSchema },
         { name: AppointmentEntity.name, schema: AppointmentSchema },
+        { name: WarrantyClaimEntity.name, schema: WarrantyClaimSchema },
       ],
       'autoservice',
     ),
@@ -175,6 +180,7 @@ import { AppointmentRepository } from './appointment/appointment.repository';
     ServiceHistoryRepository,
     WorkOrderPaymentRepository,
     AppointmentRepository,
+    WarrantyClaimRepository,
   ],
   exports: [
     UsersRepository,
@@ -202,6 +208,7 @@ import { AppointmentRepository } from './appointment/appointment.repository';
     ServiceHistoryRepository,
     WorkOrderPaymentRepository,
     AppointmentRepository,
+    WarrantyClaimRepository,
   ],
 })
 export class RepositoryModule {}
