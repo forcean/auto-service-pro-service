@@ -18,6 +18,7 @@ import { EQuotationItemType, EQuotationStatus } from '../quotation/enums/quotati
 import {
   EInvoiceItemType,
   EInvoiceStatus,
+  EPaymentMethod,
   EWorkOrderPaymentType,
 } from './enums/billing.enum';
 import {
@@ -341,7 +342,7 @@ export class BillingService {
           await this.serviceHistoryRepository.create(
             {
               workOrderId: workOrder._id,
-              vehicleId: workOrder.vehicleId,
+              vehicleId: this.getVehicleId(workOrder.vehicleId),
               invoiceId: result._id,
               workOrderNo: workOrder.workOrderNo,
               mileage: workOrder.mileage,
@@ -509,7 +510,7 @@ export class BillingService {
         );
         result = await this.invoiceRepository.addRefund(
           invoiceId,
-          { ...dto, refundNo },
+          { ...dto, method: dto.method ?? EPaymentMethod.CASH, refundNo },
           refundedAmount,
           status,
           user,
@@ -791,7 +792,7 @@ export class BillingService {
           await this.serviceHistoryRepository.create(
             {
               workOrderId: invoice.workOrderId,
-              vehicleId: workOrder.vehicleId,
+              vehicleId: this.getVehicleId(workOrder.vehicleId),
               invoiceId: invoice._id,
               workOrderNo: invoice.workOrderNo,
               mileage: workOrder.mileage,
@@ -835,6 +836,14 @@ export class BillingService {
       issuedParts.delete(key);
     }
     return issuedParts.size === 0;
+  }
+
+  private getVehicleId(vehicle: unknown): string {
+    if (vehicle && typeof vehicle === 'object' && '_id' in vehicle) {
+      return String((vehicle as { _id: unknown })._id);
+    }
+
+    return String(vehicle);
   }
 
   private async getPrintableReceiptByData(receipt: any, size?: string) {

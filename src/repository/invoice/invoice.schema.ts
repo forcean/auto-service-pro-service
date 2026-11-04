@@ -12,7 +12,7 @@ export type InvoiceDocument = HydratedDocument<InvoiceEntity>;
 
 @Schema({ _id: false })
 export class InvoiceItem {
-  @Prop({ enum: EInvoiceItemType, required: true })
+  @Prop({ type: String, enum: EInvoiceItemType, required: true })
   itemType!: EInvoiceItemType;
 
   @Prop({ type: Types.ObjectId, ref: 'ProductsEntity' })
@@ -48,7 +48,7 @@ export class PaymentRecord {
   @Prop({ required: true, min: 0.01 })
   amount!: number;
 
-  @Prop({ enum: EPaymentMethod, required: true })
+  @Prop({ type: String, enum: EPaymentMethod, required: true })
   method!: EPaymentMethod;
 
   @Prop()
@@ -73,6 +73,11 @@ export class RefundRecord {
 
   @Prop({ required: true })
   reason!: string;
+
+  // Stored for cash-drawer reconciliation. Old records without this field are
+  // intentionally reported as "unclassified" instead of being guessed.
+  @Prop({ type: String, enum: EPaymentMethod, default: EPaymentMethod.CASH })
+  method!: EPaymentMethod;
 
   @Prop({ required: true })
   refundedBy!: string;
@@ -137,7 +142,7 @@ export class AppliedPrepayment {
   @Prop({ required: true })
   paymentNo!: string;
 
-  @Prop({ enum: ['DEPOSIT', 'PROGRESS'], required: true })
+  @Prop({ type: String, enum: ['DEPOSIT', 'PROGRESS'], required: true })
   type!: 'DEPOSIT' | 'PROGRESS';
 
   @Prop({ required: true, min: 0.01 })
@@ -172,7 +177,7 @@ export class InvoiceEntity {
   @Prop({ type: VehicleSnapshot, _id: false })
   vehicleSnapshot?: VehicleSnapshot;
 
-  @Prop({ enum: EInvoiceStatus, default: EInvoiceStatus.ISSUED, index: true })
+  @Prop({ type: String, enum: EInvoiceStatus, default: EInvoiceStatus.ISSUED, index: true })
   status!: EInvoiceStatus;
 
   @Prop({ type: [InvoiceItem], default: [] })
